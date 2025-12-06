@@ -1,127 +1,32 @@
-# Ignorar todo por defecto
-*
-
-# Permitir subir archivos esenciales
-!.gitignore
-!package.json
-!package-lock.json
-!README.md
-!DEPLOY.md
-!netlify.toml
-
-# Permitir subir código fuente de React en admin (ERP de la dueña)
-!admin/
-!admin/**
-
-# Permitir subir código fuente de React en agents (CRM del agente)
-!agents/
-!agents/**
-
-# Permitir subir código fuente del frontend (sitio principal)
-!frontend/
-!frontend/**
-
-# Ignorar archivos innecesarios en frontend
-frontend/node_modules/
-frontend/.env*
-frontend/dist/
-frontend/build/
-frontend/.next/
-frontend/logs/
-frontend/coverage/
-frontend/.nyc_output
-frontend/.npm
-frontend/.eslintcache
-frontend/.cache/
-frontend/.parcel-cache/
-frontend/tmp/
-frontend/temp/
-frontend/.vscode/
-frontend/.idea/
-frontend/*.log
-frontend/**/*.log
-
-# Ignorar archivos innecesarios en admin
-admin/node_modules/
-admin/.env*
-admin/build/
-admin/dist/
-admin/.next/
-admin/logs/
-admin/coverage/
-admin/.nyc_output
-admin/.npm
-admin/.eslintcache
-admin/.cache/
-admin/.parcel-cache/
-admin/tmp/
-admin/temp/
-admin/.vscode/
-admin/.idea/
-admin/*.log
-admin/**/*.log
-
-# Ignorar archivos innecesarios en agents
-agents/node_modules/
-agents/.env*
-agents/build/
-agents/dist/
-agents/.next/
-agents/logs/
-agents/coverage/
-agents/.nyc_output
-agents/.npm
-agents/.eslintcache
-agents/.cache/
-agents/.parcel-cache/
-agents/tmp/
-agents/temp/
-agents/.vscode/
-agents/.idea/
-agents/*.log
-agents/**/*.log
-
-# Ignorar backend y otros directorios no modificados
-backend/
+# === NODE ===
 node_modules/
-.env*
 dist/
 build/
-.next/
-out/
-logs/
-coverage/
-.nyc_output
-jspm_packages/
-.npm
-.eslintcache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-.node_repl_history
-*.tgz
-.yarn-integrity
-.cache
-.parcel-cache
-.nuxt
-public
-.out
-.storybook-out
-tmp/
-temp/
+
+# === LOGS ===
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# === EDITOR ===
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
+
+# === SISTEMA ===
 .DS_Store
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
-*.db
-*.sqlite
-*.sqlite3
-*.bak
+
+# === ENV ===
+.env
+.env.*
+!.env.example
+
+# === NO IGNORAR ===
+# Garantizar que la carpeta public/ se incluya siempre
+!public/
+!public/**
+
+# Garantizar que los assets internos de src/ siempre se incluyan
+!src/assets/
+!src/assets/**
