@@ -1,0 +1,22 @@
+{
+  "name": "anabella-luna-crm",
+  "version": "1.0.0",
+  "dependencies": {
+    "@syncfusion/ej2": "^31.1.23",
+    "@syncfusion/ej2-react-calendars": "^31.1.23",
+    "@syncfusion/ej2-react-charts": "^31.1.23",
+    "@syncfusion/ej2-react-dropdowns": "^31.1.23",
+    "@syncfusion/ej2-react-grids": "^31.1.23",
+    "@syncfusion/ej2-react-inputs": "^31.1.23",
+    "@syncfusion/ej2-react-kanban": "^31.1.17",
+    "@syncfusion/ej2-react-maps": "^31.1.17",
+    "@syncfusion/ej2-react-popups": "^31.1.20",
+    "@syncfusion/ej2-react-richtexteditor": "^31.1.23",
+    "@syncfusion/ej2-react-schedule": "^31.1.21"
+  },
+  "scripts": {
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test"
+  }
+}

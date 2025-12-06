@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    "jsx": "react-jsx",          // Required for React 17+
+    "lib": ["dom", "esnext"],    // So DOM elements exist in JSX
+    "types": ["react", "react-dom"], 
+    "esModuleInterop": true,
+    "moduleResolution": "node"
+  }
+}

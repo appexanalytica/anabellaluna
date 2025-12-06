@@ -1,0 +1,230 @@
+@use "././style/scss/main.scss";
+
+//Common Select
+
+.select {
+  .css-13cymwt-control {
+    background-color: var(--form-bg);
+    border-color: var(--input-border);
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 400;
+    font-family: "IBM Plex Sans", sans-serif;
+  }
+  .css-1u9des2-indicatorSeparator {
+    background: none;
+  }
+  .css-t3ipsp-control {
+    border-color: var(--input-border);
+  }
+  .css-t3ipsp-control:hover {
+    border-color: var(--input-border);
+    box-shadow: none;
+  }
+  .css-13cymwt-control:hover {
+    border-color: var(--input-border);
+  }
+}
+
+//Slick
+.slick-dots li button:before {
+  display: none;
+}
+.slick-track {
+  display: flex;
+}
+.slick-slide {
+  margin-right: 15px;
+}
+
+.home-property-section .property-item {
+  margin: 0;
+}
+.search-item .result-list .result-select .select {
+  padding: 0;
+}
+
+.ant-slider .ant-slider-handle::after {
+  box-shadow: 0 0 0 2px var(--secondary);
+}
+.ant-slider .ant-slider-track {
+  background-color: var(--secondary);
+}
+.PhoneInput {
+  border-color: var(--input-border);
+  color: var(--gray-900);
+  background-color: var(--form-bg);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  border-radius: 4px;
+  padding: 0.375rem 0.75rem;
+  min-height: 38px;
+  transition: all 0.5s;
+  .PhoneInputInput {
+    border: 0;
+    color: var(--gray-900);
+    background-color: var(--form-bg);
+    font-family: "IBM Plex Sans", sans-serif;
+  }
+  :focus-visible {
+    outline: 0;
+  }
+}
+.ant-picker-outlined {
+  border: 0;
+}
+.ant-picker-outlined:hover {
+  border: 0;
+  border-color: var(--input-border);
+  background-color: var(--form-bg);
+}
+.ant-picker-outlined:focus {
+  border: 0;
+  box-shadow: 0;
+}
+
+.ant-picker-outlined:focus-within {
+  border: 0;
+  background: 0;
+  box-shadow: 0 0 0 2px transparent;
+}
+.swiper-button-prev:after {
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.swiper-button-prev:after {
+  content: "prev";
+}
+.swiper-button-prev:after {
+  font-family: swiper-icons;
+
+  text-transform: none !important;
+  letter-spacing: 0;
+  font-variant: initial;
+  line-height: 1;
+}
+.swiper-button-next:after {
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.swiper-button-next:after {
+  content: "next";
+}
+.swiper-button-next:after {
+  font-family: swiper-icons;
+
+  text-transform: none !important;
+  letter-spacing: 0;
+  font-variant: initial;
+  line-height: 1;
+}
+.listing-slider .swiper-button-next {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.listing-slider .swiper-button-prev {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.notification-body {
+  overflow: auto;
+  height: auto;
+}
+.blog-details-item-02 .blog-carousel-wrapper .blog-carousel-prev {
+  top: -70px;
+}
+.blog-details-item-02 .blog-carousel-wrapper .blog-carousel-next {
+  top: -70px;
+}
+[data-theme="dark"] {
+  .checkout-wrap .checkout-item-01 .nav.nav-tabs .nav-item .nav-link {
+    color: var(--gray-500);
+    background-color: var(--white);
+  }
+  .ant-picker-dropdown .ant-picker-panel-container {
+    color: var(--gray-500);
+    background-color: var(--white);
+  }
+  .ant-picker-dropdown .ant-picker-cell .ant-picker-cell-inner {
+    color: var(--gray-500);
+  }
+  .ant-picker-dropdown .ant-picker-header button {
+    color: var(--gray-500);
+  }
+  .css-1dimb5e-singleValue {
+    color: var(--gray-500);
+  }
+  .react-select__control {
+    background-color: var(--form-bg);
+    border-color: var(--form-bg);
+    color: var(--gray-500);
+  }
+  .react-select__menu {
+    background-color: var(--white);
+  }
+  .react-select__option {
+    color: var(--gray-500);
+    background-color: var(--white);
+  }
+  .react-select__option--is-focused {
+    background-color: var(--form-bg);
+  }
+  .react-select__single-value {
+    color: var(--gray-500);
+  }
+
+  .react-select__menu-list {
+    background-color: var(--white);
+  }
+}
+
+.fliter-select {
+  .input-group {
+    .select {
+      width: 100%;
+    }
+  }
+}
+.Home-banner-section .home-search-1 .custom-search-item .home-btn {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.home-search-2 .home-btn {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.banner-search.banner-search-three .home-btn {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  i {
+    font-size: 16px;
+  }
+}
+header .main-menu-wrapper .main-nav > li a i {
+  margin-top: 4px;
+}
+.slide-part {
+  .slick-list {
+    .slick-slide {
+      margin-right: 0;
+    }
+  }
+}
+.ant-picker-dropdown {
+  z-index: 1056;
+}
+.Home-banner-section .home-search-1 .css-13cymwt-control {
+  min-height: 42px;
+}
