@@ -5,7 +5,6 @@ import { BrowserRouter } from 'react-router'
 import ALLRoutes from './feature-module/routes/router'
 import store from './core/redux/store'
 import { base_path } from './environment'
-import './i18n';
 import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
 import "../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js";
 import "../src/style/css/iconsax.css";

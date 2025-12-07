@@ -534,16 +534,6 @@ const resources = {
           subtitle: "Selección cuidada de lugares de calidad",
           perNight: "/ noche",
         },
-        blog: {
-          title: "Último Blog",
-          subtitle: "Explorá nuestros posts destacados sobre propiedades premium en venta y alquiler.",
-          exploreAll: "Explorar Todo",
-          categories: {
-            property: "Propiedad",
-            villa: "Villa",
-            godown: "Depósito",
-          },
-        },
         stat: {
           listings: "Publicaciones agregadas",
           agents: "Agentes publicados",
@@ -552,7 +542,7 @@ const resources = {
         },
         support: {
           title: "Suscribite a nuestro newsletter",
-          subtitle: "Recibí novedades, actualizaciones y ofertas especiales.",
+          subtitle: "Recibí novedades, actualizaciones y ofertas especiales。",
         },
         contactUs: {
           breadcrumb: {
@@ -561,12 +551,12 @@ const resources = {
           },
           sales: {
             title: "Hablá con un miembro del equipo de ventas",
-            description: "Conectate con nuestro equipo experto de ventas para recibir guía personalizada, insights sobre propiedades y soporte adaptado a tus necesidades inmobiliarias.",
+            description: "Conectate con nuestro equipo experto de ventas para recibir guía personalizada, insights sobre propiedades y soporte adaptado a tus necesidades inmobiliarias。",
             phone: "Llamada gratuita: 888 634-5891",
           },
           support: {
             title: "Soporte de Producto y Cuenta",
-            description: "Recibí ayuda dedicada con tu cuenta, características y servicios a través de nuestro equipo experto de Soporte de Producto y Cuenta.",
+            description: "Recibí ayuda dedicada con tu cuenta, características y servicios a través de nuestro equipo experto de Soporte de Producto y Cuenta。",
             goToFaq: "Ir a FAQ",
           },
           info: {
@@ -640,7 +630,6 @@ const resources = {
       'Enter your email': 'Ingresá tu email',
       'Remember Me': 'Recordarme',
       'Forgot Password?': '¿Olvidaste tu contraseña?',
-      'Forgot Password': 'Olvidé mi contraseña',
       'Reset Password': 'Restablecer contraseña',
       'Return to': 'Volver a',
       'Sign In': 'Iniciar sesión',
@@ -650,13 +639,12 @@ const resources = {
       Facebook: 'Facebook',
       Google: 'Google',
       "Don’t have an account yet?": '¿Todavía no tenés cuenta?',
-      
+
       // Header / comunes
       Search: 'Buscar',
       'Light Mode': 'Modo claro',
       'Dark Mode': 'Modo oscuro',
       Light: 'Claro',
-// ... (rest of the code remains the same)
       Notifications: 'Notificaciones',
       'Mark as Read': 'Marcar como leído',
       'Delete All': 'Eliminar todo',
@@ -714,9 +702,6 @@ const resources = {
       'Agency List with Sidebar': 'Agencias - lista con sidebar',
       'Agency Details': 'Detalle de agencia',
 
-      // Páginas (claves ya definidas arriba, se dejan aquí solo como referencia)
-
-      // Autenticación / varias
       Authentication: 'Autenticación',
       'Forgot Password': 'Olvidé mi contraseña',
       'Invoice Details': 'Detalle de factura',
@@ -724,18 +709,15 @@ const resources = {
       'Error 404': 'Error 404',
       'Error 500': 'Error 500',
 
-      // Blog
       'Blog List': 'Blog - lista',
       'Blog Grid': 'Blog - grilla',
       'Blog Details': 'Detalle de blog',
 
-      // Idiomas mostrados en el dropdown
       English: 'Inglés',
       German: 'Alemán',
       French: 'Francés',
       Arabic: 'Árabe',
 
-      // Perfil demo
       'Jafna Cremson': 'Jafna Cremson',
       Administrator: 'Administrador',
     },
@@ -754,12 +736,11 @@ i18n
       escapeValue: false,
     },
     detection: {
-      order: [], // Desactivar detección automática
+      order: [],
       caches: [],
     },
   });
 
-// Forzar idioma español
 i18n.changeLanguage('es');
 
 export default i18n;

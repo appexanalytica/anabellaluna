@@ -9,6 +9,10 @@ import { useTranslation } from "react-i18next";
 
 const FeaturesSection = () => {
   const { t } = useTranslation();
+  const bedroomLabel = (count: number) =>
+    t(count === 1 ? "common.features.bedroom_one" : "common.features.bedroom_other", { count });
+  const bathroomLabel = (count: number) =>
+    t(count === 1 ? "common.features.bathroom_one" : "common.features.bathroom_other", { count });
   const features_slider = {
     dots: false,
     infinite: true,
@@ -180,23 +184,13 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             bed
                           </i>
-                          {t(
-                            4 === 1
-                              ? "common.features.bedroom_one"
-                              : "common.features.bedroom_other",
-                            { count: 4 }
-                          )}
+                          {bedroomLabel(4)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
                             bathtub
                           </i>
-                          {t(
-                            4 === 1
-                              ? "common.features.bathroom_one"
-                              : "common.features.bathroom_other",
-                            { count: 4 }
-                          )}
+                          {bathroomLabel(4)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
@@ -312,23 +306,13 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             bed
                           </i>
-                          {t(
-                            5 === 1
-                              ? "common.features.bedroom_one"
-                              : "common.features.bedroom_other",
-                            { count: 5 }
-                          )}
+                          {bedroomLabel(5)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
                             bathtub
                           </i>
-                          {t(
-                            3 === 1
-                              ? "common.features.bathroom_one"
-                              : "common.features.bathroom_other",
-                            { count: 3 }
-                          )}
+                          {bathroomLabel(3)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
@@ -447,29 +431,13 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             bed
                           </i>
-                          {t(
-                            (() => {
-                              const count = 2;
-                              return count === 1
-                                ? "common.features.bedroom_one"
-                                : "common.features.bedroom_other";
-                            })(),
-                            { count: 2 }
-                          )}
+                          {bedroomLabel(2)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
                             bathtub
                           </i>
-                          {t(
-                            (() => {
-                              const count = 2;
-                              return count === 1
-                                ? "common.features.bathroom_one"
-                                : "common.features.bathroom_other";
-                            })(),
-                            { count: 2 }
-                          )}
+                          {bathroomLabel(2)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
@@ -591,12 +559,7 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             bathtub
                           </i>
-                          {t(
-                            1 === 1
-                              ? "common.features.bathroom_one"
-                              : "common.features.bathroom_other",
-                            { count: 1 }
-                          )}
+                          {bathroomLabel(1)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
@@ -721,23 +684,13 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             bed
                           </i>
-                          {t(
-                            4 === 1
-                              ? "common.features.bedroom_one"
-                              : "common.features.bedroom_other",
-                            { count: 4 }
-                          )}
+                          {bedroomLabel(4)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
                             bathtub
                           </i>
-                          {t(
-                            3 === 1
-                              ? "common.features.bathroom_one"
-                              : "common.features.bathroom_other",
-                            { count: 3 }
-                          )}
+                          {bathroomLabel(3)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
@@ -853,29 +806,13 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             bed
                           </i>
-                          {t(
-                            (() => {
-                              const count = 3;
-                              return count === 1
-                                ? "common.features.bedroom_one"
-                                : "common.features.bedroom_other";
-                            })(),
-                            { count: 3 }
-                          )}
+                          {bedroomLabel(3)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
                             bathtub
                           </i>
-                          {t(
-                            (() => {
-                              const count = 2;
-                              return count === 1
-                                ? "common.features.bathroom_one"
-                                : "common.features.bathroom_other";
-                            })(),
-                            { count: 2 }
-                          )}
+                          {bathroomLabel(2)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
@@ -994,26 +931,13 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             bed
                           </i>
-                          {t(
-                            (() => {
-                              const count = 2;
-                              return count === 1
-                                ? "common.features.bedroom_one"
-                                : "common.features.bedroom_other";
-                            })(),
-                            { count: 2 }
-                          )}
+                          {bedroomLabel(2)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
                             bathtub
                           </i>
-                          {t(
-                            1 === 1
-                              ? "common.features.bathroom_one"
-                              : "common.features.bathroom_other",
-                            { count: 1 }
-                          )}
+                          {bathroomLabel(1)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
@@ -1127,29 +1051,13 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             bed
                           </i>
-                          {t(
-                            (() => {
-                              const count = 2;
-                              return count === 1
-                                ? "common.features.bedroom_one"
-                                : "common.features.bedroom_other";
-                            })(),
-                            { count: 2 }
-                          )}
+                          {bedroomLabel(2)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
                             bathtub
                           </i>
-                          {t(
-                            (() => {
-                              const count = 2;
-                              return count === 1
-                                ? "common.features.bathroom_one"
-                                : "common.features.bathroom_other";
-                            })(),
-                            { count: 2 }
-                          )}
+                          {bathroomLabel(2)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
