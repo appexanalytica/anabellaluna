@@ -1,7 +1,7 @@
 @use '../utils/' as *;
 
 .banner-section-three {
-	background-image: url(/react/public/assets/img/home-3/banner-bg.jpg);
+	background-image: url("/assets/img/home-3/banner-bg.jpg");
 	background-repeat: no-repeat;
 	background-size: cover;
 	background-attachment: fixed;
@@ -303,7 +303,7 @@
 	}
 }
 .about-us-section {
-	background-image: url(/react/public/assets/img/home-3/bg/sec-bg-02.png);
+	background-image: url("/assets/img/home-3/bg/sec-bg-02.png");
 	background-repeat: no-repeat;
 	background-position: right top;
 	background-size: contain;
@@ -545,7 +545,7 @@
 	}
 }
 .post-propert-section {
-	background-image: url(/react/public/assets/img/home-3/bg/section-bg.jpg);
+	background-image: url("/assets/img/home-3/bg/section-bg.jpg");
 	background-repeat: no-repeat;
 	background-size: cover;
 	background-attachment: fixed;

@@ -289,7 +289,7 @@
         top: 50%;
         @include transform(translateY(-50%));
         right: 0;
-        background: url('/react/public/assets/img/icons/star-icon.svg');
+        background: url("/assets/img/icons/star-icon.svg");
         width: 12px;
         height: 12px;
         background-repeat: no-repeat;
@@ -495,7 +495,7 @@
 }
 
 .work-section {
-    background-image: url(/react/public/assets/img/section-bg/section-bg-03.jpg);
+    background-image: url("/assets/img/section-bg/section-bg-03.jpg");
     background-repeat: no-repeat;
     background-attachment: fixed;
     background-position: center;

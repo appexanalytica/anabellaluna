@@ -2,7 +2,7 @@
 @use '../utils/colors' as *;
 
 .auth-cover {
-    background-image: url(/react/public/assets/img/bg/auth-bg.png);
+    background-image: url("/assets/img/bg/auth-bg.png");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

@@ -62,7 +62,7 @@ const routes = all_routes;
 
 export const publicRoutes = [
   {
-    path: "/react/",
+    path: "/",
     name: "Root",
     element: <Navigate to={routes.index} />,
     route: Route,
