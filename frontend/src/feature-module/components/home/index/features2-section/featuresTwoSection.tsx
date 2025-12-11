@@ -3,14 +3,10 @@ import ImageWithBasePath from "../../../../../core/imageWithBasePath";
 import { Link } from "react-router";
 import { useState } from "react";
 import { all_routes } from "../../../../routes/all_routes";
-import { useTranslation } from "react-i18next";
 
 const FeaturesTwoSection = () => {
-  const { t } = useTranslation();
-  const bedroomLabel = (count: number) =>
-    t(count === 1 ? "common.features.bedroom_one" : "common.features.bedroom_other", { count });
-  const bathroomLabel = (count: number) =>
-    t(count === 1 ? "common.features.bathroom_one" : "common.features.bathroom_other", { count });
+  const bedroomLabel = (count: number) => `${count} dormitorio${count === 1 ? "" : "s"}`;
+  const bathroomLabel = (count: number) => `${count} baño${count === 1 ? "" : "s"}`;
   const Features_Two_Section = {
     dots: false,
     infinite: true,
@@ -66,13 +62,13 @@ const FeaturesTwoSection = () => {
             data-aos="fade-down"
             data-aos-duration={1000}
           >
-            <h2 className="mb-2 text-center">{t("home.featuresTwoSection.title")}</h2>
+            <h2 className="mb-2 text-center">Propiedades Destacadas en Alquiler</h2>
             <div className="sec-line">
               <span className="sec-line1" />
               <span className="sec-line2" />
             </div>
             <p className="mb-0 text-center">
-              {t("home.featuresTwoSection.subtitle")}
+              Descubre las mejores opciones de alquiler para tu estancia
             </p>
           </div>
           {/* end title */}
@@ -104,18 +100,18 @@ const FeaturesTwoSection = () => {
                             <i className="material-icons-outlined">
                               offline_bolt
                             </i>
-                            {t("common.badges.new")}
+                            Nuevo
                           </div>
                           <div className="badge badge-sm bg-orange d-flex align-items-center">
                             <i className="material-icons-outlined">loyalty</i>
-                            {t("common.badges.featured")}
+                            Destacado
                           </div>
                         </div>
                       </div>
                       <div className="d-flex align-items-center justify-content-between position-absolute bottom-0 end-0 start-0 p-3 z-1">
                         <h6 className="text-white mb-0">
                           $21000
-                          <span className="fs-14 fw-normal"> {t("home.featuresTwoSection.perNight")} </span>
+                          <span className="fs-14 fw-normal"> por noche </span>
                           </h6>
                         <Link
                           to="#"
@@ -153,9 +149,9 @@ const FeaturesTwoSection = () => {
                           <i className="material-icons-outlined text-warning">
                             star
                           </i>
-                          <span className="ms-1 fs-14">{t("common.rating.excellent")}</span>
+                          <span className="ms-1 fs-14">Excelente</span>
                         </div>
-                        <span className="badge bg-secondary"> {t("common.badges.lodge")}</span>
+                        <span className="badge bg-secondary"> Cabaña </span>
                       </div>
                       <div className="d-flex align-items-center justify-content-between mb-3">
                         <div>
@@ -189,7 +185,7 @@ const FeaturesTwoSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             straighten
                           </i>
-                          {t("common.features.squareFeet", { value: 350 })}
+                          350 m²
                         </li>
                       </ul>
                       <div className="d-flex align-items-center justify-content-between flex-wrap border-top border-light-100 pt-3 gap-2">
@@ -215,7 +211,7 @@ const FeaturesTwoSection = () => {
                           to={all_routes.rentDetails}
                           className="btn btn-dark"
                         >
-                          Book Now
+                          Reservar Ahora
                         </Link>
                       </div>
                     </div>
@@ -279,9 +275,9 @@ const FeaturesTwoSection = () => {
                           <i className="material-icons-outlined text-warning">
                             star
                           </i>
-                          <span className="ms-1 fs-14">{t("common.rating.excellent")}</span>
+                          <span className="ms-1 fs-14">Excelente</span>
                         </div>
-                        <span className="badge bg-secondary"> {t("common.badges.residency")}</span>
+                        <span className="badge bg-secondary"> Residencia </span>
                       </div>
                       <div className="d-flex align-items-center justify-content-between mb-3">
                         <div>
@@ -303,19 +299,19 @@ const FeaturesTwoSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             bed
                           </i>
-                          5 Bedroom
+                          5 Dormitorios
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
                             bathtub
                           </i>
-                          3 Bath
+                          3 Baños
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
                             straighten
                           </i>
-                          700 Sq Ft
+                          700 m²
                         </li>
                       </ul>
                       <div className="d-flex align-items-center justify-content-between flex-wrap border-top border-light-100 pt-3 gap-2">
@@ -341,7 +337,7 @@ const FeaturesTwoSection = () => {
                           to={all_routes.rentDetails}
                           className="btn btn-dark"
                         >
-                          Book Now
+                          Reservar Ahora
                         </Link>
                       </div>
                     </div>
@@ -407,9 +403,9 @@ const FeaturesTwoSection = () => {
                           <i className="material-icons-outlined text-warning">
                             star
                           </i>
-                          <span className="ms-1 fs-14">{t("common.rating.excellent")}</span>
+                          <span className="ms-1 fs-14">Excelente</span>
                         </div>
-                        <span className="badge bg-secondary"> {t("common.badges.apartment")}</span>
+                        <span className="badge bg-secondary"> Departamento </span>
                       </div>
                       <div className="d-flex align-items-center justify-content-between mb-3">
                         <div>
@@ -443,7 +439,7 @@ const FeaturesTwoSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             straighten
                           </i>
-                          {t("common.features.squareFeet", { value: 350 })}
+                          350 m²
                         </li>
                       </ul>
                       <div className="d-flex align-items-center justify-content-between flex-wrap border-top border-light-100 pt-3 gap-2">
@@ -469,7 +465,7 @@ const FeaturesTwoSection = () => {
                           to={all_routes.rentDetails}
                           className="btn btn-dark"
                         >
-                          Book Now
+                          Reservar Ahora
                         </Link>
                       </div>
                     </div>
@@ -532,9 +528,9 @@ const FeaturesTwoSection = () => {
                           <i className="material-icons-outlined text-warning">
                             star
                           </i>
-                          <span className="ms-1 fs-14">{t("common.rating.excellent")}</span>
+                          <span className="ms-1 fs-14">Excelente</span>
                         </div>
-                        <span className="badge bg-secondary"> {t("common.badges.residency")}</span>
+                        <span className="badge bg-secondary"> Residencia </span>
                       </div>
                       <div className="d-flex align-items-center justify-content-between mb-3">
                         <div>
@@ -568,7 +564,7 @@ const FeaturesTwoSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             straighten
                           </i>
-                          {t("common.features.squareFeet", { value: 400 })}
+                          400 m²
                         </li>
                       </ul>
                       <div className="d-flex align-items-center justify-content-between flex-wrap border-top border-light-100 pt-3 gap-2">
@@ -594,7 +590,7 @@ const FeaturesTwoSection = () => {
                           to={all_routes.rentDetails}
                           className="btn btn-dark"
                         >
-                          Book Now
+                          Reservar Ahora
                         </Link>
                       </div>
                     </div>
@@ -661,9 +657,9 @@ const FeaturesTwoSection = () => {
                           <i className="material-icons-outlined text-warning">
                             star
                           </i>
-                          <span className="ms-1 fs-14">{t("common.rating.excellent")}</span>
+                          <span className="ms-1 fs-14">Excelente</span>
                         </div>
-                        <span className="badge bg-secondary"> {t("common.badges.condo")}</span>
+                        <span className="badge bg-secondary"> Condominio </span>
                       </div>
                       <div className="d-flex align-items-center justify-content-between mb-3">
                         <div>
@@ -691,13 +687,13 @@ const FeaturesTwoSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             bathtub
                           </i>
-                          3 Bath
+                          3 Baños
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
                             straighten
                           </i>
-                          520 Sq Ft
+                          520 m²
                         </li>
                       </ul>
                       <div className="d-flex align-items-center justify-content-between flex-wrap border-top border-light-100 pt-3 gap-2">
@@ -723,7 +719,7 @@ const FeaturesTwoSection = () => {
                           to={all_routes.rentDetails}
                           className="btn btn-dark"
                         >
-                          Book Now
+                          Reservar Ahora
                         </Link>
                       </div>
                     </div>
@@ -787,9 +783,9 @@ const FeaturesTwoSection = () => {
                           <i className="material-icons-outlined text-warning">
                             star
                           </i>
-                          <span className="ms-1 fs-14">{t("common.rating.excellent")}</span>
+                          <span className="ms-1 fs-14">Excelente</span>
                         </div>
-                        <span className="badge bg-secondary"> {t("common.badges.lodge")}</span>
+                        <span className="badge bg-secondary"> Cabaña </span>
                       </div>
                       <div className="d-flex align-items-center justify-content-between mb-3">
                         <div>
@@ -821,7 +817,7 @@ const FeaturesTwoSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             straighten
                           </i>
-                          {t("common.features.squareFeet", { value: 550 })}
+                          550 m²
                         </li>
                       </ul>
                       <div className="d-flex align-items-center justify-content-between flex-wrap border-top border-light-100 pt-3 gap-2">
@@ -847,7 +843,7 @@ const FeaturesTwoSection = () => {
                           to={all_routes.rentDetails}
                           className="btn btn-dark"
                         >
-                          Book Now
+                          Reservar Ahora
                         </Link>
                       </div>
                     </div>
@@ -914,9 +910,9 @@ const FeaturesTwoSection = () => {
                           <i className="material-icons-outlined text-warning">
                             star
                           </i>
-                          <span className="ms-1 fs-14">{t("common.rating.excellent")}</span>
+                          <span className="ms-1 fs-14">Excelente</span>
                         </div>
-                        <span className="badge bg-secondary"> {t("common.badges.villa")}</span>
+                        <span className="badge bg-secondary"> Villa </span>
                       </div>
                       <div className="d-flex align-items-center justify-content-between mb-3">
                         <div>
@@ -950,7 +946,7 @@ const FeaturesTwoSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             straighten
                           </i>
-                          {t("common.features.squareFeet", { value: 480 })}
+                          480 m²
                         </li>
                       </ul>
                       <div className="d-flex align-items-center justify-content-between flex-wrap border-top border-light-100 pt-3 gap-2">
@@ -976,7 +972,7 @@ const FeaturesTwoSection = () => {
                           to={all_routes.rentDetails}
                           className="btn btn-dark"
                         >
-                          Book Now
+                          Reservar Ahora
                         </Link>
                       </div>
                     </div>
@@ -1040,9 +1036,9 @@ const FeaturesTwoSection = () => {
                           <i className="material-icons-outlined text-warning">
                             star
                           </i>
-                          <span className="ms-1 fs-14">{t("common.rating.excellent")}</span>
+                          <span className="ms-1 fs-14">Excelente</span>
                         </div>
-                        <span className="badge bg-secondary"> {t("common.badges.apartment")}</span>
+                        <span className="badge bg-secondary"> Departamento </span>
                       </div>
                       <div className="d-flex align-items-center justify-content-between mb-3">
                         <div>
@@ -1076,7 +1072,7 @@ const FeaturesTwoSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             straighten
                           </i>
-                          {t("common.features.squareFeet", { value: 350 })}
+                          350 m²
                         </li>
                       </ul>
                       <div className="d-flex align-items-center justify-content-between flex-wrap border-top border-light-100 pt-3 gap-2">
@@ -1102,7 +1098,7 @@ const FeaturesTwoSection = () => {
                           to={all_routes.rentDetails}
                           className="btn btn-dark"
                         >
-                          Book Now
+                          Reservar Ahora
                         </Link>
                       </div>
                     </div>
@@ -1117,7 +1113,7 @@ const FeaturesTwoSection = () => {
               to={all_routes.rentPropertyGrid}
               className="btn btn-lg btn-dark d-flex align-items-center gap-1"
             >
-              Explore All
+              Explorar Todas
               <i className="material-icons-outlined">arrow_forward</i>
             </Link>
           </div>

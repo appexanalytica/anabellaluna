@@ -1,8 +1,6 @@
 import { Link } from "react-router";
-import { useTranslation } from "react-i18next";
 
 const PlanSection = () => {
-  const { t } = useTranslation();
   return (
     <>
       {/* start plan section */}
@@ -18,14 +16,14 @@ const PlanSection = () => {
                 data-aos-duration={1000}
               >
                 <h2 className="mb-2 text-center text-lg-start">
-                  {t("home.plan.title")}
+                  Planes de Precios
                 </h2>
                 <div className="sec-line justify-content-lg-start">
                   <span className="sec-line1" />
                   <span className="sec-line2" />
                 </div>
                 <p className="mb-0 text-center text-lg-start">
-                  {t("home.plan.subtitle")}
+                  Explora nuestros planes flexibles diseñados para satisfacer tus necesidades
                 </p>
               </div>
             </div>
@@ -37,7 +35,7 @@ const PlanSection = () => {
                 data-aos-duration={1500}
               >
                 <div className="pricing-item-nav d-flex align-items-center justify-content-between">
-                  {t("home.plan.tabs.yearly")}
+                  Anual
                   <ul className="nav nav-tabs nav-tabs-rounded nav-justified">
                     <li className="nav-item">
                       <Link
@@ -54,7 +52,7 @@ const PlanSection = () => {
                       />
                     </li>
                   </ul>
-                  {t("home.plan.tabs.monthly")}
+                  Mensual
                 </div>
               </div>
             </div>
@@ -74,7 +72,7 @@ const PlanSection = () => {
                     >
                       <div className="pricing-item-02">
                         <div className="plan-head">
-                          <h4 className="mb-1">{t("home.plan.plans.standard.title")}</h4>
+                          <h4 className="mb-1">Estándar</h4>
                           <p>
                             Manage up to 10 listings with essential features for
                             small teams and businesses.
@@ -82,76 +80,76 @@ const PlanSection = () => {
                         </div>
                         <div className="plan-price">
                           <h2>
-                            $99<span>{t("home.plan.perMonth")}</span>
+                            $99<span>/mes</span>
                           </h2>
                           <hr />
                         </div>
                         <div className="plan-features">
-                          <h6>{t("home.plan.keyFeatures")}</h6>
+                          <h6>Características Clave</h6>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            10 Listing Per Login
+                            10 Listados por Inicio de Sesión
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Up to 100 Users
+                            Hasta 100 Usuarios
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Enquiry on Listing
+                            Consulta en Listados
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            24 Hrs Support
+                            Soporte 24 Horas
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Basic Custom Review
+                            Revisión Personalizada Básica
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Simple Impact Reporting
+                            Reporte de Impacto Simple
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Quick Onboarding &amp; Account
+                            Onboarding Rápido y Cuenta
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            No API Access
+                            Sin Acceso API
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Basic Transaction Tracking
+                            Seguimiento de Transacciones Básico
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Dreams Estate Branding
+                            Marca Dreams Estate
                           </p>
                         </div>
                         <div className="plan-btn">
                           <Link to="#;" className="btn btn-dark border-0">
-                            {t("home.plan.getQuote")}
+                            Obtener Cotización
                           </Link>
                         </div>
                       </div>
@@ -164,10 +162,10 @@ const PlanSection = () => {
                     >
                       <div className="pricing-item-02 popular">
                         <span className="bookmark-sideright-ribbone-primary-right">
-                          <span>{t("home.plan.mostPopular")}</span>
+                          <span>Más Popular</span>
                         </span>
                         <div className="plan-head">
-                          <h4 className="mb-1">{t("home.plan.plans.professional.title")}</h4>
+                          <h4 className="mb-1">Profesional</h4>
                           <p>
                             Manage up to 10 listings with essential features for
                             small teams and businesses.
@@ -180,71 +178,71 @@ const PlanSection = () => {
                           <hr />
                         </div>
                         <div className="plan-features">
-                          <h6>{t("home.plan.keyFeatures")}</h6>
+                          <h6>Características Clave</h6>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            50 Listing Per Login
+                            50 Listados por Inicio de Sesión
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            500+ Active Users
+                            500+ Usuarios Activos
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Enquiry On Every Listing
+                            Consulta en Cada Listado
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Priority 24 Hrs Support
+                            Soporte Prioritario 24 Horas
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Advanced Custom Review
+                            Revisión Personalizada Avanzada
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Standard Impact Reporting
+                            Reporte de Impacto Estándar
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Standard Impact Reporting
+                            Reporte de Impacto Estándar
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Partial API Access
+                            Acceso API Parcial
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Partial API Access
+                            Acceso API Parcial
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Partial Custom Branding
+                            Marca Personalizada Parcial
                           </p>
                         </div>
                         <div className="plan-btn">
                           <Link to="#;" className="btn btn-dark border-0">
-                            {t("home.plan.getQuote")}
+                            Obtener Cotización
                           </Link>
                         </div>
                       </div>
@@ -257,7 +255,7 @@ const PlanSection = () => {
                     >
                       <div className="pricing-item-02">
                         <div className="plan-head">
-                          <h4 className="mb-1">{t("home.plan.plans.enterprise.title")}</h4>
+                          <h4 className="mb-1">Empresarial</h4>
                           <p>
                             Unlimited listings, full API access, 24/7 support,
                             and featured organizations.
@@ -270,71 +268,71 @@ const PlanSection = () => {
                           <hr />
                         </div>
                         <div className="plan-features">
-                          <h6>{t("home.plan.keyFeatures")}</h6>
+                          <h6>Características Clave</h6>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Unlimited Listings Per Login
+                            Listados Ilimitados por Inicio de Sesión
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            1000+ Active Users
+                            1000+ Usuarios Activos
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Enquiry Enabled On Listings
+                            Consulta Habilitada en Listados
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Dedicated 24 Hrs Support
+                            Soporte Dedicado 24 Horas
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Full Custom Review Tools
+                            Herramientas de Revisión Personalizada Completa
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Advanced Impact Reporting
+                            Reporte de Impacto Avanzado
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Personalized Onboarding &amp; Account
+                            Onboarding Personalizado y Cuenta
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Full Api Access
+                            Acceso API Completo
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Full Transaction Tracking
+                            Seguimiento Completo de Transacciones
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            White-Label Branding
+                            Marca White-Label
                           </p>
                         </div>
                         <div className="plan-btn">
                           <Link to="#;" className="btn btn-dark border-0">
-                            {t("home.plan.getQuote")}
+                            Obtener Cotización
                           </Link>
                         </div>
                       </div>
@@ -349,7 +347,7 @@ const PlanSection = () => {
                     <div className="col-lg-4">
                       <div className="pricing-item-02">
                         <div className="plan-head">
-                          <h4 className="mb-1">{t("home.plan.plans.professional.title")}</h4>
+                          <h4 className="mb-1">Profesional</h4>
                           <p>
                             Manage up to 10 listings with essential features for
                             small teams and businesses.
@@ -357,76 +355,76 @@ const PlanSection = () => {
                         </div>
                         <div className="plan-price">
                           <h2>
-                            $999<span>{t("home.plan.perYear")}</span>
+                            $999<span>/año</span>
                           </h2>
                           <hr />
                         </div>
                         <div className="plan-features">
-                          <h6>{t("home.plan.keyFeatures")}</h6>
+                          <h6>Características Clave</h6>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            10 Listing Per Login
+                            10 Listados por Inicio de Sesión
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Up to 100 Users
+                            Hasta 100 Usuarios
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Enquiry on Listing
+                            Consulta en Listados
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            24 Hrs Support
+                            Soporte 24 Horas
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Basic Custom Review
+                            Revisión Personalizada Básica
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Simple Impact Reporting
+                            Reporte de Impacto Simple
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Quick Onboarding &amp; Account
+                            Onboarding Rápido y Cuenta
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            No API Access
+                            Sin Acceso API
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Basic Transaction Tracking
+                            Seguimiento de Transacciones Básico
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Dreams Estate Branding
+                            Marca Dreams Estate
                           </p>
                         </div>
                         <div className="plan-btn">
                           <Link to="#;" className="btn btn-dark">
-                            {t("home.plan.getQuote")}
+                            Obtener Cotización
                           </Link>
                         </div>
                       </div>
@@ -435,10 +433,10 @@ const PlanSection = () => {
                     <div className="col-lg-4">
                       <div className="pricing-item-02 popular">
                         <span className="bookmark-sideright-ribbone-primary-right">
-                          <span>{t("home.plan.mostPopular")}</span>
+                          <span>Más Popular</span>
                         </span>
                         <div className="plan-head">
-                          <h4 className="mb-1">{t("home.plan.plans.professional.title")}</h4>
+                          <h4 className="mb-1">Profesional</h4>
                           <p>
                             Manage up to 10 listings with essential features for
                             small teams and businesses.
@@ -446,76 +444,76 @@ const PlanSection = () => {
                         </div>
                         <div className="plan-price">
                           <h2>
-                            $1199<span>{t("home.plan.perYear")}</span>
+                            $1199<span>/año</span>
                           </h2>
                           <hr />
                         </div>
                         <div className="plan-features">
-                          <h6>{t("home.plan.keyFeatures")}</h6>
+                          <h6>Características Clave</h6>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            50 Listing Per Login
+                            50 Listados por Inicio de Sesión
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            500+ Active Users
+                            500+ Usuarios Activos
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Enquiry On Every Listing
+                            Consulta en Cada Listado
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Priority 24 Hrs Support
+                            Soporte Prioritario 24 Horas
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Advanced Custom Review
+                            Revisión Personalizada Avanzada
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Standard Impact Reporting
+                            Reporte de Impacto Estándar
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Standard Impact Reporting
+                            Reporte de Impacto Estándar
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Partial API Access
+                            Acceso API Parcial
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Partial API Access
+                            Acceso API Parcial
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Partial Custom Branding
+                            Marca Personalizada Parcial
                           </p>
                         </div>
                         <div className="plan-btn">
                           <Link to="#;" className="btn btn-dark">
-                            {t("home.plan.getQuote")}
+                            Obtener Cotización
                           </Link>
                         </div>
                       </div>
@@ -524,7 +522,7 @@ const PlanSection = () => {
                     <div className="col-lg-4">
                       <div className="pricing-item-02">
                         <div className="plan-head">
-                          <h4 className="mb-1">{t("home.plan.plans.enterprise.title")}</h4>
+                          <h4 className="mb-1">Empresarial</h4>
                           <p>
                             Unlimited listings, full API access, 24/7 support,
                             and advanced featured organizations.
@@ -532,76 +530,76 @@ const PlanSection = () => {
                         </div>
                         <div className="plan-price">
                           <h2>
-                            $2399<span>{t("home.plan.perYear")}</span>
+                            $2399<span>/año</span>
                           </h2>
                           <hr />
                         </div>
                         <div className="plan-features">
-                          <h6>{t("home.plan.keyFeatures")}</h6>
+                          <h6>Características Clave</h6>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Unlimited Listings Per Login
+                            Listados Ilimitados por Inicio de Sesión
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            1000+ Active Users
+                            1000+ Usuarios Activos
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Enquiry Enabled On Listings
+                            Consulta Habilitada en Listados
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Dedicated 24 Hrs Support
+                            Soporte Dedicado 24 Horas
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Full Custom Review Tools
+                            Herramientas de Revisión Personalizada Completa
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Advanced Impact Reporting
+                            Reporte de Impacto Avanzado
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Personalized Onboarding &amp; Account
+                            Onboarding Personalizado y Cuenta
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Full Api Access
+                            Acceso API Completo
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            Full Transaction Tracking
+                            Seguimiento Completo de Transacciones
                           </p>
                           <p>
                             <i className="material-icons-outlined">
                               check_circle
                             </i>
-                            White-Label Branding
+                            Marca White-Label
                           </p>
                         </div>
                         <div className="plan-btn">
                           <Link to="#;" className="btn btn-dark">
-                            {t("home.plan.getQuote")}
+                            Obtener Cotización
                           </Link>
                         </div>
                       </div>

@@ -26,8 +26,8 @@ const AddProperyBuy = () => {
 	========================= */}
       <div className="page-wrapper">
         <Breadcrumb
-          title="Add New Property"
-          paths={[{ label: "Add New Property", active: true }]}
+          title="Agregar nueva propiedad"
+          paths={[{ label: "Agregar nueva propiedad", active: true }]}
         />
 
         {/* End Breadscrumb */}
@@ -56,32 +56,32 @@ const AddProperyBuy = () => {
                     >
                       <li>
                         <Link to="#add-list-1" className="active">
-                          Property Information
+                          Información de la propiedad
                         </Link>
                       </li>
                       <li>
-                        <Link to="#add-list-2">Property Details</Link>
+                        <Link to="#add-list-2">Detalles de la propiedad</Link>
                       </li>
                       <li>
-                        <Link to="#add-list-3">Amenities</Link>
+                        <Link to="#add-list-3">Servicios</Link>
                       </li>
                       <li>
-                        <Link to="#add-list-4">Documents</Link>
+                        <Link to="#add-list-4">Documentos</Link>
                       </li>
                       <li>
-                        <Link to="#add-list-5">Gallery</Link>
+                        <Link to="#add-list-5">Galería</Link>
                       </li>
                       <li>
                         <Link to="#add-list-6">Videos</Link>
                       </li>
                       <li>
-                        <Link to="#add-list-7">Description</Link>
+                        <Link to="#add-list-7">Descripción</Link>
                       </li>
                       <li>
-                        <Link to="#add-list-8">Floor Plans</Link>
+                        <Link to="#add-list-8">Planos</Link>
                       </li>
                       <li>
-                        <Link to="#add-list-9">Location</Link>
+                        <Link to="#add-list-9">Ubicación</Link>
                       </li>
                     </Scrollspy>
                   </div>
@@ -97,11 +97,11 @@ const AddProperyBuy = () => {
                       <div className="row">
                         <div className="col-lg-4">
                           <div className="mb-4">
-                            <h6 className="mb-1">Property Information</h6>
+                            <h6 className="mb-1">Información de la propiedad</h6>
                             <p className="mb-0">
-                              Explore essential details like size, type,
-                              pricing, and standout features perfect for
-                              comfortable living or smart investment.
+                              Explora detalles esenciales como tamaño, tipo,
+                              precio y características destacadas, ideales para
+                              una vida cómoda o una inversión inteligente.
                             </p>
                           </div>
                         </div>{" "}
@@ -114,7 +114,7 @@ const AddProperyBuy = () => {
                                 <div className="col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Property Name
+                                      Nombre de la propiedad
                                     </label>
                                     <input
                                       type="text"
@@ -126,7 +126,7 @@ const AddProperyBuy = () => {
                                 <div className="col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Property Type
+                                      Tipo de propiedad
                                     </label>
                                     <CommonSelect
                                       options={Property_Type}
@@ -139,7 +139,7 @@ const AddProperyBuy = () => {
                                 <div className="col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Property Category
+                                      Categoría de la propiedad
                                     </label>
                                     <CommonSelect
                                       options={Categories}
@@ -152,7 +152,7 @@ const AddProperyBuy = () => {
                                 <div className="col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Currency Type
+                                      Tipo de moneda
                                     </label>
                                     <CommonSelect
                                       options={Currency_Type}
@@ -165,7 +165,7 @@ const AddProperyBuy = () => {
                                 <div className="col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Sale Price
+                                      Precio de venta
                                     </label>
                                     <input
                                       type="text"
@@ -177,7 +177,7 @@ const AddProperyBuy = () => {
                                 <div className="col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Offer Price
+                                      Precio de oferta
                                     </label>
                                     <input
                                       type="text"
@@ -202,11 +202,11 @@ const AddProperyBuy = () => {
                       <div className="row">
                         <div className="col-lg-4">
                           <div className="mb-4">
-                            <h6 className="mb-1">Property Details</h6>
+                            <h6 className="mb-1">Detalles de la propiedad</h6>
                             <p className="mb-0">
-                              Get key specs including layout, dimensions, and
-                              materials that define this property’s quality,
-                              structure, and overall design.
+                              Obtén especificaciones clave como distribución,
+                              dimensiones y materiales que definen la calidad,
+                              estructura y diseño general de la propiedad.
                             </p>
                           </div>
                         </div>{" "}
@@ -219,7 +219,7 @@ const AddProperyBuy = () => {
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Property Id
+                                      ID de la propiedad
                                     </label>
                                     <input
                                       type="text"
@@ -231,7 +231,7 @@ const AddProperyBuy = () => {
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Price Per Sqft
+                                      Precio por m²
                                     </label>
                                     <input
                                       type="text"
@@ -243,7 +243,7 @@ const AddProperyBuy = () => {
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Structure Type
+                                      Tipo de estructura
                                     </label>
                                     <CommonSelect
                                       options={Structure_Type}
@@ -256,7 +256,7 @@ const AddProperyBuy = () => {
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      No of Bedrooms
+                                      Número de dormitorios
                                     </label>
                                     <input
                                       type="text"
@@ -268,7 +268,7 @@ const AddProperyBuy = () => {
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      No of Bathrooms
+                                      Número de baños
                                     </label>
                                     <input
                                       type="text"
@@ -279,7 +279,7 @@ const AddProperyBuy = () => {
                                 {/* end col */}
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
-                                    <label className="form-label">Sqft</label>
+                                    <label className="form-label">m²</label>
                                     <input
                                       type="text"
                                       className="form-control"
@@ -290,7 +290,7 @@ const AddProperyBuy = () => {
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Parking
+                                      Estacionamiento
                                     </label>
                                     <input
                                       type="text"
@@ -302,7 +302,7 @@ const AddProperyBuy = () => {
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Balcony
+                                      Balcón
                                     </label>
                                     <CommonSelect
                                       options={Balcony}
@@ -314,7 +314,7 @@ const AddProperyBuy = () => {
                                 {/* end col */}
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
-                                    <label className="form-label">Floor</label>
+                                    <label className="form-label">Piso</label>
                                     <input
                                       type="text"
                                       className="form-control"
@@ -325,7 +325,7 @@ const AddProperyBuy = () => {
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Wardrobe
+                                      Armario
                                     </label>
                                     <input
                                       type="text"
@@ -347,7 +347,7 @@ const AddProperyBuy = () => {
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Water Purifier
+                                      Purificador de agua
                                     </label>
                                     <input
                                       type="text"
@@ -359,7 +359,7 @@ const AddProperyBuy = () => {
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Microwave
+                                      Microondas
                                     </label>
                                     <input
                                       type="text"
@@ -370,7 +370,7 @@ const AddProperyBuy = () => {
                                 {/* end col */}
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
-                                    <label className="form-label">AC</label>
+                                    <label className="form-label">Aire acondicionado</label>
                                     <input
                                       type="text"
                                       className="form-control"
@@ -380,7 +380,7 @@ const AddProperyBuy = () => {
                                 {/* end col */}
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
-                                    <label className="form-label">Fridge</label>
+                                    <label className="form-label">Refrigerador</label>
                                     <input
                                       type="text"
                                       className="form-control"
@@ -403,7 +403,7 @@ const AddProperyBuy = () => {
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Garage Size
+                                      Tamaño del garaje
                                     </label>
                                     <input
                                       type="text"
@@ -414,7 +414,7 @@ const AddProperyBuy = () => {
                                 {/* end col */}
                                 <div className="col-lg-4 col-sm-6">
                                   <label className="form-label">
-                                    Available From
+                                    Disponible desde
                                   </label>
                                   <div className="input-group input-group-flat mb-3">
                                     <DatePicker
@@ -432,7 +432,7 @@ const AddProperyBuy = () => {
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Curtains
+                                      Cortinas
                                     </label>
                                     <CommonSelect
                                       options={Curtains}
@@ -444,7 +444,7 @@ const AddProperyBuy = () => {
                                 {/* end col */}
                                 <div className="col-lg-4 col-sm-6">
                                   <label className="form-label">
-                                    Year Constructed
+                                    Año de construcción
                                   </label>
                                   <div className="input-group input-group-flat mb-3">
                                     <DatePicker
@@ -475,11 +475,11 @@ const AddProperyBuy = () => {
                       <div className="row">
                         <div className="col-lg-4">
                           <div className="mb-4">
-                            <h6 className="mb-1">Amenities</h6>
+                            <h6 className="mb-1">Servicios</h6>
                             <p className="mb-0">
-                              Enjoy premium features like pool, gym, parking,
-                              security, and more—all designed for modern,
-                              comfortable everyday living.
+                              Disfruta de características premium como piscina,
+                              gimnasio, estacionamiento, seguridad y más, todo
+                              diseñado para una vida moderna y confortable.
                             </p>
                           </div>
                         </div>{" "}
@@ -502,7 +502,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_1"
                                     >
-                                      Air Conditioning
+                                      Aire acondicionado
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -519,7 +519,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_2"
                                     >
-                                      TV Cable
+                                      TV por cable
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -537,7 +537,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_3"
                                     >
-                                      Refrigerator
+                                      Refrigerador
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -555,7 +555,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_4"
                                     >
-                                      Lawn
+                                      Césped
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -572,7 +572,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_5"
                                     >
-                                      Dryer
+                                      Secadora
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -606,7 +606,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_7"
                                     >
-                                      Swimming Pool
+                                      Piscina
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -624,7 +624,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_8"
                                     >
-                                      Outdoor Shower
+                                      Ducha exterior
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -641,7 +641,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_9"
                                     >
-                                      Laundry
+                                      Lavandería
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -658,7 +658,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_10"
                                     >
-                                      Barbeque
+                                      Parrilla
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -675,7 +675,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_11"
                                     >
-                                      Washer
+                                      Lavadora
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -727,7 +727,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_14"
                                     >
-                                      Gym
+                                      Gimnasio
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -744,7 +744,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_15"
                                     >
-                                      Window Coverings
+                                      Cortinas
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -762,7 +762,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_16"
                                     >
-                                      Wide Open Spaces
+                                      Espacios abiertos amplios
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -779,7 +779,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_17"
                                     >
-                                      Parks
+                                      Parques
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -797,7 +797,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_18"
                                     >
-                                      Rooftop Gardens
+                                      Terrazas ajardinadas
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -814,7 +814,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_19"
                                     >
-                                      Billiards Table
+                                      Mesa de billar
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -832,7 +832,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_20"
                                     >
-                                      Clubhouse
+                                      Casa club
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -866,7 +866,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_22"
                                     >
-                                      Walet Trash
+                                      Recolección de basura
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -884,7 +884,7 @@ const AddProperyBuy = () => {
                                       className="form-check-label ms-2"
                                       htmlFor="check_23"
                                     >
-                                      Sporting Facilities
+                                      Instalaciones deportivas
                                     </label>
                                   </div>
                                 </div>{" "}
@@ -905,11 +905,12 @@ const AddProperyBuy = () => {
                       <div className="row">
                         <div className="col-lg-4">
                           <div className="mb-4">
-                            <h6 className="mb-1">Property Documents</h6>
+                            <h6 className="mb-1">Documentos de la propiedad</h6>
                             <p className="mb-0">
-                              View and Upload all essential legal documents,
-                              including title, approvals, and receipts,
-                              organized for transparency and convenience.
+                              Visualiza y carga todos los documentos legales
+                              esenciales, incluyendo título, aprobaciones y
+                              recibos, organizados para mayor transparencia y
+                              comodidad.
                             </p>
                           </div>
                         </div>{" "}
@@ -919,32 +920,31 @@ const AddProperyBuy = () => {
                             <div className="card-body">
                               <div className="mb-3">
                                 <label className="form-label">
-                                  Upload Documents
+                                  Subir documentos
                                 </label>
                                 <div className="file-uploader">
                                   <input type="file" className="form-control" />
                                   <Link to="#" className="input-file">
                                     <span className="browse-btn">
-                                      Browse Files
+                                      Buscar archivos
                                     </span>
                                     <span className="browse-text">
-                                      No Files Selected
+                                      Ningún archivo seleccionado
                                     </span>
                                   </Link>
                                 </div>
                               </div>
                               <ul className="ducument-info mb-3">
-                                <li>The maximum size is 8 MB. Format: PDF. </li>
+                                <li>El tamaño máximo es de 8 MB. Formato: PDF.</li>
                                 <li>
-                                  Maximum number of files upload will be 5
-                                  files.
+                                  El número máximo de archivos a subir es de 5.
                                 </li>
                               </ul>
                               <p className="text-primary d-inline-flex align-items-center mb-0">
                                 <i className="material-icons-outlined me-1">
                                   done_all
                                 </i>
-                                Document Uploaded Successfully
+                                Documento subido correctamente
                               </p>
                             </div>{" "}
                             {/* end card body */}
@@ -960,11 +960,11 @@ const AddProperyBuy = () => {
                       <div className="row">
                         <div className="col-lg-4">
                           <div className="mb-4">
-                            <h6 className="mb-1">Property Gallery</h6>
+                            <h6 className="mb-1">Galería de la propiedad</h6>
                             <p className="mb-0">
-                              Browse high-resolution images of interiors and
-                              exteriors to get a true feel of the design and
-                              atmosphere.
+                              Recorre imágenes en alta resolución de interiores
+                              y exteriores para obtener una verdadera sensación
+                              del diseño y la atmósfera.
                             </p>
                           </div>
                         </div>{" "}
@@ -1014,34 +1014,34 @@ const AddProperyBuy = () => {
                                 </div>
                               </div>
                               <div className="mb-3">
-                                <label className="form-label">Photo</label>
+                                <label className="form-label">Foto</label>
                                 <div className="file-uploader">
                                   <input type="file" className="form-control" />
                                   <Link to="#" className="input-file">
                                     <span className="browse-btn">
-                                      Browse Files
+                                      Buscar archivos
                                     </span>
                                     <span className="browse-text">
-                                      3 Photos Selected
+                                      3 fotos seleccionadas
                                     </span>
                                   </Link>
                                 </div>
                               </div>
                               <ul className="ducument-info mb-3">
                                 <li>
-                                  The maximum photo size is 8 MB. Formats: jpeg,
-                                  jpg,. Put the main picture first
+                                  El tamaño máximo de cada foto es de 8 MB.
+                                  Formatos: jpeg, jpg. Pon primero la imagen
+                                  principal.
                                 </li>
                                 <li>
-                                  Maximum number of files upload will be 10
-                                  files.
+                                  El número máximo de fotos a subir es de 10.
                                 </li>
                               </ul>
                               <p className="text-primary d-inline-flex align-items-center mb-0">
                                 <i className="material-icons-outlined me-1">
                                   done_all
                                 </i>
-                                Photos Uploaded Successfully
+                                Fotos subidas correctamente
                               </p>
                             </div>{" "}
                             {/* end card body */}
@@ -1057,11 +1057,12 @@ const AddProperyBuy = () => {
                       <div className="row">
                         <div className="col-lg-4">
                           <div className="mb-4">
-                            <h6 className="mb-1">Property Video</h6>
+                            <h6 className="mb-1">Video de la propiedad</h6>
                             <p className="mb-0">
-                              Watch immersive property videos offering a
-                              real-time view of space, flow, lighting, and
-                              ambiance from every angle.
+                              Mira videos inmersivos de la propiedad que
+                              ofrecen una vista en tiempo real del espacio,
+                              distribución, iluminación y ambiente desde todos
+                              los ángulos.
                             </p>
                           </div>
                         </div>{" "}
@@ -1074,7 +1075,7 @@ const AddProperyBuy = () => {
                                 <div className="col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Embed Video
+                                      Insertar video
                                     </label>
                                     <CommonSelect
                                       options={Embed_Video}
@@ -1087,7 +1088,7 @@ const AddProperyBuy = () => {
                                 <div className="col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Video Link
+                                      Enlace del video
                                     </label>
                                     <input
                                       type="text"
@@ -1112,11 +1113,11 @@ const AddProperyBuy = () => {
                       <div className="row">
                         <div className="col-lg-4">
                           <div className="mb-4">
-                            <h6 className="mb-1">Description</h6>
+                            <h6 className="mb-1">Descripción</h6>
                             <p className="mb-0">
-                              A beautifully designed home combining style and
-                              function, ideal for modern lifestyles and
-                              peaceful, long-term living.
+                              Una casa bellamente diseñada que combina estilo y
+                              funcionalidad, ideal para estilos de vida
+                              modernos y una vida tranquila a largo plazo.
                             </p>
                           </div>
                         </div>{" "}
@@ -1129,7 +1130,7 @@ const AddProperyBuy = () => {
                                 <div className="col-sm-12">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Description of Property
+                                      Descripción de la propiedad
                                     </label>
                                     <textarea
                                       className="form-control"
@@ -1155,11 +1156,12 @@ const AddProperyBuy = () => {
                       <div className="row">
                         <div className="col-lg-4">
                           <div className="mb-4">
-                            <h6 className="mb-1">Floor Plans</h6>
+                            <h6 className="mb-1">Planos</h6>
                             <p className="mb-0">
-                              See detailed floor layouts showing room sizes,
-                              flow, and structure to help visualize furniture or
-                              future changes.
+                              Consulta planos detallados con tamaños de
+                              habitaciones, distribución y estructura para
+                              ayudarte a visualizar el mobiliario o futuras
+                              modificaciones.
                             </p>
                           </div>
                         </div>{" "}
@@ -1173,7 +1175,7 @@ const AddProperyBuy = () => {
                                   <div className="col-sm-6">
                                     <div className="mb-3">
                                       <label className="form-label">
-                                        Property Name
+                                        Nombre de la propiedad
                                       </label>
                                       <input
                                         type="text"
@@ -1185,7 +1187,7 @@ const AddProperyBuy = () => {
                                   <div className="col-sm-6">
                                     <div className="mb-3">
                                       <label className="form-label">
-                                        Property Type
+                                        Tipo de propiedad
                                       </label>
                                       <CommonSelect
                                         options={Property_Type}
@@ -1198,7 +1200,7 @@ const AddProperyBuy = () => {
                                   <div className="col-sm-6">
                                     <div className="mb-3">
                                       <label className="form-label">
-                                        Property Category
+                                        Categoría de la propiedad
                                       </label>
                                       <CommonSelect
                                         options={Categories}
@@ -1211,7 +1213,7 @@ const AddProperyBuy = () => {
                                   <div className="col-sm-6">
                                     <div className="mb-3">
                                       <label className="form-label">
-                                        Currency Type
+                                        Tipo de moneda
                                       </label>
                                       <CommonSelect
                                         options={Currency_Type}
@@ -1224,7 +1226,7 @@ const AddProperyBuy = () => {
                                   <div className="col-sm-6">
                                     <div className="mb-3">
                                       <label className="form-label">
-                                        Sale Price
+                                        Precio de venta
                                       </label>
                                       <input
                                         type="text"
@@ -1236,7 +1238,7 @@ const AddProperyBuy = () => {
                                   <div className="col-sm-6">
                                     <div className="mb-3">
                                       <label className="form-label">
-                                        Offer Price
+                                        Precio de oferta
                                       </label>
                                       <input
                                         type="text"
@@ -1248,7 +1250,7 @@ const AddProperyBuy = () => {
                                   <div className="col-sm-12">
                                     <div className="mb-3">
                                       <label className="form-label">
-                                        Description of Property
+                                        Descripción de la propiedad
                                       </label>
                                       <textarea
                                         className="form-control"
@@ -1261,7 +1263,7 @@ const AddProperyBuy = () => {
                                   <div className="col-sm-12">
                                     <div className="mb-3">
                                       <label className="form-label">
-                                        Photo
+                                        Foto
                                       </label>
                                       <div className="file-uploader">
                                         <input
@@ -1270,10 +1272,10 @@ const AddProperyBuy = () => {
                                         />
                                         <Link to="#" className="input-file">
                                           <span className="browse-btn">
-                                            Browse Files
+                                            Buscar archivos
                                           </span>
                                           <span className="browse-text">
-                                            3 Photos Selected
+                                            3 fotos seleccionadas
                                           </span>
                                         </Link>
                                       </div>
@@ -1291,7 +1293,7 @@ const AddProperyBuy = () => {
                                   <i className="material-icons-outlined me-2">
                                     add
                                   </i>
-                                  Add More
+                                  Agregar más
                                 </Link>
                               </div>
                             </div>{" "}
@@ -1308,11 +1310,11 @@ const AddProperyBuy = () => {
                       <div className="row">
                         <div className="col-lg-4">
                           <div className="mb-4">
-                            <h6 className="mb-1">Property Location</h6>
+                            <h6 className="mb-1">Ubicación de la propiedad</h6>
                             <p className="mb-0">
-                              Centrally located near schools, shops, and
-                              transport—offering everyday convenience and strong
-                              long-term property value.
+                              Ubicación céntrica cerca de escuelas, comercios y
+                              transporte, ofreciendo comodidad diaria y un alto
+                              valor a largo plazo.
                             </p>
                           </div>
                         </div>{" "}
@@ -1325,7 +1327,7 @@ const AddProperyBuy = () => {
                                 <div className="col-sm-12">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Address
+                                      Dirección
                                     </label>
                                     <input
                                       type="text"
@@ -1337,7 +1339,7 @@ const AddProperyBuy = () => {
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Country
+                                      País
                                     </label>
                                     <CommonSelect
                                       options={Country}
@@ -1349,7 +1351,7 @@ const AddProperyBuy = () => {
                                 {/* end col */}
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
-                                    <label className="form-label">State</label>
+                                    <label className="form-label">Estado</label>
                                     <CommonSelect
                                       options={State}
                                       className="select"
@@ -1360,7 +1362,7 @@ const AddProperyBuy = () => {
                                 {/* end col */}
                                 <div className="col-lg-4 col-sm-6">
                                   <div className="mb-3">
-                                    <label className="form-label">City</label>
+                                    <label className="form-label">Ciudad</label>
                                     <CommonSelect
                                       options={City}
                                       className="select"
@@ -1372,7 +1374,7 @@ const AddProperyBuy = () => {
                                 <div className="col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Landmark
+                                      Punto de referencia
                                     </label>
                                     <input
                                       type="text"
@@ -1384,7 +1386,7 @@ const AddProperyBuy = () => {
                                 <div className="col-sm-6">
                                   <div className="mb-3">
                                     <label className="form-label">
-                                      Zipcode
+                                      Código postal
                                     </label>
                                     <input
                                       type="text"
@@ -1421,10 +1423,10 @@ const AddProperyBuy = () => {
                       type="button"
                       className="btn btn-danger btn-lg me-2"
                     >
-                      Reset
+                      Restablecer
                     </button>
                     <button className="btn btn-dark btn-lg" type="submit">
-                      Add Property
+                      Agregar propiedad
                     </button>
                   </div>
                 </form>
@@ -1446,7 +1448,7 @@ const AddProperyBuy = () => {
               <div className="modal-body search-wrap">
                 <form className="search-form" id="search-form">
                   <div className="d-flex align-items-center justify-content-between mb-4">
-                    <h5>What Are You Looking for?</h5>
+                    <h5>¿Qué estás buscando?</h5>
                     <Link to="#" className="close" data-bs-dismiss="modal">
                       <i className="material-icons-outlined">close</i>
                     </Link>
@@ -1455,13 +1457,13 @@ const AddProperyBuy = () => {
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Type a Keyword...."
+                      placeholder="Escribe una palabra clave..."
                     />
                     <span className="input-group-text">
                       <i className="material-icons-outlined">search</i>
                     </span>
                   </div>
-                  <h6>Popular Properties</h6>
+                  <h6>Propiedades populares</h6>
                   <div className="search-list">
                     <p>
                       <Link to={all_routes.rentPropertyGrid}>

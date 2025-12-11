@@ -1,9 +1,7 @@
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
 import Slider from "react-slick";
-import { Trans, useTranslation } from "react-i18next";
 
 const PropertySection = () => {
-  const { t } = useTranslation();
   const property_slider = {
     dots: false,
     infinite: true,
@@ -56,16 +54,14 @@ const PropertySection = () => {
               {/* start title */}
               <div className="section-heading">
                 <h2 className="mb-2 text-lg-start text-center text-white">
-                  <Trans i18nKey="home.propertySection.title">
-                    Explore by <span className="d-lg-block">Property Type</span>
-                  </Trans>
+                  Explora por <span className="d-lg-block">Tipo de Propiedad</span>
                 </h2>
                 <div className="sec-line justify-content-lg-start">
                   <span className="sec-line1" />
                   <span className="sec-line2" />
                 </div>
                 <p className="mb-0 text-lg-start text-center text-light">
-                  {t("home.propertySection.subtitle")}
+                  Encuentra el tipo de propiedad perfecto para tus necesidades
                 </p>
               </div>
               {/* end title */}
@@ -85,8 +81,8 @@ const PropertySection = () => {
                         className="m-auto"
                       />
                     </div>
-                    <h5 className="mb-1"> {t("home.propertySection.cards.houses")} </h5>
-                    <p className="mb-0"> 30 {t("home.propertySection.cards.properties")} </p>
+                    <h5 className="mb-1"> Casas </h5>
+                    <p className="mb-0"> 30 propiedades </p>
                   </div>
                 </div>
                 <div className="property-item">
@@ -102,8 +98,8 @@ const PropertySection = () => {
                         className="m-auto"
                       />
                     </div>
-                    <h5 className="mb-1"> {t("home.propertySection.cards.offices")} </h5>
-                    <p className="mb-0"> 45 {t("home.propertySection.cards.properties")} </p>
+                    <h5 className="mb-1"> Oficinas </h5>
+                    <p className="mb-0"> 45 propiedades </p>
                   </div>
                 </div>
                 <div
@@ -119,8 +115,8 @@ const PropertySection = () => {
                         className="m-auto"
                       />
                     </div>
-                    <h5 className="mb-1"> {t("home.propertySection.cards.villas")} </h5>
-                    <p className="mb-0"> 28 {t("home.propertySection.cards.properties")} </p>
+                    <h5 className="mb-1"> Condominios </h5>
+                    <p className="mb-0"> 28 propiedades </p>
                   </div>
                 </div>
                 <div
@@ -136,25 +132,8 @@ const PropertySection = () => {
                         className="m-auto"
                       />
                     </div>
-                    <h5 className="mb-1"> {t("home.propertySection.cards.apartment")} </h5>
-                    <p className="mb-0"> 35 {t("home.propertySection.cards.properties")} </p>
-                  </div>
-                </div>
-                <div
-                  className="property-item aos"
-                  data-aos="fade-up"
-                  data-aos-duration={1000}
-                >
-                  <div className="property-card-item">
-                    <div className="mb-3 text-center">
-                      <ImageWithBasePath
-                        src="assets/img/home/icons/property-icon-4.svg"
-                        alt="property-icon-1"
-                        className="m-auto"
-                      />
-                    </div>
-                    <h5 className="mb-1"> {t("home.propertySection.cards.apartment")} </h5>
-                    <p className="mb-0"> 30 {t("home.propertySection.cards.properties")} </p>
+                    <h5 className="mb-1"> Departamentos </h5>
+                    <p className="mb-0"> 35 propiedades </p>
                   </div>
                 </div>
               </Slider>

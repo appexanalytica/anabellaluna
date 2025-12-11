@@ -7,8 +7,8 @@ export const Buy = [
   { value: "Sell", label: "Sell" },
 ];
 export const Property_Type = [
-  { value: "Buy Property", label: "Buy Property" },
-  { value: "Rent Property", label: "Rent Property" },
+  { value: "Comprar propiedad", label: "Comprar propiedad" },
+  { value: "Alquilar propiedad", label: "Alquilar propiedad" },
 ];
 export const Min_Price = [
   { value: "$100", label: "$100" },
@@ -19,12 +19,12 @@ export const Max_Price = [
   { value: "$200", label: "$200" },
 ];
 export const Sort_By = [
-  { value: "Default", label: "Default" },
+  { value: "Por defecto", label: "Por defecto" },
   { value: "A-Z", label: "A-Z" },
 ];
 export const Price_Range = [
-  { value: "Low to High", label: "Low to High" },
-  { value: "High to Low", label: "High to Low" },
+  { value: "De menor a mayor", label: "De menor a mayor" },
+  { value: "De mayor a menor", label: "De mayor a menor" },
 ];
 export const Location = [
   { value: "Select", label: "Select" },
@@ -44,11 +44,11 @@ export const BathRoom = [
   { value: "3", label: "3" },
 ];
 export const Categories = [
-  { value: "Select", label: "Select" },
-  { value: "Categories", label: "Categories" },
-  { value: "Apartments", label: "Apartments" },
-  { value: "Condos", label: "Condos" },
-  { value: "Houses", label: "Houses" },
+  { value: "Seleccionar", label: "Seleccionar" },
+  { value: "Categorías", label: "Categorías" },
+  { value: "Apartamentos", label: "Apartamentos" },
+  { value: "Condominios", label: "Condominios" },
+  { value: "Casas", label: "Casas" },
 ];
 export const BedroomsNumber = [
   { value: "Select", label: "Select" },
@@ -108,9 +108,9 @@ export const Agency_Type = [
   { value: "Selling Agency", label: "Selling Agency" },
 ];
 export const Currency_Type = [
-  { value: "Select", label: "Select" },
-  { value: "Cash", label: "Cash" },
-  { value: "Bank Transfer", label: "Bank Transfer" },
+  { value: "Seleccionar", label: "Seleccionar" },
+  { value: "Efectivo", label: "Efectivo" },
+  { value: "Transferencia bancaria", label: "Transferencia bancaria" },
 ];
 export const Structure_Type = [
   { value: "Select", label: "Select" },
@@ -118,13 +118,13 @@ export const Structure_Type = [
   { value: "Rectangle", label: "Rectangle" },
 ];
 export const Balcony = [
-  { value: "Select", label: "Select" },
-  { value: "Yes", label: "Yes" },
+  { value: "Seleccionar", label: "Seleccionar" },
+  { value: "Sí", label: "Sí" },
   { value: "No", label: "No" },
 ];
 export const Curtains = [
-  { value: "Select", label: "Select" },
-  { value: "Yes", label: "Yes" },
+  { value: "Seleccionar", label: "Seleccionar" },
+  { value: "Sí", label: "Sí" },
   { value: "No", label: "No" },
 ];
 export const Embed_Video = [

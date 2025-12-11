@@ -148,6 +148,10 @@
       background: var(--white);
       border-radius: $border-radius-xxl;
       text-align: center;
+      min-height: 260px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     @include respond-below(lg) {

@@ -1,8 +1,6 @@
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
-import { useTranslation } from "react-i18next";
 
 const StatSection = () => {
-  const { t } = useTranslation();
   return (
     <>
       {/* start stat section */}
@@ -26,7 +24,7 @@ const StatSection = () => {
                 <h4 className="mb-1">
                   <span>50K</span>
                 </h4>
-                <p className="mb-0">{t("home.stat.listings")}</p>
+                <p className="mb-0">Listados</p>
               </div>
             </div>
             <div
@@ -45,7 +43,7 @@ const StatSection = () => {
                 <h4 className="mb-1">
                   <span>3000+</span>
                 </h4>
-                <p className="mb-0">{t("home.stat.agents")}</p>
+                <p className="mb-0">Agentes</p>
               </div>
             </div>
             <div
@@ -64,7 +62,7 @@ const StatSection = () => {
                 <h4 className="mb-1">
                   <span>2000+</span>
                 </h4>
-                <p className="mb-0">{t("home.stat.sales")}</p>
+                <p className="mb-0">Ventas</p>
               </div>
             </div>
             <div
@@ -83,7 +81,7 @@ const StatSection = () => {
                 <h4 className="mb-1">
                   <span>5000+</span>
                 </h4>
-                <p className="mb-0">{t("home.stat.users")} </p>
+                <p className="mb-0">Usuarios</p>
               </div>
             </div>
           </div>

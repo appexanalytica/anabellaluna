@@ -1,10 +1,8 @@
 import { Link } from "react-router";
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
 import { all_routes } from "../../../../routes/all_routes";
-import { useTranslation } from "react-i18next";
 
 const BuySection = () => {
-  const { t } = useTranslation();
   return (
     <>
       {/* start buy section */}
@@ -29,7 +27,7 @@ const BuySection = () => {
                 <div className="buy-property bg-white d-flex align-items-center justify-content-between">
                   <h6 className="mb-0">
                     <Link to={all_routes.buyPropertyGrid}>
-                      {t("home.buySection.buy")}
+                      Comprar
                     </Link>
                   </h6>
                   <Link
@@ -58,12 +56,12 @@ const BuySection = () => {
                 </div>
                 <div className="buy-property bg-white d-flex align-items-center justify-content-between">
                   <h6 className="mb-0">
-                    <Link to="rent-property-gridhtml">
-                      {t("home.buySection.sell")}
+                    <Link to={all_routes.addpropertybuy}>
+                      Vender
                     </Link>
                   </h6>
                   <Link
-                    to={all_routes.rentPropertyGrid}
+                    to={all_routes.addpropertybuy}
                     className="arrow sell-arrow d-flex align-items-center justify-content-center bg-warning rounded-circle"
                   >
                     <i className="fa-solid fa-arrow-right" />
@@ -89,7 +87,7 @@ const BuySection = () => {
                 <div className="buy-property bg-white d-flex align-items-center justify-content-between">
                   <h6 className="mb-0">
                     <Link to={all_routes.rentPropertyGrid}>
-                      {t("home.buySection.rent")}
+                      Alquilar
                     </Link>
                   </h6>
                   <Link

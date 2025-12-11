@@ -1,9 +1,7 @@
 import { Link } from "react-router";
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
-import { useTranslation } from "react-i18next";
 
 const AgentSection = () => {
-  const { t } = useTranslation();
   return (
     <>
       {/* start agent section */}
@@ -19,10 +17,10 @@ const AgentSection = () => {
               {/* start title */}
               <div className="section-heading mb-3 mb-lg-0">
                 <h2 className="mb-2 text-center text-lg-start  text-white ">
-                  {t("home.agent.title")}
+                  Conviértete en Agente
                 </h2>
                 <p className="mb-0 text-center text-lg-start text-light">
-                  {t("home.agent.subtitle")}
+                  Únete a nuestra red de agentes inmobiliarios de confianza y expande tu negocio con nosotros
                 </p>
               </div>
               {/* end title */}
@@ -34,7 +32,7 @@ const AgentSection = () => {
             >
               <div className="text-lg-end text-center ">
                 <Link to="" className="btn btn-xl btn-primary">
-                  {t("home.agent.cta")}
+                  Registrarse
                 </Link>
               </div>
             </div>

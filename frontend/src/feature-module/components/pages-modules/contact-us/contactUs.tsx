@@ -7,11 +7,8 @@ import { all_routes } from "../../../routes/all_routes";
 import { useState } from "react";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
-import { useTranslation } from "react-i18next";
 
 const ContactUs = () => {
-  const { t } = useTranslation();
-  console.log("Idioma actual:", t('language')); // Debug
   const [phone, setPhone] = useState<string | undefined>();
   return (
     <>
@@ -21,8 +18,8 @@ const ContactUs = () => {
       <div className="page-wrapper">
         {/* Start Breadscrumb */}
         <Breadcrumb
-          title={t("home.blog.title") || "Contactanos"}
-          paths={[{ label: t("home.blog.title") || "Contactanos", active: true }]}
+          title="Contactanos"
+          paths={[{ label: "Contactanos", active: true }]}
         />
         {/* End Breadscrumb */}
         <div className="contact-us-wrap-01">
@@ -32,23 +29,27 @@ const ContactUs = () => {
               <div className="col-lg-6">
                 <div className="card border-0">
                   <div className="card-body p-4">
-                    <h4 className="mb-2">{t("home.blog.title") || "Hablá con un miembro del equipo de ventas"}</h4>
+                    <h4 className="mb-2">Hablá con un miembro del equipo de ventas</h4>
                     <p className="mb-3">
-                      {t("home.blog.subtitle") || "Conectate con nuestro equipo experto de ventas para recibir guía personalizada, insights sobre propiedades y soporte adaptado a tus necesidades inmobiliarias."}
+                      Conectate con nuestro equipo experto de ventas para recibir
+                      guía personalizada, insights sobre propiedades y soporte
+                      adaptado a tus necesidades inmobiliarias.
                     </p>
-                    <p className="fw-semibold mb-0">{t("home.plan.perMonth") || "Llamada gratuita: 888 634-5891"}</p>
+                    <p className="fw-semibold mb-0">Llamada gratuita: 888 634-5891</p>
                   </div>
                   {/* end card body */}
                 </div>
                 {/* end card */}
                 <div className="card border-0 mb-0">
                   <div className="card-body p-4">
-                    <h4 className="mb-2">{t("home.plan.title") || "Soporte de Producto y Cuenta"}</h4>
+                    <h4 className="mb-2">Soporte de Producto y Cuenta</h4>
                     <p className="mb-3">
-                      {t("home.plan.subtitle") || "Recibí ayuda dedicada con tu cuenta, características y servicios a través de nuestro equipo experto de Soporte de Producto y Cuenta."}
+                      Recibí ayuda dedicada con tu cuenta, características y
+                      servicios a través de nuestro equipo experto de Soporte de
+                      Producto y Cuenta.
                     </p>
                     <Link to={all_routes.faq} className="btn btn-dark">
-                      {t("home.blog.exploreAll") || "Ir a FAQ"}
+                      Ir a FAQ
                     </Link>
                   </div>
                   {/* end card body */}
@@ -82,7 +83,7 @@ const ContactUs = () => {
                       <div className="d-flex align-items-center">
                         <span className="material-icons-outlined">mail</span>
                         <div>
-                          <h6 className="mb-2">{t("home.blog.categories.property") || "Dirección de Email"}</h6>
+                          <h6 className="mb-2">Dirección de Email</h6>
                           <p className="mb-0">info@example.com</p>
                           <p className="mb-0">corporate@example.com</p>
                         </div>
@@ -95,7 +96,7 @@ const ContactUs = () => {
                       <div className="d-flex align-items-center">
                         <span className="material-icons-outlined">call</span>
                         <div>
-                          <h6 className="mb-2">{t("home.blog.categories.villa") || "Número de Teléfono"}</h6>
+                          <h6 className="mb-2">Número de Teléfono</h6>
                           <p className="mb-0">+81649 48103</p>
                           <p className="mb-0">+78301 71940</p>
                         </div>
@@ -110,9 +111,9 @@ const ContactUs = () => {
                           location_on
                         </span>
                         <div>
-                          <h6 className="mb-2">{t("home.blog.categories.godown") || "Dirección"}</h6>
+                          <h6 className="mb-2">Dirección</h6>
                           <p className="mb-0">
-                            509 Rosewood Drive, San Francisco, California
+                            Av. Del Mar 1500, Pinamar, Buenos Aires, Argentina
                           </p>
                         </div>
                       </div>
@@ -137,7 +138,7 @@ const ContactUs = () => {
               {/* end col */}
               <div className="col-lg-6">
                 <div className="contact-us-item-02">
-                  <h2>{t("home.stat.users") || "Contactanos"}</h2>
+                  <h2>Contactanos</h2>
                   {/* start row */}
                   <div className="row">
                     <div className="col-md-12">
@@ -151,7 +152,7 @@ const ContactUs = () => {
                       <div className="mb-3">
                         <label className="form-label">Número de Teléfono</label>
                         <PhoneInput
-                          defaultCountry="US"
+                          defaultCountry="AR"
                           value={phone}
                           onChange={setPhone}
                         />
@@ -160,14 +161,14 @@ const ContactUs = () => {
                     {/* end col */}
                     <div className="col-md-6">
                       <div className="mb-3">
-                        <label className="form-label">{t("home.support.title") || "Email"}</label>
+                        <label className="form-label">Email</label>
                         <input type="text" className="form-control" />
                       </div>
                     </div>
                     {/* end col */}
                     <div className="col-md-6">
                       <div className="mb-3">
-                        <label className="form-label">{t("common.buttons.subscribe") || "País"}</label>
+                        <label className="form-label">País</label>
                         <CommonSelect
                           options={Country}
                           className="select"
@@ -178,18 +179,18 @@ const ContactUs = () => {
                     {/* end col */}
                     <div className="col-md-6">
                       <div className="mb-3">
-                        <label className="form-label">{t("home.blog.title") || "Asunto"}</label>
+                        <label className="form-label">Asunto</label>
                         <input type="text" className="form-control" />
                       </div>
                     </div>
                     {/* end col */}
                     <div className="col-md-12">
                       <div className="mb-3">
-                        <label className="form-label">{t("home.blog.subtitle") || "Descripción"}</label>
+                        <label className="form-label">Descripción</label>
                         <textarea
                           className="form-control"
                           rows={3}
-                          placeholder={t("home.plan.mostPopular") || "Comentarios"}
+                          placeholder="Comentarios"
                           defaultValue={""}
                         />
                       </div>
@@ -200,7 +201,7 @@ const ContactUs = () => {
                         to="#"
                         className="btn btn-lg btn-dark"
                       >
-                        {t("home.blog.exploreAll") || "Enviar Consulta"}
+                        Enviar Consulta
                       </Link>
                     </div>
                     {/* end col */}

@@ -1,10 +1,8 @@
 import { Link } from "react-router";
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
 import { all_routes } from "../../../../routes/all_routes";
-import { useTranslation } from "react-i18next";
 
 const BlogSection = () => {
-  const { t } = useTranslation();
   return (
     <>
       {/* start blog section */}
@@ -16,13 +14,13 @@ const BlogSection = () => {
             data-aos="fade-down"
             data-aos-duration={1000}
           >
-            <h2 className="mb-2 text-center">{t("home.blog.title")}</h2>
+            <h2 className="mb-2 text-center">Últimos Artículos</h2>
             <div className="sec-line">
               <span className="sec-line1" />
               <span className="sec-line2" />
             </div>
             <p className="mb-0 text-center">
-              {t("home.blog.subtitle")}
+              Descubre nuestras notas destacadas sobre propiedades premium en venta y alquiler.
             </p>
           </div>
           {/* end title */}
@@ -46,7 +44,7 @@ const BlogSection = () => {
                 <div className="blog-content">
                   <div className="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
                     <span className="badge badge-sm bg-secondary fw-semibold">
-                      {t("home.blog.categories.property")}
+                      Propiedad
                     </span>
                     <div className="d-flex align-items-center author-details">
                       <div className="d-flex align-items-center me-3">
@@ -59,22 +57,30 @@ const BlogSection = () => {
                         </Link>
                         <Link to={all_routes.agentDetails}>Susan Culli</Link>
                       </div>
-                      <span className="d-inline-flex align-items-center">
-                        <i className="material-icons-outlined me-1">events</i>10
-                        Apr 2025
-                      </span>
+                      <div className="d-flex align-items-center">
+                        <i className="feather-calendar" />
+                        <span>12 Ene 2025</span>
+                      </div>
                     </div>
                   </div>
                   <div>
                     <h5 className="mb-1">
                       <Link to={all_routes.blogDetails}>
-                        Location is Everything
+                        La ubicación lo es todo
                       </Link>
                     </h5>
                     <p className="mb-0">
-                      The value of a property largely depends on where it’s
-                      located.
+                      El valor de una propiedad depende en gran parte de dónde
+                      está situada.
                     </p>
+                  </div>
+                  <div className="blog-footer d-flex align-items-center justify-content-between">
+                    <Link to={all_routes.blogDetails} className="btn btn-outline-dark">
+                      Ver todo
+                    </Link>
+                    <Link to={all_routes.blogDetails} className="btn btn-light">
+                      <i className="feather-arrow-up-right" />
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -98,7 +104,7 @@ const BlogSection = () => {
                 <div className="blog-content">
                   <div className="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
                     <span className="badge badge-sm bg-secondary fw-semibold">
-                      {t("home.blog.categories.villa")}
+                      Villa
                     </span>
                     <div className="d-flex align-items-center author-details">
                       <div className="d-flex align-items-center me-3">
@@ -120,12 +126,12 @@ const BlogSection = () => {
                   <div>
                     <h5 className="mb-1">
                       <Link to={all_routes.blogDetails}>
-                        Real Estate is a Investment
+                        El real estate es una inversión
                       </Link>
                     </h5>
                     <p className="mb-0">
-                      Unlike stocks, real estate usually grows in value over
-                      time.
+                      A diferencia de otras opciones, los inmuebles suelen
+                      aumentar su valor con el tiempo.
                     </p>
                   </div>
                 </div>
@@ -149,9 +155,7 @@ const BlogSection = () => {
                 </div>
                 <div className="blog-content">
                   <div className="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
-                    <span className="badge badge-sm bg-secondary fw-semibold">
-                      {t("home.blog.categories.godown")}
-                    </span>
+                    <h4 className="mb-2">La ubicación lo es todo</h4>
                     <div className="d-flex align-items-center author-details">
                       <div className="d-flex align-items-center me-3">
                         <Link to={all_routes.agentDetails}>
@@ -172,12 +176,12 @@ const BlogSection = () => {
                   <div>
                     <h5 className="mb-1">
                       <Link to={all_routes.blogDetails}>
-                        Market Trends Matter
+                        Las tendencias del mercado importan
                       </Link>
                     </h5>
                     <p className="mb-0">
-                      Staying informed about housing market trends helps you
-                      make smarter.
+                      Mantenerte informado sobre el mercado inmobiliario te ayuda
+                      a tomar mejores decisiones.
                     </p>
                   </div>
                 </div>
@@ -190,7 +194,7 @@ const BlogSection = () => {
               to={all_routes.blogGrid}
               className="btn btn-lg btn-dark d-flex align-items-center gap-1"
             >
-              {t("home.blog.exploreAll")}{" "}
+              Ver todos
               <i className="material-icons-outlined">arrow_forward</i>
             </Link>
           </div>

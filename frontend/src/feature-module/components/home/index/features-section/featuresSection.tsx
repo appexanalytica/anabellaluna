@@ -5,14 +5,10 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
 
 const FeaturesSection = () => {
-  const { t } = useTranslation();
-  const bedroomLabel = (count: number) =>
-    t(count === 1 ? "common.features.bedroom_one" : "common.features.bedroom_other", { count });
-  const bathroomLabel = (count: number) =>
-    t(count === 1 ? "common.features.bathroom_one" : "common.features.bathroom_other", { count });
+  const bedroomLabel = (count: number) => `${count} dormitorio${count === 1 ? "" : "s"}`;
+  const bathroomLabel = (count: number) => `${count} baño${count === 1 ? "" : "s"}`;
   const features_slider = {
     dots: false,
     infinite: true,
@@ -70,12 +66,12 @@ const FeaturesSection = () => {
             data-aos="fade-down"
             data-aos-duration={1000}
           >
-            <h2 className="mb-2 text-center">{t("home.featuresSection.title")}</h2>
+            <h2 className="mb-2 text-center">Propiedades destacadas en venta</h2>
             <div className="sec-line">
               <span className="sec-line1" />
               <span className="sec-line2" />
             </div>
-            <p className="mb-0 text-center">{t("home.featuresSection.subtitle")}</p>
+            <p className="mb-0 text-center">Selección cuidada de lugares de calidad</p>
           </div>
           {/* end title */}
           <Slider
@@ -103,14 +99,12 @@ const FeaturesSection = () => {
                       <div className="d-flex align-items-center justify-content-between position-absolute top-0 start-0 end-0 p-3 z-1">
                         <div className="d-flex align-items-center gap-2">
                           <div className="badge badge-sm bg-danger d-flex align-items-center">
-                            <i className="material-icons-outlined">
-                              offline_bolt
-                            </i>
-                            {t("common.badges.new")}
+                            <i className="material-icons-outlined">offline_bolt</i>
+                            Nuevo
                           </div>
                           <div className="badge badge-sm bg-orange d-flex align-items-center">
                             <i className="material-icons-outlined">loyalty</i>
-                            {t("common.badges.featured")}
+                            Destacado
                           </div>
                         </div>
                         <Link
@@ -159,23 +153,17 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined text-warning">
                             star
                           </i>
-                          <span className="ms-1 fs-14">
-                            {t("common.reviewSummary", { rating: "5.0", total: "20" })}
-                          </span>
+                          <span className="ms-1 fs-14">5.0 (20 reseñas)</span>
                         </div>
                       </div>
                       <div className="d-flex align-items-center justify-content-between mb-3">
                         <div>
                           <h6 className="title mb-1">
-                            <Link to={all_routes.buyDetails}>
-                              {t("home.featuresSection.property1.title")}
-                            </Link>
+                            <Link to={all_routes.buyDetails}>Serenity Condo Suite</Link>
                           </h6>
                           <p className="d-flex align-items-center fs-14 mb-0">
-                            <i className="material-icons-outlined me-1 ms-0">
-                              location_on
-                            </i>
-                            {t("home.featuresSection.property1.location")}
+                            <i className="material-icons-outlined me-1 ms-0">location_on</i>
+                            17, Grove Towers, New York, EE.UU.
                           </p>
                         </div>
                       </div>
@@ -193,24 +181,18 @@ const FeaturesSection = () => {
                           {bathroomLabel(4)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
-                          <i className="material-icons-outlined bg-white text-secondary">
-                            straighten
-                          </i>
-                          {t("common.features.squareFeet", { value: 350 })}
+                          <i className="material-icons-outlined bg-white text-secondary">straighten</i>
+                          350 m²
                         </li>
                       </ul>
                       <div className="d-flex align-items-center justify-content-between flex-wrap gap-1">
                         <p className="fs-14 fw-medium text-dark mb-0">
-                          {t("common.labels.listedOn")} :
-                          <span className="fw-medium text-body">
-                            {t("home.featuresSection.property1.listedOn")}
-                          </span>
+                          Publicado el :
+                          <span className="fw-medium text-body">16 Ene 2023</span>
                         </p>
                         <p className="fs-14 fw-medium text-dark mb-0">
-                          {t("common.labels.category")} :
-                          <span className="fw-medium text-body">
-                            {t("home.featuresSection.property1.category")}
-                          </span>
+                          Categoría :
+                          <span className="fw-medium text-body">Departamento</span>
                         </p>
                       </div>
                     </div>
@@ -281,23 +263,17 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined text-warning">
                             star
                           </i>
-                          <span className="ms-1 fs-14">
-                            {t("common.reviewSummary", { rating: "4.8", total: "26" })}
-                          </span>
+                          <span className="ms-1 fs-14">4.8 (26 reseñas)</span>
                         </div>
                       </div>
                       <div className="d-flex align-items-center justify-content-between mb-3">
                         <div>
                           <h6 className="title mb-1">
-                            <Link to={all_routes.buyDetails}>
-                              {t("home.featuresSection.property2.title")}
-                            </Link>
+                            <Link to={all_routes.buyDetails}>Palm Cove Bungalows</Link>
                           </h6>
                           <p className="d-flex align-items-center fs-14 mb-0">
-                            <i className="material-icons-outlined me-1 ms-0">
-                              location_on
-                            </i>
-                            {t("home.featuresSection.property2.location")}
+                            <i className="material-icons-outlined me-1 ms-0">location_on</i>
+                            42, Pine Residency, Miami, EE.UU.
                           </p>
                         </div>
                       </div>
@@ -315,24 +291,18 @@ const FeaturesSection = () => {
                           {bathroomLabel(3)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
-                          <i className="material-icons-outlined bg-white text-secondary">
-                            straighten
-                          </i>
-                          {t("common.features.squareFeet", { value: 700 })}
+                          <i className="material-icons-outlined bg-white text-secondary">straighten</i>
+                          700 m²
                         </li>
                       </ul>
                       <div className="d-flex align-items-center justify-content-between flex-wrap gap-1">
                         <p className="fs-14 fw-medium text-dark mb-0">
-                          {t("common.labels.listedOn")} :
-                          <span className="fw-medium text-body">
-                            {t("home.featuresSection.property2.listedOn")}
-                          </span>
+                          Publicado el :
+                          <span className="fw-medium text-body">16 Mar 2025</span>
                         </p>
                         <p className="fs-14 fw-medium text-dark mb-0">
-                          {t("common.labels.category")} :
-                          <span className="fw-medium text-body">
-                            {t("home.featuresSection.property2.category")}
-                          </span>
+                          Categoría :
+                          <span className="fw-medium text-body">Bungalow</span>
                         </p>
                       </div>
                     </div>
@@ -406,23 +376,17 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined text-warning">
                             star
                           </i>
-                          <span className="ms-1 fs-14">
-                            {t("common.reviewSummary", { rating: "4.6", total: "36" })}
-                          </span>
+                          <span className="ms-1 fs-14">4.6 (36 reseñas)</span>
                         </div>
                       </div>
                       <div className="d-flex align-items-center justify-content-between mb-3">
                         <div>
                           <h6 className="title mb-1">
-                            <Link to={all_routes.buyDetails}>
-                              {t("home.featuresSection.property3.title")}
-                            </Link>
+                            <Link to={all_routes.buyDetails}>Loyal Apartment</Link>
                           </h6>
                           <p className="d-flex align-items-center fs-14 mb-0">
-                            <i className="material-icons-outlined me-1 ms-0">
-                              location_on
-                            </i>
-                            {t("home.featuresSection.property3.location")}
+                            <i className="material-icons-outlined me-1 ms-0">location_on</i>
+                            25, Willow Crest Apartment, EE.UU.
                           </p>
                         </div>
                       </div>
@@ -440,24 +404,18 @@ const FeaturesSection = () => {
                           {bathroomLabel(2)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
-                          <i className="material-icons-outlined bg-white text-secondary">
-                            straighten
-                          </i>
-                          {t("common.features.squareFeet", { value: 350 })}
+                          <i className="material-icons-outlined bg-white text-secondary">straighten</i>
+                          350 m²
                         </li>
                       </ul>
                       <div className="d-flex align-items-center justify-content-between flex-wrap gap-1">
                         <p className="fs-14 fw-medium text-dark mb-0">
-                          {t("common.labels.listedOn")} :
-                          <span className="fw-medium text-body">
-                            {t("home.featuresSection.property3.listedOn")}
-                          </span>
+                          Publicado el :
+                          <span className="fw-medium text-body">02 May 2025</span>
                         </p>
                         <p className="fs-14 fw-medium text-dark mb-0">
-                          {t("common.labels.category")} :
-                          <span className="fw-medium text-body">
-                            {t("home.featuresSection.property3.category")}
-                          </span>
+                          Categoría :
+                          <span className="fw-medium text-body">Departamento</span>
                         </p>
                       </div>
                     </div>
@@ -528,32 +486,24 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined text-warning">
                             star
                           </i>
-                          <span className="ms-1 fs-14">
-                            {t("common.reviewSummary", { rating: "4.9", total: "19" })}
-                          </span>
+                          <span className="ms-1 fs-14">4.9 (19 reseñas)</span>
                         </div>
                       </div>
                       <div className="d-flex align-items-center justify-content-between mb-3">
                         <div>
                           <h6 className="title mb-1">
-                            <Link to={all_routes.buyDetails}>
-                              {t("home.featuresSection.property4.title")}
-                            </Link>
+                            <Link to={all_routes.buyDetails}>Blue Horizon Villa</Link>
                           </h6>
                           <p className="d-flex align-items-center fs-14 mb-0">
-                            <i className="material-icons-outlined me-1 ms-0">
-                              location_on
-                            </i>
-                            {t("home.featuresSection.property4.location")}
+                            <i className="material-icons-outlined me-1 ms-0">location_on</i>
+                            76, Golden Oaks, Dallas, EE.UU.
                           </p>
                         </div>
                       </div>
                       <ul className="d-flex buy-grid-details d-flex mb-3 bg-light rounded p-3 justify-content-between align-items-center flex-wrap gap-1">
                         <li className="d-flex align-items-center gap-1">
-                          <i className="material-icons-outlined bg-white text-secondary">
-                            bed
-                          </i>
-                          {t("common.features.bedroom_other", { count: 2 })}
+                          <i className="material-icons-outlined bg-white text-secondary">bed</i>
+                          {bedroomLabel(2)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
                           <i className="material-icons-outlined bg-white text-secondary">
@@ -562,24 +512,18 @@ const FeaturesSection = () => {
                           {bathroomLabel(1)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
-                          <i className="material-icons-outlined bg-white text-secondary">
-                            straighten
-                          </i>
-                          {t("common.features.squareFeet", { value: 400 })}
+                          <i className="material-icons-outlined bg-white text-secondary">straighten</i>
+                          400 m²
                         </li>
                       </ul>
                       <div className="d-flex align-items-center justify-content-between flex-wrap gap-1">
                         <p className="fs-14 fw-medium text-dark mb-0">
-                          {t("common.labels.listedOn")} :
-                          <span className="fw-medium text-body">
-                            {t("home.featuresSection.property4.listedOn")}
-                          </span>
+                          Publicado el :
+                          <span className="fw-medium text-body">08 Mar 2025</span>
                         </p>
                         <p className="fs-14 fw-medium text-dark mb-0">
-                          {t("common.labels.category")} :
-                          <span className="fw-medium text-body">
-                            {t("home.featuresSection.property4.category")}
-                          </span>
+                          Categoría :
+                          <span className="fw-medium text-body">Villa</span>
                         </p>
                       </div>
                     </div>
@@ -610,7 +554,7 @@ const FeaturesSection = () => {
                         <div className="d-flex align-items-center gap-2">
                           <span className="badge badge-sm bg-orange d-flex align-items-center">
                             <i className="material-icons-outlined">loyalty</i>
-                            {t("common.badges.featured")}
+                            Destacado
                           </span>
                         </div>
                         <Link
@@ -659,23 +603,17 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined text-warning">
                             star
                           </i>
-                          <span className="ms-1 fs-14">
-                            {t("common.reviewSummary", { rating: "4.9", total: "25" })}
-                          </span>
+                          <span className="ms-1 fs-14">4.9 (25 reseñas)</span>
                         </div>
                       </div>
                       <div className="d-flex align-items-center justify-content-between mb-3">
                         <div>
                           <h6 className="title mb-1">
-                            <Link to={all_routes.buyDetails}>
-                              {t("home.featuresSection.property5.title")}
-                            </Link>
+                            <Link to={all_routes.buyDetails}>Grand Villa House</Link>
                           </h6>
                           <p className="d-flex align-items-center fs-14 mb-0">
-                            <i className="material-icons-outlined me-1 ms-0">
-                              location_on
-                            </i>
-                            {t("home.featuresSection.property5.location")}
+                            <i className="material-icons-outlined me-1 ms-0">location_on</i>
+                            10, Oak Ridge Villa, EE.UU.
                           </p>
                         </div>
                       </div>
@@ -693,24 +631,18 @@ const FeaturesSection = () => {
                           {bathroomLabel(3)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
-                          <i className="material-icons-outlined bg-white text-secondary">
-                            straighten
-                          </i>
-                          {t("common.features.squareFeet", { value: 520 })}
+                          <i className="material-icons-outlined bg-white text-secondary">straighten</i>
+                          520 m²
                         </li>
                       </ul>
                       <div className="d-flex align-items-center justify-content-between flex-wrap gap-1">
                         <p className="fs-14 fw-medium text-dark mb-0">
-                          {t("common.labels.listedOn")} :
-                          <span className="fw-medium text-body">
-                            {t("home.featuresSection.property5.listedOn")}
-                          </span>
+                          Publicado el :
+                          <span className="fw-medium text-body">28 Abr 2025</span>
                         </p>
                         <p className="fs-14 fw-medium text-dark mb-0">
-                          {t("common.labels.category")} :
-                          <span className="fw-medium text-body">
-                            {t("home.featuresSection.property5.category")}
-                          </span>
+                          Categoría :
+                          <span className="fw-medium text-body">Villa</span>
                         </p>
                       </div>
                     </div>
@@ -781,9 +713,7 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined text-warning">
                             star
                           </i>
-                          <span className="ms-1 fs-14">
-                          {t("common.reviewSummary", { rating: "4.7", total: "45" })}
-                        </span>
+                          <span className="ms-1 fs-14">4.7 (45 reseñas)</span>
                         </div>
                       </div>
                       <div className="d-flex align-items-center justify-content-between mb-3">
@@ -815,24 +745,18 @@ const FeaturesSection = () => {
                           {bathroomLabel(2)}
                         </li>
                         <li className="d-flex align-items-center gap-1">
-                          <i className="material-icons-outlined bg-white text-secondary">
-                            straighten
-                          </i>
-                          {t("common.features.squareFeet", { value: 550 })}
+                          <i className="material-icons-outlined bg-white text-secondary">straighten</i>
+                          550 m²
                         </li>
                       </ul>
                       <div className="d-flex align-items-center justify-content-between flex-wrap gap-1">
                         <p className="fs-14 fw-medium text-dark mb-0">
-                          {t("common.labels.listedOn")} :
-                          <span className="fw-medium text-body">
-                            25 Feb 2025
-                          </span>
+                          Publicado el :
+                          <span className="fw-medium text-body">25 Feb 2025</span>
                         </p>
                         <p className="fs-14 fw-medium text-dark mb-0">
-                          {t("common.labels.category")} :
-                          <span className="fw-medium text-body">
-                            {t("common.badges.lodge")}
-                          </span>
+                          Categoría :
+                          <span className="fw-medium text-body">Lodge</span>
                         </p>
                       </div>
                     </div>
@@ -906,9 +830,7 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined text-warning">
                             star
                           </i>
-                          <span className="ms-1 fs-14">
-                          {t("common.reviewSummary", { rating: "4.4", total: "79" })}
-                        </span>
+                          <span className="ms-1 fs-14">4.4 (79 reseñas)</span>
                         </div>
                       </div>
                       <div className="d-flex align-items-center justify-content-between mb-3">
@@ -943,18 +865,18 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             straighten
                           </i>
-                          {t("common.features.squareFeet", { value: 480 })}
+                          480 m²
                         </li>
                       </ul>
                       <div className="d-flex align-items-center justify-content-between flex-wrap gap-1">
                         <p className="fs-14 fw-medium text-dark mb-0">
-                          Listed on :
+                          Publicado el :
                           <span className="fw-medium text-body">
-                            14 Apr 2025
+                            14 Abr 2025
                           </span>
                         </p>
                         <p className="fs-14 fw-medium text-dark mb-0">
-                          {t("common.labels.category")} :
+                          Categoría :
                           <span className="fw-medium text-body"> Suite </span>
                         </p>
                       </div>
@@ -1026,9 +948,7 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined text-warning">
                             star
                           </i>
-                          <span className="ms-1 fs-14">
-                          {t("common.reviewSummary", { rating: "4.6", total: "47" })}
-                        </span>
+                          <span className="ms-1 fs-14">4.6 (47 reseñas)</span>
                         </div>
                       </div>
                       <div className="d-flex align-items-center justify-content-between mb-3">
@@ -1063,18 +983,18 @@ const FeaturesSection = () => {
                           <i className="material-icons-outlined bg-white text-secondary">
                             straighten
                           </i>
-                          {t("common.features.squareFeet", { value: 354 })}
+                          354 m²
                         </li>
                       </ul>
                       <div className="d-flex align-items-center justify-content-between flex-wrap gap-1">
                         <p className="fs-14 fw-medium text-dark mb-0">
-                          {t("common.labels.listedOn")} :
+                          Publicado el :
                           <span className="fw-medium text-body">
-                            06 Apr 2025
+                            06 Abr 2025
                           </span>
                         </p>
                         <p className="fs-14 fw-medium text-dark mb-0">
-                          {t("common.labels.category")} :
+                          Categoría :
                           <span className="fw-medium text-body"> Villa </span>
                         </p>
                       </div>
@@ -1090,7 +1010,7 @@ const FeaturesSection = () => {
               to={all_routes.buyPropertyGrid}
               className="btn btn-lg btn-dark d-flex align-items-center gap-1"
             >
-              {t("home.blog.exploreAll")}
+              Ver todas
               <i className="material-icons-outlined">arrow_forward</i>
             </Link>
           </div>

@@ -1,8 +1,6 @@
 import { Link } from "react-router";
-import { useTranslation } from "react-i18next";
 
 const SupportSection = () => {
-  const { t } = useTranslation();
   return (
     <>
       {/* start support section */}
@@ -18,10 +16,10 @@ const SupportSection = () => {
               {/* start title */}
               <div className="section-heading mb-3 mb-lg-0">
                 <h2 className="mb-2 text-lg-start text-center">
-                  {t("home.support.title")}
+                  Noticias y tips de Anabella Luna
                 </h2>
                 <p className="mb-0 text-lg-start text-center">
-                  {t("home.support.subtitle")}
+                  Recibe novedades exclusivas de nuestra inmobiliaria Anabella Luna directamente en tu bandeja.
                 </p>
               </div>
               {/* end title */}
@@ -38,13 +36,13 @@ const SupportSection = () => {
                     <input
                       type="text"
                       className="form-control bg-white w-100"
-                      placeholder={t("common.placeholders.email")}
+                      placeholder="Ingresa tu correo electrónico"
                     />
                   </div>
                   <i className="material-icons-outlined text-dark z-2">email</i>
                 </div>
                 <Link to="#" className="btn btn-lg btn-primary">
-                  {t("common.buttons.subscribe")}
+                  Suscribirme
                 </Link>
               </div>
             </div>

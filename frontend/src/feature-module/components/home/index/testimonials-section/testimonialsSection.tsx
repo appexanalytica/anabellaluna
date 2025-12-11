@@ -49,13 +49,13 @@ const TestimonialsSection = () => {
             data-aos="fade-down"
             data-aos-duration={1000}
           >
-            <h2 className="mb-2 text-center text-white">Testimonials</h2>
+            <h2 className="mb-2 text-center text-white">Testimonios</h2>
             <div className="sec-line">
               <span className="sec-line1" />
               <span className="sec-line2" />
             </div>
             <p className="mb-0 text-center text-light">
-              What our happy client says
+              Lo que dicen nuestros clientes sobre el excelente servicio y la calidad humana de Anabella Luna.
             </p>
           </div>
           {/* end title */}
@@ -78,8 +78,10 @@ const TestimonialsSection = () => {
                   />
                 </div>
                 <p className="mb-2">
-                  Booking our dream home was incredibly easy with Dreams Estate
-                  The interface was user-friendly
+                  
+Encontrar nuestra casa soñada con Anabella Luna fue una experiencia inmejorable.
+El equipo nos acompañó con una calidez humana excepcional y un servicio atento en cada detalle.
+
                 </p>
                 <h6 className="mb-2"> Lily Brooks </h6>
                 <div className="d-flex align-items-center justify-content-center">
@@ -106,8 +108,10 @@ const TestimonialsSection = () => {
                   />
                 </div>
                 <p className="mb-2">
-                  Dreams Estate made home booking a breeze. Super easy and
-                  stress-free! listing Portal of all time
+                  
+Gracias a Anabella Luna, pudimos concretar la compra de nuestra propiedad sin estrés.
+La dedicación, transparencia y calidad humana del equipo hicieron que todo el proceso fuera simple y seguro.
+
                 </p>
                 <h6 className="mb-2">Daniel Cooper </h6>
                 <div className="d-flex align-items-center justify-content-center">
@@ -134,8 +138,10 @@ const TestimonialsSection = () => {
                   />
                 </div>
                 <p className="mb-2">
-                  From browsing to booking, everything felt effortless great
-                  design, clear information.
+                  
+Desde la primera visita hasta la firma final, el acompañamiento de Anabella Luna fue impecable.
+Se nota el compromiso humano en cada asesoría y en la búsqueda de la mejor opción para nuestra familia.
+
                 </p>
                 <h6 className="mb-2"> Karen Maria </h6>
                 <div className="d-flex align-items-center justify-content-center">
@@ -162,8 +168,10 @@ const TestimonialsSection = () => {
                   />
                 </div>
                 <p className="mb-2">
-                  Inding the perfect home was a breeze. The platform was smooth,
-                  intuitive, and made experience.
+                  
+Con Anabella Luna sentimos que no éramos solo clientes, sino personas realmente escuchadas.
+Su trato cercano y humano, sumado a un servicio profesional, marcaron toda la diferencia.
+
                 </p>
                 <h6 className="mb-2"> John Carter </h6>
                 <div className="d-flex align-items-center justify-content-center">
@@ -190,8 +198,8 @@ const TestimonialsSection = () => {
                   />
                 </div>
                 <p className="mb-2">
-                  Dreams Estate made home booking a breeze. Super easy and
-                  stress-free! listing Portal of all time
+                  Dreams Estate hizo que reservar una casa fuera pan comido. ¡Súper fácil y
+                  sin estrés! El mejor portal de listados de todos los tiempos
                 </p>
                 <h6 className="mb-2"> Daniel Cooper </h6>
                 <div className="d-flex align-items-center justify-content-center">

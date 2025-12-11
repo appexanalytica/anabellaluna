@@ -198,21 +198,11 @@ const Footer = () => {
                 <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
                   <div className="copyright">
                     <p className="copy-right">
-                      Copyright &copy; {year}. All Rights Reserved, Dreams
-                      Estate
+                      Copyright &copy; {year}. Todos los derechos reservados, Anabella Luna
                     </p>
                   </div>
                   <div className="company-logo">
-                    <p>
-                      Product of{" "}
-                      <Link
-                        to="https://dreamstechnologies.com/"
-                        className="link-primary"
-                        target="_blank"
-                      >
-                        Dreams Technologies
-                      </Link>
-                    </p>
+                    <p>Un producto de Anabella Luna</p>
                   </div>
                 </div>
               </div>
@@ -362,7 +352,7 @@ const Footer = () => {
               <div className="container">
                 <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
                   <p className="copy-right">
-                    Copyright © . All Rights Reserved, Dreams Estate
+                    Copyright © {year}. Todos los derechos reservados, Anabella Luna
                   </p>
                   <div className="policy-link">
                     <Link to={all_routes.privacyPolicy}>Política de Privacidad</Link>
@@ -595,7 +585,7 @@ const Footer = () => {
             <div className="footer-bottom">
               <div className="text-center">
                 <p className="copy-right">
-                  Copyright &copy; {year}. All Rights Reserved, Dreams Estate
+                  Copyright &copy; {year}. Todos los derechos reservados, Anabella Luna
                 </p>
               </div>
             </div>

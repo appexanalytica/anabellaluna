@@ -21,10 +21,10 @@ export default function DynamicTitle() {
     (route) => route.path === location.pathname
   );
 
-  const baseTitle = "Dreams Estate";
+  const baseTitle = "Anabella Luna";
 
   if (currentRoute && currentRoute.meta_title) {
-    // Check if meta_title already includes "Dreams Estate"
+    // Check if meta_title already includes baseTitle
     if (currentRoute.meta_title.includes(baseTitle)) {
       document.title = currentRoute.meta_title;
     } else {

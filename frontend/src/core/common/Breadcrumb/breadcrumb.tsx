@@ -42,7 +42,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ title, paths }) => {
                                     <span>
                                         <i className="material-icons-outlined me-1">home</i>
                                     </span>
-                                    Home
+                                    Inicio
                                 </Link>
                             </li>
                             {paths.map((item, index) => (

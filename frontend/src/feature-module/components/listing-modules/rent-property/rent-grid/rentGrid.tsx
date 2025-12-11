@@ -23,8 +23,8 @@ const RentGrid = () => {
       <div className="page-wrapper">
         {/* Start Breadscrumb */}
         <Breadcrumb
-          title="Rent Grid"
-          paths={[{ label: "Rent Grid", active: true }]}
+          title="Alquilar en cuadrícula"
+          paths={[{ label: "Alquilar en cuadrícula", active: true }]}
         />
         {/* End Breadscrumb */}
         {/* Start Content */}
@@ -36,16 +36,16 @@ const RentGrid = () => {
                 <div className="row align-items-center">
                   <div className="col-lg-3">
                     <p className="mb-4 mb-lg-0 mb-md-3 text-lg-start text-md-start  text-center">
-                      Showing result <span className="result-value"> 06</span>
-                      of
-                      <span className="result-value"> 125</span>
+                      Mostrando <span className="result-value"> 06</span>
+                      de
+                      <span className="result-value"> 125</span> resultados
                     </p>
                   </div>
                   {/* end col */}
                   <div className="col-lg-9">
                     <div className="d-flex align-items-center gap-3 flex-wrap justify-content-lg-end flex-lg-row flex-md-row flex-column">
                       <div className="result-list d-flex d-block flex-lg-row flex-md-row flex-column align-items-center gap-2">
-                        <h5>Sort By</h5>
+                        <h5>Ordenar por</h5>
                         <div className="result-select">
                           <CommonSelect
                             options={Sort_By}
@@ -55,7 +55,7 @@ const RentGrid = () => {
                         </div>
                       </div>
                       <div className="result-list d-flex flex-lg-row flex-md-row flex-column align-items-center gap-2">
-                        <h5>Price Range</h5>
+                        <h5>Rango de precios</h5>
                         <div className="result-select">
                           <CommonSelect
                             options={Price_Range}

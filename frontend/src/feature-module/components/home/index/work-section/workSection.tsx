@@ -1,8 +1,6 @@
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
-import { useTranslation } from "react-i18next";
 
 const WorkSection = () => {
-  const { t } = useTranslation();
   return (
     <>
       {/* start how it works section */}
@@ -14,12 +12,12 @@ const WorkSection = () => {
             data-aos="fade-down"
             data-aos-duration={1000}
           >
-            <h2 className="mb-2 text-center">{t("home.work.title")}</h2>
+            <h2 className="mb-2 text-center">Cómo Funciona</h2>
             <div className="sec-line">
               <span className="sec-line1" />
               <span className="sec-line2" />
             </div>
-            <p className="mb-0 text-center">{t("home.work.subtitle")}</p>
+            <p className="mb-0 text-center">Encuentra tu propiedad ideal en tres simples pasos</p>
           </div>
           {/* end title */}
           {/* start row */}
@@ -41,8 +39,8 @@ const WorkSection = () => {
                     alt="icon"
                   />
                 </div>
-                <h5 className="mb-3">{t("home.work.steps.search.title")}</h5>
-                <p className="mb-0">{t("home.work.steps.search.description")}</p>
+                <h5 className="mb-3">Buscar Propiedad</h5>
+                <p className="mb-0">Explora nuestra amplia selección de propiedades disponibles con filtros avanzados</p>
               </div>
             </div>
             {/* end col */}
@@ -63,8 +61,8 @@ const WorkSection = () => {
                     alt="icon"
                   />
                 </div>
-                <h5 className="mb-3">{t("home.work.steps.select.title")}</h5>
-                <p className="mb-0">{t("home.work.steps.select.description")}</p>
+                <h5 className="mb-3">Seleccionar Favoritos</h5>
+                <p className="mb-0">Guarda tus propiedades preferidas y compara características para tomar la mejor decisión</p>
               </div>
             </div>
             {/* end col */}
@@ -85,8 +83,8 @@ const WorkSection = () => {
                     alt="icon"
                   />
                 </div>
-                <h5 className="mb-3">{t("home.work.steps.book.title")}</h5>
-                <p className="mb-0">{t("home.work.steps.book.description")}</p>
+                <h5 className="mb-3">Reservar Visita</h5>
+                <p className="mb-0">Agenda una visita con nuestros agentes y descubre tu futuro hogar</p>
               </div>
             </div>
             {/* end col */}

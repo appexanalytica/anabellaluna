@@ -12,13 +12,13 @@ const FaqSection = () => {
             data-aos="fade-down"
             data-aos-duration={1000}
           >
-            <h2 className="mb-2 text-center">Frequently Asked Questions</h2>
+            <h2 className="mb-2 text-center">Preguntas frecuentes</h2>
             <div className="sec-line">
               <span className="sec-line1" />
               <span className="sec-line2" />
             </div>
             <p className="mb-0 text-center">
-              Ready to buy your dream home? find it here.
+              ¿Listo para comprar tu casa ideal? Encontrala acá.
             </p>
           </div>
           {/* end title */}
@@ -39,7 +39,7 @@ const FaqSection = () => {
               <div className="card mb-0">
                 <div className="card-body">
                   <div>
-                    <h5 className="mb-4"> General FAQ’s </h5>
+                    <h5 className="mb-4"> Preguntas generales </h5>
                     <div
                       className="accordion accordions-items-seperate faq-accordion m-0"
                       id="faq-accordion"
@@ -58,7 +58,7 @@ const FaqSection = () => {
                             data-bs-target="#accordion-1"
                             aria-expanded="true"
                           >
-                            What is real estate?
+                            ¿Qué es el real estate?
                           </button>
                         </div>
                         <div
@@ -68,8 +68,9 @@ const FaqSection = () => {
                         >
                           <div className="accordion-body">
                             <p className="mb-0">
-                              Real estate refers to land and any permanent
-                              structures on it, such as homes or buildings.
+                              El real estate se refiere a la tierra y a todas las
+                              construcciones permanentes sobre ella, como casas
+                              o edificios.
                             </p>
                           </div>
                         </div>
@@ -88,8 +89,7 @@ const FaqSection = () => {
                             data-bs-target="#accordion-2"
                             aria-expanded="false"
                           >
-                            What types of properties are included in real
-                            estate?
+                            ¿Qué tipos de propiedades incluye el real estate?
                           </button>
                         </div>
                         <div
@@ -99,8 +99,9 @@ const FaqSection = () => {
                         >
                           <div className="accordion-body">
                             <p className="mb-0">
-                              Real estate includes residential, commercial,
-                              industrial, land, and special-purpose properties.
+                              Incluye propiedades residenciales, comerciales,
+                              industriales, terrenos y propiedades de uso
+                              especial.
                             </p>
                           </div>
                         </div>
@@ -119,7 +120,7 @@ const FaqSection = () => {
                             data-bs-target="#accordion-3"
                             aria-expanded="false"
                           >
-                            What is the role of a real estate agent?
+                            ¿Cuál es el rol de un agente inmobiliario?
                           </button>
                         </div>
                         <div
@@ -129,9 +130,9 @@ const FaqSection = () => {
                         >
                           <div className="accordion-body">
                             <p className="mb-0">
-                              A real estate agent assists clients in buying,
-                              selling, or renting properties by guiding them
-                              through the process.
+                              Un agente inmobiliario ayuda a sus clientes a
+                              comprar, vender o alquilar propiedades,
+                              acompañándolos y asesorándolos en todo el proceso.
                             </p>
                           </div>
                         </div>
@@ -139,7 +140,7 @@ const FaqSection = () => {
                     </div>
                   </div>
                   <div>
-                    <h5 className="mb-4 mt-4"> Buying FAQ’s </h5>
+                    <h5 className="mb-4 mt-4"> Preguntas sobre compra </h5>
                     <div
                       className="accordion accordions-items-seperate faq-accordion m-0"
                       id="faq-accordion1"
@@ -158,7 +159,7 @@ const FaqSection = () => {
                             data-bs-target="#accordion-4"
                             aria-expanded="true"
                           >
-                            How do I start the home-buying process?
+                            ¿Cómo empiezo el proceso para comprar una propiedad?
                           </button>
                         </div>
                         <div
@@ -168,9 +169,9 @@ const FaqSection = () => {
                         >
                           <div className="accordion-body">
                             <p className="mb-0">
-                              Start the home-buying process by checking your
-                              budget, getting pre approved for a mortgage, and
-                              consulting a real estate agent.
+                              Empezá revisando tu presupuesto, obteniendo una
+                              preaprobación de crédito hipotecario y hablando con
+                              un agente inmobiliario de confianza.
                             </p>
                           </div>
                         </div>
@@ -189,7 +190,7 @@ const FaqSection = () => {
                             data-bs-target="#accordion-5"
                             aria-expanded="false"
                           >
-                            How much down payment do I need?
+                            ¿Cuánta seña o adelanto necesito?
                           </button>
                         </div>
                         <div
@@ -199,9 +200,9 @@ const FaqSection = () => {
                         >
                           <div className="accordion-body">
                             <p className="mb-0">
-                              The down payment typically ranges from 3% to 20%
-                              of the home's price, depending on the loan type
-                              and lender requirements.
+                              Suele ir desde el 3% hasta el 20% del valor de la
+                              propiedad, según el tipo de préstamo y las
+                              condiciones del banco o entidad financiera.
                             </p>
                           </div>
                         </div>
@@ -220,7 +221,7 @@ const FaqSection = () => {
                             data-bs-target="#accordion-6"
                             aria-expanded="false"
                           >
-                            What is a home inspection?
+                            ¿Qué es una inspección de la propiedad?
                           </button>
                         </div>
                         <div
@@ -230,9 +231,9 @@ const FaqSection = () => {
                         >
                           <div className="accordion-body">
                             <p className="mb-0">
-                              A home inspection is a professional evaluation of
-                              a property's condition to identify any issues
-                              before finalizing the purchase.
+                              Es una evaluación profesional del estado de la
+                              propiedad para detectar problemas antes de cerrar
+                              la compra.
                             </p>
                           </div>
                         </div>

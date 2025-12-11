@@ -10,7 +10,10 @@ const Faq = () => {
 		========================= */}
       <div className="page-wrapper">
         {/* Start Breadscrumb */}
-        <Breadcrumb title="FAQ" paths={[{ label: "FAQ", active: true }]} />
+        <Breadcrumb
+          title="Preguntas frecuentes"
+          paths={[{ label: "Preguntas frecuentes", active: true }]}
+        />
 
         {/* End Breadscrumb */}
         {/* Start Content */}
@@ -25,7 +28,7 @@ const Faq = () => {
                     <div className="col-lg-3">
                       <div className="card faq-sidebar mb-lg-0">
                         <div className="card-body">
-                          <h5 className="mb-3">Table of Contents</h5>
+                          <h5 className="mb-3">Tabla de contenido</h5>
                           <Scrollspy
                             items={[
                               "general",
@@ -46,17 +49,17 @@ const Faq = () => {
                             </li>
                             <li>
                               <Link to="#buying" className="nav-link">
-                                Buying
+                                Compra
                               </Link>
                             </li>
                             <li>
                               <Link to="#selling" className="nav-link">
-                                Sellings
+                                Venta
                               </Link>
                             </li>
                             <li>
                               <Link to="#renting" className="nav-link">
-                                Renting
+                                Alquiler
                               </Link>
                             </li>
                             <li>
@@ -66,7 +69,7 @@ const Faq = () => {
                             </li>
                             <li>
                               <Link to="#financial" className="nav-link">
-                                Financial
+                                Financiera
                               </Link>
                             </li>
                           </Scrollspy>
@@ -99,7 +102,7 @@ const Faq = () => {
                                   aria-expanded="true"
                                   aria-controls="CustomIconcollapse1"
                                 >
-                                  What is real estate?
+                                  ¿Qué es el mercado inmobiliario?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -111,8 +114,10 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample"
                               >
                                 <div className="accordion-body">
-                                  Real estate refers to land and any permanent
-                                  structures on it, such as homes or buildings.
+                                  El mercado inmobiliario se refiere a los
+                                  terrenos y a todas las construcciones
+                                  permanentes sobre ellos, como casas o
+                                  edificios.
                                 </div>
                               </div>
                             </div>
@@ -134,8 +139,8 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse2"
                                 >
-                                  What types of properties are included in real
-                                  estate?
+                                  ¿Qué tipos de propiedades se incluyen en el
+                                  mercado inmobiliario?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -147,9 +152,9 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample2"
                               >
                                 <div className="accordion-body">
-                                  Real estate includes residential, commercial,
-                                  industrial, land, and special-purpose
-                                  properties.
+                                  El mercado inmobiliario incluye propiedades
+                                  residenciales, comerciales, industriales,
+                                  terrenos y propiedades de uso especial.
                                 </div>
                               </div>
                             </div>
@@ -171,7 +176,7 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse3"
                                 >
-                                  What is the role of a real estate agent?
+                                  ¿Cuál es el rol de un agente inmobiliario?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -183,9 +188,9 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample3"
                               >
                                 <div className="accordion-body">
-                                  A real estate agent assists clients in buying,
-                                  selling, or renting properties by guiding them
-                                  through the process.
+                                  Un agente inmobiliario ayuda a los clientes a
+                                  comprar, vender o alquilar propiedades,
+                                  guiándolos durante todo el proceso.
                                 </div>
                               </div>
                             </div>
@@ -193,7 +198,7 @@ const Faq = () => {
                         </div>
                         <hr className="my-4" />
                         <div className="mb-4" id="buying">
-                          <h4 className="mb-3">Buying </h4>
+                          <h4 className="mb-3">Compra</h4>
                           <div
                             className="accordion accordion-bordered accordion-custom-icon accordion-arrow-none"
                             id="CustomIconaccordionExample4"
@@ -211,7 +216,8 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse4"
                                 >
-                                  How do I start the home-buying process?
+                                  ¿Cómo comienzo el proceso de compra de una
+                                  vivienda?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -223,9 +229,9 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample4"
                               >
                                 <div className="accordion-body">
-                                  Start home-buying process by checking your
-                                  budget, getting pre approved for a mortgage
-                                  &amp; consulting a real estate agent.
+                                  Comenzá evaluando tu presupuesto, obteniendo
+                                  una precalificación hipotecaria y
+                                  asesorándote con un agente inmobiliario.
                                 </div>
                               </div>
                             </div>
@@ -247,7 +253,7 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse5"
                                 >
-                                  How much down payment do I need?
+                                  ¿Cuánto dinero necesito de anticipo?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -259,9 +265,10 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample5"
                               >
                                 <div className="accordion-body">
-                                  The down payment typically ranges from 3% to
-                                  20% of the home's price, depending on the loan
-                                  type and requirements.
+                                  El anticipo suele ir desde un 10% hasta un 30%
+                                  del valor de la propiedad, según el tipo de
+                                  operación y las condiciones pactadas entre las
+                                  partes o con el banco.
                                 </div>
                               </div>
                             </div>
@@ -283,7 +290,8 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse6"
                                 >
-                                  What is a home inspection?
+                                  ¿Qué es una inspección o informe técnico de la
+                                  propiedad?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -295,9 +303,10 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample6"
                               >
                                 <div className="accordion-body">
-                                  A home inspection is a professional evaluation
-                                  of a property's condition to identify any
-                                  issues before finalizing the purchase.
+                                  Es una evaluación profesional del estado de la
+                                  propiedad (estructura, instalaciones,
+                                  humedad, etc.) para detectar problemas antes
+                                  de cerrar la compra o firmar la escritura.
                                 </div>
                               </div>
                             </div>
@@ -305,7 +314,7 @@ const Faq = () => {
                         </div>
                         <hr className="my-4" />
                         <div className="mb-4" id="selling">
-                          <h4 className="mb-3">Selling </h4>
+                          <h4 className="mb-3">Venta</h4>
                           <div
                             className="accordion accordion-bordered accordion-custom-icon accordion-arrow-none"
                             id="CustomIconaccordionExample7"
@@ -323,7 +332,8 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse7"
                                 >
-                                  What’s the best time to sell a home?
+                                  ¿Cuál es el mejor momento para vender una
+                                  propiedad?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -335,9 +345,10 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample7"
                               >
                                 <div className="accordion-body">
-                                  The best time to sell a home is usually in
-                                  spring or early summer when buyer demand is
-                                  strongest.
+                                  En Argentina, suele haber más movimiento en el
+                                  mercado entre primavera y comienzos de verano,
+                                  pero lo más importante es publicar con un
+                                  precio acorde al mercado y fotos de calidad.
                                 </div>
                               </div>
                             </div>
@@ -359,7 +370,7 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse8"
                                 >
-                                  Should I renovate before selling?
+                                  ¿Conviene refaccionar antes de vender?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -371,9 +382,10 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample8"
                               >
                                 <div className="accordion-body">
-                                  Renovating before selling can increase your
-                                  home's value, but focus on cost-effective
-                                  updates that appeal to buyers.
+                                  Las refacciones pueden sumar valor, pero es
+                                  clave enfocarse en arreglos básicos (pintura,
+                                  humedad, mantenimiento) que mejoren la
+                                  presentación sin sobreinvertir.
                                 </div>
                               </div>
                             </div>
@@ -395,7 +407,7 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse9"
                                 >
-                                  How is the listing price determined?
+                                  ¿Cómo se determina el precio de publicación?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -407,9 +419,10 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample9"
                               >
                                 <div className="accordion-body">
-                                  The listing price is set by comparing the home
-                                  to similar properties and current market
-                                  conditions.
+                                  Se define a partir de una tasación comparando
+                                  la propiedad con otras similares en la zona,
+                                  su estado, superficie y la situación del
+                                  mercado en ese momento.
                                 </div>
                               </div>
                             </div>
@@ -417,7 +430,7 @@ const Faq = () => {
                         </div>
                         <hr className="my-4" />
                         <div className="mb-4" id="renting">
-                          <h4 className="mb-3">Renting </h4>
+                          <h4 className="mb-3">Alquiler</h4>
                           <div
                             className="accordion accordion-bordered accordion-custom-icon accordion-arrow-none"
                             id="CustomIconaccordionExample10"
@@ -435,7 +448,7 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse10"
                                 >
-                                  What documents do I need to rent a property?
+                                  ¿Qué documentación necesito para alquilar?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -447,9 +460,9 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample10"
                               >
                                 <div className="accordion-body">
-                                  You typically need identification, proof of
-                                  income, rental application, and references to
-                                  rent a property.
+                                  En general se solicita DNI, recibos de sueldo
+                                  o comprobante de ingresos, referencias y un
+                                  garante propietario o seguro de caución.
                                 </div>
                               </div>
                             </div>
@@ -471,7 +484,7 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse11"
                                 >
-                                  What’s included in the rent?
+                                  ¿Qué suele incluir el alquiler mensual?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -483,9 +496,10 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample11"
                               >
                                 <div className="accordion-body">
-                                  Rent typically covers the property cost and
-                                  may include utilities, maintenance, or
-                                  amenities.
+                                  El alquiler cubre el uso de la propiedad y,
+                                  según el contrato, puede incluir expensas,
+                                  impuestos o algunos servicios. Siempre hay que
+                                  revisar qué paga el inquilino y qué el dueño.
                                 </div>
                               </div>
                             </div>
@@ -507,7 +521,8 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse12"
                                 >
-                                  How long is a typical lease agreement?
+                                  ¿Cuál es la duración habitual de un contrato
+                                  de alquiler?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -519,9 +534,9 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample12"
                               >
                                 <div className="accordion-body">
-                                  A typical lease agreement usually lasts 12
-                                  months, but can vary from month-to-month to
-                                  several years.
+                                  En Argentina los contratos suelen ser de 24 a
+                                  36 meses, aunque pueden existir modalidades
+                                  temporarias o de temporada con otros plazos.
                                 </div>
                               </div>
                             </div>
@@ -529,7 +544,7 @@ const Faq = () => {
                         </div>
                         <hr className="my-4" />
                         <div className="mb-4" id="legal">
-                          <h4 className="mb-3">Legal </h4>
+                          <h4 className="mb-3">Legal</h4>
                           <div
                             className="accordion accordion-bordered accordion-custom-icon accordion-arrow-none"
                             id="CustomIconaccordionExample13"
@@ -547,7 +562,7 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse13"
                                 >
-                                  What is a title deed?
+                                  ¿Qué es la escritura de una propiedad?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -559,8 +574,9 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample13"
                               >
                                 <div className="accordion-body">
-                                  A title deed is an official document proving
-                                  ownership of a property.
+                                  Es el documento público otorgado ante
+                                  escribano que acredita la titularidad
+                                  definitiva de la propiedad.
                                 </div>
                               </div>
                             </div>
@@ -582,7 +598,8 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse14"
                                 >
-                                  What is escrow?
+                                  ¿Qué rol cumple la escribanía en la
+                                  operación?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -594,8 +611,10 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample14"
                               >
                                 <div className="accordion-body">
-                                  Escrow is when a third party holds funds or
-                                  documents until a transaction is complete.
+                                  El escribano es un tercero imparcial que
+                                  redacta la escritura, verifica títulos,
+                                  retiene fondos y documentos hasta que se
+                                  completa la operación.
                                 </div>
                               </div>
                             </div>
@@ -617,7 +636,8 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse15"
                                 >
-                                  What are property taxes?
+                                  ¿Qué impuestos y tasas suelen pagar las
+                                  propiedades?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -629,8 +649,10 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample15"
                               >
                                 <div className="accordion-body">
-                                  Property taxes are fees paid to local
-                                  governments based on the value of a property.
+                                  Generalmente se abonan impuestos como el
+                                  inmobiliario provincial, tasas municipales y
+                                  servicios (agua, luz, gas), según la
+                                  jurisdicción.
                                 </div>
                               </div>
                             </div>
@@ -638,7 +660,7 @@ const Faq = () => {
                         </div>
                         <hr className="my-4" />
                         <div className="mb-0" id="financial">
-                          <h4 className="mb-3">Financial </h4>
+                          <h4 className="mb-3">Financiera</h4>
                           <div
                             className="accordion accordion-bordered accordion-custom-icon accordion-arrow-none"
                             id="CustomIconaccordionExample16"
@@ -656,7 +678,7 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse16"
                                 >
-                                  What is a mortgage?
+                                  ¿Qué es un crédito hipotecario?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -668,8 +690,10 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample16"
                               >
                                 <div className="accordion-body">
-                                  A mortgage is a loan used to buy a property,
-                                  paid back over time with interest.
+                                  Es un préstamo de largo plazo otorgado por un
+                                  banco u otra entidad para comprar una
+                                  propiedad, que se devuelve en cuotas con
+                                  interés y con la propiedad como garantía.
                                 </div>
                               </div>
                             </div>
@@ -691,7 +715,7 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse17"
                                 >
-                                  What are closing costs?
+                                  ¿Qué son los gastos de escrituración y cierre?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -703,8 +727,9 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample17"
                               >
                                 <div className="accordion-body">
-                                  Closing costs are fees paid at the end of a
-                                  property purchase for services and taxes.
+                                  Son los costos que se pagan al momento de la
+                                  escritura: honorarios de escribano, sellos,
+                                  impuestos y otros gastos administrativos.
                                 </div>
                               </div>
                             </div>
@@ -726,8 +751,8 @@ const Faq = () => {
                                   aria-expanded="false"
                                   aria-controls="CustomIconcollapse18"
                                 >
-                                  Can I get assistance as a first-time
-                                  homebuyer?
+                                  ¿Existen ayudas para quienes compran su
+                                  primera vivienda?
                                   <i className="ti ti-plus accordion-icon accordion-icon-on" />
                                   <i className="ti ti-minus accordion-icon accordion-icon-off" />
                                 </button>
@@ -739,9 +764,11 @@ const Faq = () => {
                                 data-bs-parent="#CustomIconaccordionExample18"
                               >
                                 <div className="accordion-body">
-                                  Yes, many programs offer assistance and
-                                  benefits specifically for first-time
-                                  homebuyers.
+                                  Sí, suelen existir líneas de crédito
+                                  hipotecario y programas estatales o
+                                  provinciales pensados para primeros
+                                  compradores. Consultá siempre la oferta
+                                  vigente.
                                 </div>
                               </div>
                             </div>

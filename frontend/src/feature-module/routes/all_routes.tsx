@@ -9,8 +9,6 @@ export const all_routes = {
 
   //Home routes
   index: "/index",
-  index2: "/index-2",
-  index3: "/index-3",
 
   //Listing routes
   buyPropertyGrid:'/buy-property-grid',

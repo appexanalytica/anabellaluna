@@ -1,5 +1,3 @@
-import Index2 from "../components/home/index-2/index2";
-import Index3 from "../components/home/index-3/index3";
 import Index from "../components/home/index";
 import { all_routes } from "./all_routes";
 import { Navigate, Route } from "react-router";
@@ -75,19 +73,7 @@ export const publicRoutes = [
   {
     path: routes.index,
     element: <Index />,
-    meta_title:"Home",
-    route: Route,
-  },
-  {
-    path: routes.index2,
-    element: <Index2 />,
-        meta_title:"Home",
-    route: Route,
-  },
-  {
-    path: routes.index3,
-    element: <Index3 />,
-        meta_title:"Home",
+    meta_title:"Inicio | Dreams Estate",
     route: Route,
   },
   {

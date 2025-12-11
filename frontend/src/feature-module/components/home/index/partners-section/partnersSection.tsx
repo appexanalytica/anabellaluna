@@ -51,15 +51,15 @@ const PartnersSection = () => {
             data-aos-duration={1000}
           >
             <h2 className="mb-2 text-center">
-              Hundreds of Partners Around the World
+              Cientos de Socios en Todo el Mundo
             </h2>
             <div className="sec-line">
               <span className="sec-line1" />
               <span className="sec-line2" />
             </div>
             <p className="mb-0 text-center">
-              Every day, we build trust through communication, transparency, and
-              results.
+              Cada día, construimos confianza a través de comunicación, transparencia y
+              resultados.
             </p>
           </div>
           {/* end title */}

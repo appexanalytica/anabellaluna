@@ -5,10 +5,8 @@ import {
 } from "../../../../../core/common/selectOption";
 import CommonSelect from "../../../../../core/common/common-select/commonSelect";
 import { all_routes } from "../../../../routes/all_routes";
-import { useTranslation } from "react-i18next";
 
 const BannerSections = () => {
-  const { t } = useTranslation();
   return (
     <>
       {/* start banner section */}
@@ -18,8 +16,11 @@ const BannerSections = () => {
           <div className="row">
             <div className="col-lg-6">
               <div className="banner-content aos" data-aos="fade-up">
-                <h1 className="mb-2">{t("home.banner.title")}</h1>
-                <p className="mb-0">{t("home.banner.subtitle")}</p>
+                <h1 className="mb-2">Tu casa en la playa</h1>
+                <p className="mb-0">
+                  Propiedades para comprar o alquilar en tu zona. Tenemos más de
+                  3000 publicaciones para vos.
+                </p>
               </div>
             </div>
           </div>
@@ -40,10 +41,8 @@ const BannerSections = () => {
                   aria-controls="buy_property"
                   aria-selected="true"
                 >
-                  <i className="material-icons-outlined me-2">
-                    shopping_basket
-                  </i>
-                  {t("home.banner.tabs.buy")}
+                  <i className="material-icons-outlined me-2">shopping_basket</i>
+                  Comprar propiedad
                 </Link>
               </li>
               <li className="nav-item" role="presentation">
@@ -56,7 +55,7 @@ const BannerSections = () => {
                   aria-selected="false"
                 >
                   <i className="material-icons-outlined me-2">king_bed</i>
-                  {t("home.banner.tabs.rent")}
+                  Alquilar propiedad
                 </Link>
               </li>
             </ul>
@@ -75,9 +74,7 @@ const BannerSections = () => {
                   <form>
                     <div className="d-flex align-items-bottom flex-wrap flex-lg-nowrap gap-3">
                       <div className="flex-fill select-field w-100">
-                        <label className="form-label">
-                          {t("home.banner.fields.keyword")}
-                        </label>
+                        <label className="form-label">Palabra clave</label>
                         <CommonSelect
                           options={Keyword}
                           className="select"
@@ -85,9 +82,7 @@ const BannerSections = () => {
                         />
                       </div>
                       <div className="flex-fill select-field w-100">
-                        <label className="form-label">
-                          {t("home.banner.fields.propertyType")}
-                        </label>
+                        <label className="form-label">Tipo de propiedad</label>
                         <CommonSelect
                           options={Property_Type}
                           className="select"
@@ -95,15 +90,11 @@ const BannerSections = () => {
                         />
                       </div>
                       <div className="flex-fill select-field w-100">
-                        <label className="form-label">
-                          {t("home.banner.fields.address")}
-                        </label>
+                        <label className="form-label">Dirección</label>
                         <input type="text" className="form-control" />
                       </div>
                       <div className="flex-fill select-field w-100">
-                        <label className="form-label">
-                          {t("home.banner.fields.minPrice")}
-                        </label>
+                        <label className="form-label">Precio mínimo</label>
                         <input
                           type="text"
                           className="form-control"
@@ -111,9 +102,7 @@ const BannerSections = () => {
                         />
                       </div>
                       <div className="flex-fill select-field w-100">
-                        <label className="form-label">
-                          {t("home.banner.fields.maxPrice")}
-                        </label>
+                        <label className="form-label">Precio máximo</label>
                         <input
                           type="text"
                           className="form-control"
@@ -138,9 +127,7 @@ const BannerSections = () => {
                   <form>
                     <div className="d-flex align-items-bottom flex-wrap flex-lg-nowrap gap-3">
                       <div className="flex-fill select-field  w-100">
-                        <label className="form-label">
-                          {t("home.banner.fields.keyword")}
-                        </label>
+                        <label className="form-label">Palabra clave</label>
                         <CommonSelect
                           options={Keyword}
                           className="select"
@@ -148,9 +135,7 @@ const BannerSections = () => {
                         />
                       </div>
                       <div className="flex-fill select-field w-100">
-                        <label className="form-label">
-                          {t("home.banner.fields.propertyType")}
-                        </label>
+                        <label className="form-label">Tipo de propiedad</label>
                         <CommonSelect
                           options={Property_Type}
                           className="select"
@@ -158,15 +143,11 @@ const BannerSections = () => {
                         />
                       </div>
                       <div className="flex-fill select-field w-100">
-                        <label className="form-label">
-                          {t("home.banner.fields.address")}
-                        </label>
+                        <label className="form-label">Dirección</label>
                         <input type="text" className="form-control" />
                       </div>
                       <div className="flex-fill select-field w-100">
-                        <label className="form-label">
-                          {t("home.banner.fields.minPrice")}
-                        </label>
+                        <label className="form-label">Precio mínimo</label>
                         <input
                           type="text"
                           className="form-control"
@@ -174,9 +155,7 @@ const BannerSections = () => {
                         />
                       </div>
                       <div className="flex-fill select-field w-100">
-                        <label className="form-label">
-                          {t("home.banner.fields.maxPrice")}
-                        </label>
+                        <label className="form-label">Precio máximo</label>
                         <input
                           type="text"
                           className="form-control"

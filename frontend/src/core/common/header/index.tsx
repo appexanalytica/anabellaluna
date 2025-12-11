@@ -5,7 +5,6 @@ import { useDispatch, useSelector } from "react-redux";
 import ImageWithBasePath from "../../imageWithBasePath";
 import { setDataTheme } from "../../redux/themeSettingSlice";
 import { all_routes } from "../../../feature-module/routes/all_routes";
-import { useTranslation } from "react-i18next";
 
 const Header = () => {
   const [subOpen, setSubopen] = useState<any>("");
@@ -15,9 +14,11 @@ const Header = () => {
   const dispatch = useDispatch();
   const [isFixed, setIsFixed] = useState(false);
   const dataTheme = useSelector((state: any) => state.themeSetting.dataTheme);
-  const { t } = useTranslation();
   const handleDataThemeChange = (theme: string) => {
     dispatch(setDataTheme(theme));
+  };
+  const toggleTheme = () => {
+    handleDataThemeChange(dataTheme === "light" ? "dark" : "light");
   };
   const onHandleMobileMenu = () => {
     const root = document.getElementsByTagName("html")[0];
@@ -70,39 +71,20 @@ const Header = () => {
   return (
     <>
       {/* Header Start */}
-      <header
-        className={
-          // Always add fixed class if isFixed is true, regardless of page
-          `header${
-            location.pathname === "/index-2"
-              ? " header-two"
-              : location.pathname === "/index-3"
-              ? " header-three"
-              : ""
-          }${isFixed ? " fixed" : ""}`
-        }
-      >
+      <header className={`header${isFixed ? " fixed" : ""}`}>
         <div className="container-fluid">
           <nav className="navbar navbar-expand-lg header-nav">
             <div className="navbar-header">
               <Link to={all_routes.index} className="navbar-brand logo">
                 <ImageWithBasePath
-                  src={
-                    location.pathname === "/index-3"
-                      ? "assets/img/logo-white.svg"
-                      : "assets/img/logo.svg"
-                  }
+                  src="assets/img/logo.svg"
                   className="img-fluid"
                   alt="Logo"
                 />
               </Link>
               <Link to={all_routes.index} className="navbar-brand logo-dark">
                 <ImageWithBasePath
-                  src={
-                    location.pathname === "/index-3"
-                      ? `assets/img/logo.svg`
-                      : `assets/img/logo-white.svg`
-                  }
+                  src="assets/img/logo-white.svg"
                   className="img-fluid"
                   alt="Logo"
                 />
@@ -143,71 +125,19 @@ const Header = () => {
                 <input
                   type="text"
                   className="form-control form-control-lg"
-                  placeholder={t("Search")}
+                  placeholder="Buscar"
                 />
               </div>
               <ul className={`main-nav  navbar-nav`}>
                 {header.map((mainMenus: any, mainIndex) => (
                   <React.Fragment key={mainIndex}>
-                    {mainMenus.separateRoute ? (
+                    {mainMenus.tittle === "Inicio" ? (
                       <li
-                        key={mainIndex}
-                        className={`has-submenu megamenu ${
-                          location.pathname === "/index" ||
-                          location.pathname === "/index-2" ||
-                          location.pathname === "/index-3"
-                            ? "active"
-                            : ""
-                        }`}
-                        onClick={() => toggleSidebar(mainMenus.tittle)}
+                        className={
+                          location.pathname === all_routes.index ? "active" : ""
+                        }
                       >
-                        <Link to="#">
-                          {t(mainMenus.tittle)}
-                          <i className="material-icons-outlined">
-                            {mainMenus.icon}
-                          </i>
-                        </Link>
-                        <ul
-                          className={`submenu mega-submenu ${
-                            subOpen === mainMenus.tittle ? "d-block" : ""
-                          }`}
-                        >
-                          <li>
-                            <div className="megamenu-wrapper">
-                              <div className="row">
-                                {mainMenus.menu.map((menu: any, idx: any) => (
-                                  <div className="col-lg-3" key={idx}>
-                                    <div
-                                      className={`single-demo ${
-                                        location.pathname === menu.route
-                                          ? "active"
-                                          : ""
-                                      }`}
-                                    >
-                                      <div className="demo-img">
-                                        <Link to={menu.route}>
-                                          <ImageWithBasePath
-                                            src={menu.img}
-                                            className="img-fluid "
-                                            alt="img"
-                                          />
-                                        </Link>
-                                      </div>
-                                      <div className="demo-info">
-                                        <Link
-                                          to={menu.route}
-                                          className={`inner-demo-img`}
-                                        >
-                                          {t(menu.menuValue)}
-                                        </Link>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </li>
-                        </ul>
+                        <Link to={all_routes.index}>Inicio</Link>
                       </li>
                     ) : (
                       <li
@@ -228,7 +158,7 @@ const Header = () => {
                           to="#"
                           onClick={() => toggleSidebar(mainMenus.tittle)}
                         >
-                          {t(mainMenus.tittle)}
+                          {mainMenus.tittle}
                           <i className="material-icons-outlined">
                             {mainMenus.icon}
                           </i>
@@ -261,7 +191,7 @@ const Header = () => {
                                       toggleSubsidebar(menu.menuValue);
                                     }}
                                   >
-                                    {t(menu.menuValue)}
+                                    {menu.menuValue}
                                   </Link>
                                   <ul
                                     className={`submenu showonmob ${
@@ -295,7 +225,7 @@ const Header = () => {
                                                   );
                                                 }}
                                               >
-                                                {t(subMenu.menuValue)}
+                                                {subMenu.menuValue}
                                               </Link>
                                               <ul
                                                 className={`submenu ${
@@ -320,7 +250,7 @@ const Header = () => {
                                                       }
                                                     >
                                                       <Link to={menu.route}>
-                                                        {t(menu.menuValue)}
+                                                        {menu.menuValue}
                                                       </Link>
                                                     </li>
                                                   )
@@ -340,12 +270,10 @@ const Header = () => {
                                               <Link
                                                 to={subMenu.route}
                                                 target={`${
-                                                  subMenu.admin
-                                                    ? "_blank"
-                                                    : "_self"
+                                                  subMenu.admin ? "_blank" : "_self"
                                                 }`}
                                               >
-                                                {t(subMenu.menuValue)}
+                                                {subMenu.menuValue}
                                               </Link>
                                             </li>
                                           )}
@@ -363,7 +291,7 @@ const Header = () => {
                                       : ""
                                   }
                                 >
-                                  <Link to={menu.route}>{t(menu.menuValue)}</Link>
+                                  <Link to={menu.route}>{menu.menuValue}</Link>
                                 </li>
                               )}
                             </React.Fragment>
@@ -375,106 +303,26 @@ const Header = () => {
                 ))}
               </ul>
               <div className="menu-dropdown">
-                <div className="dropdown mb-2">
-                  <Link
-                    to="#"
-                    className="dropdown-toggle d-flex align-items-center"
-                    data-bs-toggle="dropdown"
-                  >
-                    <ImageWithBasePath
-                      src="assets/img/flags/us.svg"
-                      alt="Language"
-                      className="me-1"
-                      height={16}
-                    />
-                    {t("English")}
-                  </Link>
-                  <div className="dropdown-menu dropdown-menu-end">
-                    <Link
-                      to="#"
-                      className="dropdown-item d-flex align-items-center"
-                    >
-                      <ImageWithBasePath
-                        src="assets/img/flags/us.svg"
-                        alt="image"
-                        className="me-2"
-                        height={16}
-                      />
-                      <span className="align-middle">{t("English")}</span>
-                    </Link>
-                    <Link
-                      to="#"
-                      className="dropdown-item d-flex align-items-center"
-                    >
-                      <ImageWithBasePath
-                        src="assets/img/flags/de.svg"
-                        alt="image"
-                        className="me-2"
-                        height={16}
-                      />
-                      <span className="align-middle">{t("German")}</span>
-                    </Link>
-                    <Link
-                      to="#"
-                      className="dropdown-item d-flex align-items-center"
-                    >
-                      <ImageWithBasePath
-                        src="assets/img/flags/fr.svg"
-                        alt="image"
-                        className="me-2"
-                        height={16}
-                      />
-                      <span className="align-middle">{t("French")}</span>
-                    </Link>
-                    <Link
-                      to="#"
-                      className="dropdown-item d-flex align-items-center"
-                    >
-                      <ImageWithBasePath
-                        src="assets/img/flags/ae.svg"
-                        alt="image"
-                        className="me-2"
-                        height={16}
-                      />
-                      <span className="align-middle">{t("Arabic")}</span>
-                    </Link>
-                  </div>
-                </div>
-                <div className="dropdown">
-                  <Link
-                    to="#"
-                    className="dropdown-toggle"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false"
-                  >
-                    {t("Light")}
-                  </Link>
-                  <ul className="dropdown-menu mt-2">
-                    <li>
-                      <Link className="dropdown-item light-mode" to="#">
-                        {t("Light")}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link className="dropdown-item dark-mode" to="#">
-                        {t("Dark")}
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
+                <button
+                  type="button"
+                  className="btn btn-link p-0 border-0"
+                  onClick={toggleTheme}
+                >
+                  {dataTheme === "light" ? "Modo Oscuro" : "Modo Claro"}
+                </button>
               </div>
               <div className="menu-login">
                 <Link
                   to={all_routes.signup}
                   className="btn btn-primary w-100 mb-2"
                 >
-                  {t("Sign In")}
+                  Iniciar Sesión
                 </Link>
                 <Link
                   to={all_routes.signin}
                   className="btn btn-secondary w-100"
                 >
-                  {t("Register")}
+                  Crear Cuenta
                 </Link>
               </div>
             </div>
@@ -490,115 +338,29 @@ const Header = () => {
                 >
                   <i className="material-icons-outlined">search</i>
                 </Link>
-                <div className="dropdown topbar-lang">
-                  <Link
-                    to="#"
-                    className="topbar-link btn btn-light"
-                    data-bs-toggle="dropdown"
-                  >
-                    <ImageWithBasePath
-                      src="assets/img/flags/us.svg"
-                      alt="Language"
-                      height={16}
-                    />
-                  </Link>
-                  <div className="dropdown-menu dropdown-menu-end">
-                    <Link
-                      to="#"
-                      className="dropdown-item d-flex align-items-center"
-                    >
-                      <ImageWithBasePath
-                        src="assets/img/flags/us.svg"
-                        alt="image"
-                        className="me-2"
-                        height={16}
-                      />
-                      <span className="align-middle">{t("English")}</span>
-                    </Link>
-                    <Link
-                      to="#"
-                      className="dropdown-item d-flex align-items-center"
-                    >
-                      <ImageWithBasePath
-                        src="assets/img/flags/de.svg"
-                        alt="image"
-                        className="me-2"
-                        height={16}
-                      />
-                      <span className="align-middle">{t("German")}</span>
-                    </Link>
-                    <Link
-                      to="#"
-                      className="dropdown-item d-flex align-items-center"
-                    >
-                      <ImageWithBasePath
-                        src="assets/img/flags/fr.svg"
-                        alt="image"
-                        className="me-2"
-                        height={16}
-                      />
-                      <span className="align-middle">{t("French")}</span>
-                    </Link>
-                    <Link
-                      to="#"
-                      className="dropdown-item d-flex align-items-center"
-                    >
-                      <ImageWithBasePath
-                        src="assets/img/flags/ae.svg"
-                        alt="image"
-                        className="me-2"
-                        height={16}
-                      />
-                      <span className="align-middle">{t("Arabic")}</span>
-                    </Link>
-                  </div>
-                </div>
-                <div className="dropdown">
-                  <Link
-                    to="#"
-                    className="topbar-link btn btn-light"
-                    data-bs-toggle="dropdown"
-                  >
-                    <i className="material-icons-outlined">wb_sunny</i>
-                  </Link>
-                  <div className="dropdown-menu dropdown-menu-end">
-                    <Link
-                      to="#"
-                      className={`dropdown-item d-flex align-items-center ${
-                        dataTheme === "light" && "active"
-                      }`}
-                      id="light-mode-toggle"
-                      onClick={() => handleDataThemeChange("light")}
-                    >
-                      <i className="material-icons-outlined me-2">wb_sunny</i>
-                      <span className="align-middle">{t("Light Mode")}</span>
-                    </Link>
-                    <Link
-                      to="#"
-                      className={`dropdown-item d-flex align-items-center ${
-                        dataTheme === "dark" && "active"
-                      }`}
-                      id="dark-mode-toggle"
-                      onClick={() => handleDataThemeChange("dark")}
-                    >
-                      <i className="material-icons-outlined me-2">dark_mode</i>
-                      <span className="align-middle">{t("Dark Mode")}</span>
-                    </Link>
-                  </div>
-                </div>
+                {/* Selector de idioma eliminado a pedido del usuario */}
+                <button
+                  type="button"
+                  className="topbar-link btn btn-light me-2"
+                  onClick={toggleTheme}
+                >
+                  <i className="material-icons-outlined">
+                    {dataTheme === "light" ? "dark_mode" : "wb_sunny"}
+                  </i>
+                </button>
                 <Link
                   to={all_routes.signin}
                   className="btn btn-lg btn-primary d-inline-flex align-items-center"
                 >
                   <i className="material-icons-outlined me-1">lock</i>
-                  {t("Sign In")}
+                  Iniciar Sesión
                 </Link>
                 <Link
                   to={all_routes.signup}
                   className="btn btn-lg btn-dark d-inline-flex align-items-center"
                 >
                   <i className="material-icons-outlined me-1">perm_identity</i>
-                  {t("Register")}
+                  Crear Cuenta
                 </Link>
               </div>
             ) : (
@@ -619,110 +381,16 @@ const Header = () => {
                 >
                   <i className="material-icons-outlined">search</i>
                 </Link>
-                <div className="dropdown topbar-lang">
-                  <Link
-                    to="#"
-                    className={`topbar-link btn btn-light  ${
-                      [
-                        "/buy-details",
-                        "/rent-details",
-                        "/buy-details-schedule",
-                      ].includes(location.pathname)
-                        ? "custom-btn-light"
-                        : ""
-                    }`}
-                    data-bs-toggle="dropdown"
-                  >
-                    <ImageWithBasePath
-                      src="assets/img/flags/us.svg"
-                      alt="Language"
-                      height={16}
-                    />
-                  </Link>
-                  <div className="dropdown-menu dropdown-menu-end">
-                    <Link
-                      to="#"
-                      className="dropdown-item d-flex align-items-center"
-                    >
-                      <ImageWithBasePath
-                        src="assets/img/flags/us.svg"
-                        alt="image"
-                        className="me-2"
-                        height={16}
-                      />
-                      <span className="align-middle">{t("English")}</span>
-                    </Link>
-                    <Link
-                      to="#"
-                      className="dropdown-item d-flex align-items-center"
-                    >
-                      <ImageWithBasePath
-                        src="assets/img/flags/de.svg"
-                        alt="image"
-                        className="me-2"
-                        height={16}
-                      />
-                      <span className="align-middle">{t("German")}</span>
-                    </Link>
-                    <Link
-                      to="#"
-                      className="dropdown-item d-flex align-items-center"
-                    >
-                      <ImageWithBasePath
-                        src="assets/img/flags/fr.svg"
-                        alt="image"
-                        className="me-2"
-                        height={16}
-                      />
-                      <span className="align-middle">{t("French")}</span>
-                    </Link>
-                    <Link
-                      to="#"
-                      className="dropdown-item d-flex align-items-center"
-                    >
-                      <ImageWithBasePath
-                        src="assets/img/flags/ae.svg"
-                        alt="image"
-                        className="me-2"
-                        height={16}
-                      />
-                      <span className="align-middle">{t("Arabic")}</span>
-                    </Link>
-                  </div>
-                </div>
-                <div className="dropdown">
-                  <Link
-                    to="#"
-                    className="topbar-link btn btn-light"
-                    data-bs-toggle="dropdown"
-                  >
-                    <i className="material-icons-outlined">wb_sunny</i>
-                  </Link>
-                  <div className="dropdown-menu dropdown-menu-end">
-                    <Link
-                      to="#"
-                      className={`dropdown-item d-flex align-items-center ${
-                        dataTheme === "light" && "active"
-                      }`}
-                      id="light-mode-toggle"
-                      onClick={() => handleDataThemeChange("light")}
-                    >
-                      <i className="material-icons-outlined me-2">wb_sunny</i>
-                      <span className="align-middle">{t("Light Mode")}</span>
-                    </Link>
-                    <Link
-                      to="#"
-                      className={`dropdown-item d-flex align-items-center ${
-                        dataTheme === "dark" && "active"
-                      }`}
-                      id="dark-mode-toggle"
-                      onClick={() => handleDataThemeChange("dark")}
-                    >
-                      <i className="material-icons-outlined me-2">dark_mode</i>
-                      <span className="align-middle">{t("Dark Mode")}</span>
-                    </Link>
-                  </div>
-                </div>
+                {/* Selector de idioma eliminado a pedido del usuario */}
+                <button
+                  type="button"
+                  className="topbar-link btn btn-light me-2"
+                  onClick={toggleTheme}
+                >
+                  <i className="material-icons-outlined">
+                    {dataTheme === "light" ? "dark_mode" : "wb_sunny"}
+                  </i>
+                </button>
                 <div className="dropdown">
                   <Link
                     to="#"
@@ -749,7 +417,7 @@ const Header = () => {
                     <div className="notification-head">
                       <div className="row align-items-center">
                         <div className="col">
-                          <h6 className="m-0">{t("Notifications")}</h6>
+                          <h6 className="m-0">Notificaciones</h6>
                         </div>
                         <div className="col-auto">
                           <div className="dropdown">
@@ -767,11 +435,11 @@ const Header = () => {
                             <div className="dropdown-menu dropdown-menu-end">
                               {/* item*/}
                               <Link to="#" className="dropdown-item">
-                                {t("Mark as Read")}
+                                Marcar como leídas
                               </Link>
                               {/* item*/}
                               <Link to="#" className="dropdown-item">
-                                {t("Delete All")}
+                                Borrar todo
                               </Link>
                             </div>
                           </div>
@@ -983,7 +651,7 @@ const Header = () => {
                         to={all_routes.notification}
                         className="text-center mb-0"
                       >
-                        {t("View All")}
+                        Ver todas
                       </Link>
                     </div>
                   </div>
@@ -1008,7 +676,7 @@ const Header = () => {
                   className="btn btn-lg btn-dark d-inline-flex align-items-center topbar-add"
                 >
                   <i className="material-icons-outlined me-1">home</i>
-                  {t("Post Property")}
+                  Publicar propiedad
                 </Link>
                 <div className="dropdown topbar-profile d-flex">
                   <Link to="#" className="avatar" data-bs-toggle="dropdown">
@@ -1028,8 +696,8 @@ const Header = () => {
                         alt="image"
                       />
                       <div className="ms-2">
-                        <h6 className="mb-1">{t("Jafna Cremson")}</h6>
-                        <span className="d-block">{t("Administrator")}</span>
+                        <h6 className="mb-1">Jafna Cremson</h6>
+                        <span className="d-block">Administrador</span>
                       </div>
                     </div>
                     {/* Item*/}
@@ -1040,7 +708,7 @@ const Header = () => {
                       <i className="material-icons-outlined me-2">
                         person_outline
                       </i>
-                      {t("Profile Settings")}
+                      Configuración de perfil
                     </Link>
                     {/* Item*/}
                     <Link
@@ -1050,7 +718,7 @@ const Header = () => {
                       <i className="material-icons-outlined me-2">
                         notifications_none
                       </i>
-                      {t("Notifications")}
+                      Notificaciones
                     </Link>
                     {/* Item*/}
                     <Link
@@ -1060,7 +728,7 @@ const Header = () => {
                       <i className="material-icons-outlined me-2">
                         help_outline
                       </i>
-                      {t("Help & Support")}
+                      Ayuda y soporte
                     </Link>
                     {/* Item*/}
                     <Link
@@ -1068,7 +736,7 @@ const Header = () => {
                       className="dropdown-item d-inline-flex align-items-center"
                     >
                       <i className="material-icons-outlined me-2">settings</i>
-                      {t("Settings")}
+                      Configuración
                     </Link>
                     <hr className="dropdown-divider" />
                     <Link
@@ -1076,7 +744,7 @@ const Header = () => {
                       className="dropdown-item d-inline-flex align-items-center link-danger"
                     >
                       <i className="material-icons-outlined me-2">logout</i>
-                      {t("Sign Out")}
+                      Cerrar sesión
                     </Link>
                   </div>
                 </div>

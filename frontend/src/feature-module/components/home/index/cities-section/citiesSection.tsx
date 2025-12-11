@@ -4,10 +4,8 @@ import { all_routes } from "../../../../routes/all_routes";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { useTranslation } from "react-i18next";
 
 const CitiesSection = () => {
-  const { t } = useTranslation();
   const Citites_Section = {
     dots: true,
     infinite: true,
@@ -57,12 +55,12 @@ const CitiesSection = () => {
             data-aos="fade-down"
             data-aos-duration={1000}
           >
-            <h2 className="mb-2 text-center">{t("home.cities.title")}</h2>
+            <h2 className="mb-2 text-center">Ciudades con publicaciones</h2>
             <div className="sec-line">
               <span className="sec-line1" />
               <span className="sec-line2" />
             </div>
-            <p className="mb-0 text-center">{t("home.cities.subtitle")}</p>
+            <p className="mb-0 text-center">Destinos que más nos gustan</p>
           </div>
           {/* end title */}
           <Slider {...Citites_Section} className="cities-slider">
@@ -82,8 +80,8 @@ const CitiesSection = () => {
                   />
                 </div>
                 <div className="city-name">
-                  <h5 className="mb-1">New York</h5>
-                  <p className="mb-0">300 {t("home.cities.properties")}</p>
+                  <h5 className="mb-1">Pinamar</h5>
+                  <p className="mb-0">300 Propiedades</p>
                 </div>
                 <div className="arrow-overlay">
                   <Link to={all_routes.rentPropertyGrid}>
@@ -105,8 +103,8 @@ const CitiesSection = () => {
                   />
                 </div>
                 <div className="city-name">
-                  <h5 className="mb-1">Argentina</h5>
-                  <p className="mb-0">740 {t("home.cities.properties")}</p>
+                  <h5 className="mb-1">Partido de la Costa</h5>
+                  <p className="mb-0">740 Propiedades</p>
                 </div>
                 <div className="arrow-overlay">
                   <Link to={all_routes.rentPropertyGrid}>
@@ -131,8 +129,8 @@ const CitiesSection = () => {
                   />
                 </div>
                 <div className="city-name">
-                  <h5 className="mb-1">Singapore</h5>
-                  <p className="mb-0">400 {t("home.cities.properties")}</p>
+                  <h5 className="mb-1">Villa Gesell</h5>
+                  <p className="mb-0">400 Propiedades</p>
                 </div>
                 <div className="arrow-overlay">
                   <Link to={all_routes.rentPropertyGrid}>
@@ -154,8 +152,8 @@ const CitiesSection = () => {
                   />
                 </div>
                 <div className="city-name">
-                  <h5 className="mb-1">United Kingdom</h5>
-                  <p className="mb-0">1450 {t("home.cities.properties")}</p>
+                  <h5 className="mb-1">Cariló</h5>
+                  <p className="mb-0">1450 Propiedades</p>
                 </div>
                 <div className="arrow-overlay">
                   <Link to={all_routes.rentPropertyGrid}>
@@ -181,7 +179,7 @@ const CitiesSection = () => {
                 </div>
                 <div className="city-name">
                   <h5 className="mb-1">New York</h5>
-                  <p className="mb-0">300 Properties</p>
+                  <p className="mb-0">300 Propiedades</p>
                 </div>
                 <div className="arrow-overlay">
                   <Link to={all_routes.rentPropertyGrid}>
@@ -203,8 +201,8 @@ const CitiesSection = () => {
                   />
                 </div>
                 <div className="city-name">
-                  <h5>Singapore</h5>
-                  <p>400 {t("home.cities.properties")}</p>
+                  <h5>Costa del Este</h5>
+                  <p>400 Propiedades</p>
                 </div>
                 <div className="arrow-overlay">
                   <Link to={all_routes.rentPropertyGrid}>
@@ -229,8 +227,8 @@ const CitiesSection = () => {
                   />
                 </div>
                 <div className="city-name">
-                  <h5 className="mb-1">Thailand</h5>
-                  <p className="mb-0">300 Properties</p>
+                  <h5 className="mb-1">Mar de Ajó</h5>
+                  <p className="mb-0">300 Propiedades</p>
                 </div>
                 <div className="arrow-overlay">
                   <Link to={all_routes.rentPropertyGrid}>
@@ -252,8 +250,8 @@ const CitiesSection = () => {
                   />
                 </div>
                 <div className="city-name">
-                  <h5 className="mb-1">United Arab Emirates</h5>
-                  <p className="mb-0">100 {t("home.cities.properties")}</p>
+                  <h5 className="mb-1">Las Toninas</h5>
+                  <p className="mb-0">100 Propiedades</p>
                 </div>
                 <div className="arrow-overlay">
                   <Link to={all_routes.rentPropertyGrid}>
@@ -278,8 +276,8 @@ const CitiesSection = () => {
                   />
                 </div>
                 <div className="city-name">
-                  <h5 className="mb-1">New York</h5>
-                  <p className="mb-0">300 Properties</p>
+                  <h5 className="mb-1">Santa Teresita</h5>
+                  <p className="mb-0">300 Propiedades</p>
                 </div>
                 <div className="arrow-overlay">
                   <Link to={all_routes.rentPropertyGrid}>
@@ -302,7 +300,7 @@ const CitiesSection = () => {
                 </div>
                 <div className="city-name">
                   <h5>Singapore</h5>
-                  <p>400 Properties</p>
+                  <p>400 Propiedades</p>
                 </div>
                 <div className="arrow-overlay">
                   <Link to={all_routes.rentPropertyGrid}>
