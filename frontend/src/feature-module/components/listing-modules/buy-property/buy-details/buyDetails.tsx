@@ -56,6 +56,9 @@ const BuyDetails = () => {
 
   // Classic-carousel hero state
   const [heroSlideIndex, setHeroSlideIndex] = useState(0);
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches
+  );
 
   // Funnel UI state
   const [stickyVisible, setStickyVisible] = useState(false);
@@ -202,25 +205,37 @@ const BuyDetails = () => {
   const classicHeroStyle = useMemo((): React.CSSProperties => ({
     position: "relative",
     width: "100%",
-    height: isIosWebKitBrowser && iosViewportHeight ? iosViewportHeight : "100vh",
-    minHeight: isIosWebKitBrowser ? undefined : 520,
-    maxHeight: 780,
+    height: isMobileViewport ? "auto" : (isIosWebKitBrowser && iosViewportHeight ? iosViewportHeight : "100vh"),
+    aspectRatio: isMobileViewport ? "4 / 3" : undefined,
+    minHeight: isMobileViewport ? undefined : (isIosWebKitBrowser ? undefined : 520),
+    maxHeight: isMobileViewport ? undefined : 780,
     overflow: "hidden",
     background: "#0f172a",
     touchAction: "pan-y",
-  }), [iosViewportHeight, isIosWebKitBrowser]);
+  }), [iosViewportHeight, isIosWebKitBrowser, isMobileViewport]);
 
   const coverImage = galleryImages[0] || "";
   const showHeroImage = !canUseClassicCarousel && imageStyle !== "hidden" && !!coverImage;
 
-  // Autoplay for classic-carousel (3 s per slide)
+  // Track mobile viewport for full-width carousel sizing
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 768px)");
+    const handler = (e: MediaQueryListEvent) => setIsMobileViewport(e.matches);
+    setIsMobileViewport(mq.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  // Autoplay for classic-carousel. Timer resets on every slide change so manual
+  // navigation always gets the full interval before the next auto-advance.
   useEffect(() => {
     if (!canUseClassicCarousel || galleryImages.length <= 1) return;
     const timer = setInterval(() => {
       setHeroSlideIndex((prev) => (prev + 1) % galleryImages.length);
-    }, 3000);
+    }, 7000);
     return () => clearInterval(timer);
-  }, [canUseClassicCarousel, galleryImages.length]);
+  }, [canUseClassicCarousel, galleryImages.length, heroSlideIndex]);
 
   useEffect(() => {
     if (galleryImages.length > 0 && heroSlideIndex >= galleryImages.length) {
