@@ -14,6 +14,8 @@ const {
   traceMutationError,
 } = require('../utils/persistenceTrace');
 
+const isValidObjectId = (v) => /^[a-fA-F0-9]{24}$/.test(String(v || ''));
+
 const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff', 'ico', 'heic']);
 const isImageDoc = (doc) => {
   if (!doc) return false;
@@ -48,7 +50,7 @@ router.get('/', authenticateToken, requireCRMUser, async (req, res) => {
     }
 
     // Populate owner (client) data
-    const ownerIds = [...new Set(items.filter((p) => p.ownerId).map((p) => String(p.ownerId)))];
+    const ownerIds = [...new Set(items.filter((p) => p.ownerId && isValidObjectId(p.ownerId)).map((p) => String(p.ownerId)))];
     const ownersById = {};
     if (ownerIds.length) {
       const owners = await Cliente.find({ _id: { $in: ownerIds } }).select('nombre email telefono metadata').lean();
@@ -80,7 +82,7 @@ router.get('/:id', authenticateToken, requireCRMUser, async (req, res) => {
     if (scopeId && String(item.agentId || '') !== scopeId) return res.status(403).json({ error: 'forbidden' });
     // Populate owner data
     let ownerData = null;
-    if (item.ownerId) {
+    if (item.ownerId && isValidObjectId(item.ownerId)) {
       const owner = await Cliente.findById(item.ownerId).select('nombre email telefono metadata').lean();
       if (owner) ownerData = { _id: owner._id, nombre: owner.nombre || '', email: owner.email || '', telefono: owner.telefono || '' };
     }
@@ -224,7 +226,7 @@ router.patch('/:id/visita', authenticateToken, requireCRMUser, async (req, res) 
     });
 
     let ownerData = null;
-    if (persisted.ownerId) {
+    if (persisted.ownerId && isValidObjectId(persisted.ownerId)) {
       const owner = await Cliente.findById(persisted.ownerId).select('nombre email telefono metadata').lean();
       if (owner) {
         ownerData = {

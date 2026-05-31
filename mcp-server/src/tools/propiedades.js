@@ -13,6 +13,8 @@ function registerPropiedadTools(server) {
   const Activity = () => getModel('Activity');
 
   const safeLimit = (limit, fallback = 20) => Math.min(Math.max(Number(limit) || fallback, 1), 50);
+  const isObjectId = (v) => /^[a-fA-F0-9]{24}$/.test(String(v || ''));
+  const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const persistedResult = async (model, id, label) => {
     const persisted = await model.findById(id).lean();
     if (!persisted) {
@@ -238,11 +240,12 @@ function registerPropiedadTools(server) {
       status: z.string().optional().describe('Disponible | Reservada | Vendida | Alquilada'),
       published: z.boolean().optional(),
       featured: z.boolean().optional(),
-      ownerId: z.string().optional().describe('ID del cliente propietario'),
+      ownerId: z.string().optional().describe('ID (ObjectId) del cliente propietario, si ya se conoce'),
+      ownerName: z.string().optional().describe('Nombre del dueño/propietario. Si no coincide con un cliente existente, se crea automáticamente y se vincula.'),
       agentId: z.string().optional().describe('ID del agente responsable'),
       metadata: z.object({}).passthrough().optional().describe('Datos adicionales'),
     },
-    async ({ title, description, address, price, moneda, status, published, featured, ownerId, agentId, metadata }) => {
+    async ({ title, description, address, price, moneda, status, published, featured, ownerId, ownerName, agentId, metadata }) => {
       if (!title || !String(title).trim()) {
         return { content: [{ type: 'text', text: 'title es requerido' }], isError: true };
       }
@@ -259,11 +262,38 @@ function registerPropiedadTools(server) {
       if (status) doc.status = status;
       if (published !== undefined) doc.published = !!published;
       if (featured !== undefined) doc.featured = !!featured;
-      if (ownerId) doc.ownerId = String(ownerId);
       if (agentId) doc.agentId = String(agentId);
 
+      // Resolve owner: accept an existing client ObjectId, or a name (link to an
+      // existing client or auto-create one). Never store a raw name as ownerId.
+      let ownerNote = '';
+      const ownerNameCandidate = (ownerName && String(ownerName).trim())
+        || (ownerId && !isObjectId(ownerId) ? String(ownerId).trim() : '');
+      if (ownerId && isObjectId(ownerId)) {
+        doc.ownerId = String(ownerId);
+      } else if (ownerNameCandidate) {
+        const clienteFilter = { nombre: new RegExp(`^${escapeRegex(ownerNameCandidate)}$`, 'i') };
+        if (agentId) clienteFilter.agenteId = String(agentId);
+        let cliente = await Cliente().findOne(clienteFilter).lean();
+        if (!cliente) {
+          const createdCliente = await Cliente().create({
+            nombre: ownerNameCandidate,
+            agenteId: agentId ? String(agentId) : '',
+          });
+          cliente = createdCliente.toObject ? createdCliente.toObject() : createdCliente;
+          ownerNote = `Cliente "${ownerNameCandidate}" no estaba agendado; se creó automáticamente y se vinculó como dueño.`;
+        } else {
+          ownerNote = `Se vinculó al cliente existente "${cliente.nombre}" como dueño.`;
+        }
+        doc.ownerId = String(cliente._id);
+      }
+
       const created = await Propiedad().create(doc);
-      return persistedResult(Propiedad(), created._id, 'propiedad');
+      const result = await persistedResult(Propiedad(), created._id, 'propiedad');
+      if (ownerNote && !result.isError && result.content && result.content[0]) {
+        result.content[0].text += `\n\n${ownerNote}`;
+      }
+      return result;
     }
   );
 
