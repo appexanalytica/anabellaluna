@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import * as THREE from "three";
 import publicService, { type VirtualTour, type VirtualTourScene } from "../../../services/publicService";
 import { resolveMediaUrl } from "../listing-modules/common/funnelUtils";
@@ -22,6 +22,9 @@ const DEFAULT_FOV = Math.PI / 2;
 const MIN_FOV = 0.55;
 const MAX_FOV = 2.1;
 const SOFT_SMOOTHING_MS = 180;
+const TELEPORT_DEPART_MS = 460;
+const TELEPORT_ARRIVE_MS = 560;
+const TELEPORT_TEXTURE_WAIT_MS = 260;
 const DEFAULT_VIEW: ViewState = { yaw: 0, pitch: 0, fov: DEFAULT_FOV };
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -118,6 +121,8 @@ const getPointerDistance = (pointers: Map<number, { x: number; y: number }>) => 
   return Math.hypot(first.x - second.x, first.y - second.y);
 };
 
+const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
 type Props = {
   tour?: VirtualTour | null;
   propertyId?: string;
@@ -139,9 +144,13 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const materialRef = useRef<THREE.MeshBasicMaterial | null>(null);
   const textureRef = useRef<THREE.Texture | null>(null);
+  const textureCacheRef = useRef<Record<string, THREE.Texture>>({});
+  const texturePromiseRef = useRef<Partial<Record<string, Promise<THREE.Texture | null>>>>({});
+  const textureCacheGenerationRef = useRef(0);
   const animationRef = useRef(0);
   const previousFrameRef = useRef(0);
   const lastHotspotSyncRef = useRef(0);
+  const transitionTimeoutsRef = useRef<number[]>([]);
   const [tour, setTour] = useState<VirtualTour | null>(providedTour || null);
   const [loadedScenes, setLoadedScenes] = useState<LoadedScene[]>([]);
   const [activeSceneId, setActiveSceneId] = useState("");
@@ -152,6 +161,94 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
   const [fallbackImageUrl, setFallbackImageUrl] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [isWebglReady, setIsWebglReady] = useState(false);
+  const [teleportTransition, setTeleportTransition] = useState({
+    phase: "idle" as "idle" | "departing" | "arriving",
+    left: 50,
+    top: 50,
+  });
+
+  const isTeleporting = teleportTransition.phase !== "idle";
+
+  const clearTransitionTimers = useCallback(() => {
+    transitionTimeoutsRef.current.forEach((timer) => window.clearTimeout(timer));
+    transitionTimeoutsRef.current = [];
+  }, []);
+
+  const disposeCachedTextures = useCallback(() => {
+    textureCacheGenerationRef.current += 1;
+    Object.values(textureCacheRef.current).forEach((texture) => texture.dispose());
+    textureCacheRef.current = {};
+    texturePromiseRef.current = {};
+    textureRef.current = null;
+    if (materialRef.current) {
+      materialRef.current.map = null;
+      materialRef.current.needsUpdate = true;
+    }
+  }, []);
+
+  const loadTextureForScene = useCallback((loadedScene: LoadedScene) => {
+    const renderer = rendererRef.current;
+    if (!renderer) return Promise.resolve(null);
+
+    const sceneId = loadedScene.scene.id;
+    const cachedTexture = textureCacheRef.current[sceneId];
+    if (cachedTexture) return Promise.resolve(cachedTexture);
+    if (texturePromiseRef.current[sceneId]) return texturePromiseRef.current[sceneId];
+
+    const loader = new THREE.TextureLoader();
+    const maxTextureSize = renderer.capabilities.maxTextureSize || 4096;
+    const candidates = Array.from(new Set([...getSceneSourceCandidates(loadedScene.scene), loadedScene.sourceUrl].filter(Boolean)));
+    const cacheGeneration = textureCacheGenerationRef.current;
+    loader.setCrossOrigin("anonymous");
+
+    const promise = new Promise<THREE.Texture | null>((resolve) => {
+      const loadCandidate = (index: number) => {
+        const candidate = candidates[index];
+        if (!candidate) {
+          resolve(null);
+          return;
+        }
+
+        loader.load(
+          candidate,
+          (texture) => {
+            const { width, height } = getTextureSize(texture);
+            if ((width && width > maxTextureSize) || (height && height > maxTextureSize)) {
+              texture.dispose();
+              loadCandidate(index + 1);
+              return;
+            }
+
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.ClampToEdgeWrapping;
+            texture.minFilter = THREE.LinearMipmapLinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            texture.anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
+            texture.needsUpdate = true;
+
+            if (cacheGeneration !== textureCacheGenerationRef.current) {
+              texture.dispose();
+              resolve(null);
+              return;
+            }
+
+            textureCacheRef.current[sceneId] = texture;
+            resolve(texture);
+          },
+          undefined,
+          () => loadCandidate(index + 1),
+        );
+      };
+
+      loadCandidate(0);
+    }).finally(() => {
+      delete texturePromiseRef.current[sceneId];
+    });
+
+    texturePromiseRef.current[sceneId] = promise;
+    return promise;
+  }, []);
 
   useEffect(() => {
     setTour(providedTour || null);
@@ -197,12 +294,14 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
       if (!tour || !orderedScenes.length) {
         setLoadedScenes([]);
         setFallbackImageUrl("");
+        disposeCachedTextures();
         return;
       }
 
       try {
         setIsLoading(true);
         setError("");
+        disposeCachedTextures();
         setFallbackImageUrl(orderedScenes.flatMap(getSceneSourceCandidates)[0] || "");
 
         const loadedSceneResults = await Promise.all(orderedScenes.map((scene) => loadSceneAsset(scene)));
@@ -244,14 +343,10 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
   const hasRenderableTour = !!tour && orderedScenes.length > 0;
   const activeScene = activeLoadedScene?.scene || initialScene || orderedScenes[0] || null;
   const panoramaUrl = activeLoadedScene?.sourceUrl || fallbackImageUrl;
-  const textureSourceCandidates = useMemo(() => {
-    if (activeScene) return getSceneSourceCandidates(activeScene);
-    return panoramaUrl ? [panoramaUrl] : [];
-  }, [activeScene, panoramaUrl]);
 
   useEffect(() => {
-    autorotateActiveRef.current = !!(tour?.settings?.autorotate && autorotateEnabled && activeScene);
-  }, [activeScene, autorotateEnabled, tour?.settings?.autorotate]);
+    autorotateActiveRef.current = !!(tour?.settings?.autorotate && autorotateEnabled && activeScene && !isTeleporting);
+  }, [activeScene, autorotateEnabled, isTeleporting, tour?.settings?.autorotate]);
 
   useEffect(() => {
     if (!hasRenderableTour) return undefined;
@@ -338,8 +433,7 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
       cancelAnimationFrame(animationRef.current);
       resizeObserver.disconnect();
       window.removeEventListener("resize", resize);
-      textureRef.current?.dispose();
-      textureRef.current = null;
+      disposeCachedTextures();
       material.dispose();
       geometry.dispose();
       renderer.dispose();
@@ -350,14 +444,14 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
       pointersRef.current.clear();
       pinchRef.current.active = false;
     };
-  }, [hasRenderableTour]);
+  }, [disposeCachedTextures, hasRenderableTour]);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return undefined;
 
     const onWheelZoom = (event: WheelEvent) => {
-      if (isTourControlTarget(event.target)) return;
+      if (isTeleporting || isTourControlTarget(event.target)) return;
       event.preventDefault();
       const modeMultiplier = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : 1;
       const delta = event.deltaY * modeMultiplier * 0.001;
@@ -368,68 +462,32 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
 
     el.addEventListener("wheel", onWheelZoom, { passive: false });
     return () => el.removeEventListener("wheel", onWheelZoom);
-  }, [hasRenderableTour]);
+  }, [hasRenderableTour, isTeleporting]);
 
   useEffect(() => {
-    const renderer = rendererRef.current;
     const material = materialRef.current;
-    if (!renderer || !material || !textureSourceCandidates.length) return undefined;
-
+    if (!material || !activeLoadedScene) return undefined;
     let cancelled = false;
-    const loader = new THREE.TextureLoader();
-    const maxTextureSize = renderer.capabilities.maxTextureSize || 4096;
-
-    loader.setCrossOrigin("anonymous");
     setIsWebglReady(false);
 
-    const loadCandidate = (index: number) => {
-      const candidate = textureSourceCandidates[index];
-      if (!candidate) {
-        if (!cancelled) setError("No se pudo cargar la textura premium del panorama 360°");
+    loadTextureForScene(activeLoadedScene).then((texture) => {
+      if (cancelled) return;
+      if (!texture) {
+        setError("No se pudo cargar la textura premium del panorama 360°");
         return;
       }
 
-      loader.load(
-        candidate,
-        (texture) => {
-          if (cancelled) {
-            texture.dispose();
-            return;
-          }
-
-          const { width, height } = getTextureSize(texture);
-          if ((width && width > maxTextureSize) || (height && height > maxTextureSize)) {
-            texture.dispose();
-            loadCandidate(index + 1);
-            return;
-          }
-
-          texture.colorSpace = THREE.SRGBColorSpace;
-          texture.wrapS = THREE.RepeatWrapping;
-          texture.wrapT = THREE.ClampToEdgeWrapping;
-          texture.minFilter = THREE.LinearMipmapLinearFilter;
-          texture.magFilter = THREE.LinearFilter;
-          texture.anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
-          texture.needsUpdate = true;
-
-          textureRef.current?.dispose();
-          textureRef.current = texture;
-          material.map = texture;
-          material.needsUpdate = true;
-          setError("");
-          setIsWebglReady(true);
-        },
-        undefined,
-        () => loadCandidate(index + 1),
-      );
-    };
-
-    loadCandidate(0);
+      textureRef.current = texture;
+      material.map = texture;
+      material.needsUpdate = true;
+      setError("");
+      setIsWebglReady(true);
+    });
 
     return () => {
       cancelled = true;
     };
-  }, [textureSourceCandidates]);
+  }, [activeLoadedScene, loadTextureForScene]);
 
   const visibleHotspots = useMemo(() => {
     const hotspots = activeScene?.hotspots || [];
@@ -445,15 +503,75 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
     }).filter((item) => item.visible);
   }, [activeScene?.hotspots, currentView]);
 
-  const switchScene = (sceneId: string) => {
-    const loadedScene = loadedScenes.find((item) => item.scene.id === sceneId);
-    if (!loadedScene) return;
+  useEffect(() => {
+    if (!activeScene || !loadedScenes.length) return;
+
+    const targetIds = (activeScene.hotspots || [])
+      .filter((hotspot) => hotspot.type === "navigation" && hotspot.targetSceneId)
+      .map((hotspot) => hotspot.targetSceneId as string);
+
+    const currentIndex = orderedScenes.findIndex((scene) => scene.id === activeScene.id);
+    const nextScene = orderedScenes[currentIndex + 1] || orderedScenes[0];
+    if (nextScene?.id && nextScene.id !== activeScene.id) targetIds.push(nextScene.id);
+
+    Array.from(new Set(targetIds)).forEach((targetSceneId) => {
+      const loadedScene = loadedScenes.find((item) => item.scene.id === targetSceneId);
+      if (loadedScene) void loadTextureForScene(loadedScene);
+    });
+  }, [activeScene, loadedScenes, loadTextureForScene, orderedScenes]);
+
+  useEffect(() => {
+    return () => clearTransitionTimers();
+  }, [clearTransitionTimers]);
+
+  const applyScene = (loadedScene: LoadedScene) => {
     const nextView = cloneView(getInitialView(loadedScene.scene));
-    setActiveSceneId(sceneId);
+    setActiveSceneId(loadedScene.scene.id);
     renderViewRef.current = nextView;
     targetViewRef.current = nextView;
     setCurrentView(nextView);
-    setFallbackImageUrl(sceneSourceRef.current[sceneId] || loadedScene.sourceUrl);
+    setFallbackImageUrl(sceneSourceRef.current[loadedScene.scene.id] || loadedScene.sourceUrl);
+  };
+
+  const switchScene = (
+    sceneId: string,
+    origin?: { yaw?: number; pitch?: number; left?: number; top?: number },
+  ) => {
+    const loadedScene = loadedScenes.find((item) => item.scene.id === sceneId);
+    if (!loadedScene || sceneId === activeSceneId || isTeleporting) return;
+
+    clearTransitionTimers();
+    setIsDragging(false);
+    dragRef.current.active = false;
+    pinchRef.current.active = false;
+    const focusView = cloneView({
+      ...targetViewRef.current,
+      yaw: getNumber(origin?.yaw, targetViewRef.current.yaw),
+      pitch: getNumber(origin?.pitch, targetViewRef.current.pitch),
+      fov: Math.max(MIN_FOV, Math.min(0.72, targetViewRef.current.fov * 0.58)),
+    });
+    renderViewRef.current = { ...renderViewRef.current, fov: Math.min(renderViewRef.current.fov, targetViewRef.current.fov) };
+    targetViewRef.current = focusView;
+    setCurrentView(focusView);
+    setTeleportTransition({
+      phase: "departing",
+      left: clamp(getNumber(origin?.left, 50), 0, 100),
+      top: clamp(getNumber(origin?.top, 50), 0, 100),
+    });
+
+    const texturePromise = loadTextureForScene(loadedScene);
+    const departTimer = window.setTimeout(async () => {
+      await Promise.race([texturePromise, wait(TELEPORT_TEXTURE_WAIT_MS)]);
+      applyScene(loadedScene);
+      setTeleportTransition((current) => ({ ...current, phase: "arriving" }));
+
+      const arriveTimer = window.setTimeout(() => {
+        setTeleportTransition((current) => ({ ...current, phase: "idle" }));
+      }, TELEPORT_ARRIVE_MS);
+      transitionTimeoutsRef.current.push(arriveTimer);
+    }, TELEPORT_DEPART_MS);
+
+    transitionTimeoutsRef.current.push(departTimer);
   };
 
   const enterFullscreen = () => {
@@ -462,7 +580,7 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
   };
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!panoramaUrl || isTourControlTarget(event.target)) return;
+    if (!panoramaUrl || isTeleporting || isTourControlTarget(event.target)) return;
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -536,13 +654,21 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
   const fallbackBackgroundScale = Math.max(220, Math.min(900, (TWO_PI / currentView.fov) * 100));
   const fallbackBackgroundPositionX = ((normalizeAngle(currentView.yaw) + Math.PI) / TWO_PI) * 100;
   const fallbackBackgroundPositionY = 50 - clamp(currentView.pitch, -1.2, 1.2) * 28;
+  const teleportClassName = teleportTransition.phase === "idle" ? "" : `is-teleporting is-teleport-${teleportTransition.phase}`;
+  const teleportStyle = {
+    "--al-vtour-teleport-x": `${teleportTransition.left}%`,
+    "--al-vtour-teleport-y": `${teleportTransition.top}%`,
+  } as CSSProperties;
 
   return (
-    <section className={`al-vtour-shell ${embedded ? "al-vtour-embedded" : ""}`} style={{ height }}>
+    <section
+      className={`al-vtour-shell ${embedded ? "al-vtour-embedded" : ""} ${teleportClassName}`}
+      style={{ height, ...teleportStyle }}
+    >
       {fallbackImageUrl && <img className="al-vtour-fallback-image" src={fallbackImageUrl} alt="" />}
       <div
         ref={containerRef}
-        className={`al-vtour-canvas ${isDragging ? "is-dragging" : ""}`}
+        className={`al-vtour-canvas ${isDragging ? "is-dragging" : ""} ${teleportClassName}`}
         role="application"
         aria-label="Visor de recorrido virtual 360"
         tabIndex={0}
@@ -563,6 +689,7 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
         )}
         <div ref={webglRef} className={`al-vtour-panorama-image ${isWebglReady ? "is-ready" : ""}`} />
         <div className="al-vtour-gradient" />
+        <div className="al-vtour-teleport-rush" aria-hidden="true" />
         {visibleHotspots.map(({ hotspot, left, top }) => (
           <button
             type="button"
@@ -574,7 +701,12 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
             onClick={(event) => {
               event.stopPropagation();
               if (hotspot.type === "navigation" && hotspot.targetSceneId) {
-                switchScene(hotspot.targetSceneId);
+                switchScene(hotspot.targetSceneId, {
+                  yaw: getNumber(hotspot.yaw, currentView.yaw),
+                  pitch: getNumber(hotspot.pitch, currentView.pitch),
+                  left,
+                  top,
+                });
               } else if (hotspot.payload?.url) {
                 window.open(hotspot.payload.url, "_blank", "noopener,noreferrer");
               }
@@ -585,6 +717,7 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
           </button>
         ))}
       </div>
+      <div className="al-vtour-teleport-flash" aria-hidden="true" />
       <div className="al-vtour-topbar">
         <div>
           <span>Recorrido virtual</span>

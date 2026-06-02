@@ -1223,6 +1223,7 @@ header .main-menu-wrapper .main-nav > li a i {
   background-position: center;
   pointer-events: none;
   transform: translateZ(0);
+  transform-origin: var(--al-vtour-teleport-x, 50%) var(--al-vtour-teleport-y, 50%);
   will-change: background-position;
 }
 
@@ -1233,6 +1234,7 @@ header .main-menu-wrapper .main-nav > li a i {
   background-color: transparent;
   opacity: 0;
   transform: translateZ(0);
+  transform-origin: var(--al-vtour-teleport-x, 50%) var(--al-vtour-teleport-y, 50%);
   transition: opacity 0.22s ease;
 }
 
@@ -1254,6 +1256,171 @@ header .main-menu-wrapper .main-nav > li a i {
   background:
     linear-gradient(180deg, rgba(3, 7, 18, 0.65) 0%, rgba(3, 7, 18, 0) 30%),
     linear-gradient(0deg, rgba(3, 7, 18, 0.7) 0%, rgba(3, 7, 18, 0) 42%);
+}
+
+.al-vtour-teleport-rush,
+.al-vtour-teleport-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.al-vtour-teleport-rush {
+  z-index: 5;
+  background:
+    repeating-conic-gradient(
+      from 0deg at var(--al-vtour-teleport-x, 50%) var(--al-vtour-teleport-y, 50%),
+      rgba(255, 255, 255, 0.28) 0deg,
+      rgba(255, 255, 255, 0) 7deg,
+      rgba(255, 255, 255, 0) 18deg
+    ),
+    radial-gradient(
+      circle at var(--al-vtour-teleport-x, 50%) var(--al-vtour-teleport-y, 50%),
+      rgba(255, 255, 255, 0.42) 0 4%,
+      rgba(255, 255, 255, 0.08) 12%,
+      rgba(3, 7, 18, 0) 38%
+    );
+  filter: blur(10px);
+  mix-blend-mode: screen;
+  transform: scale(0.72);
+}
+
+.al-vtour-teleport-flash {
+  z-index: 5;
+  background:
+    radial-gradient(
+      circle at var(--al-vtour-teleport-x, 50%) var(--al-vtour-teleport-y, 50%),
+      rgba(255, 255, 255, 0.86) 0 6%,
+      rgba(255, 255, 255, 0.42) 18%,
+      rgba(255, 255, 255, 0.12) 36%,
+      rgba(255, 255, 255, 0) 62%
+    );
+  mix-blend-mode: screen;
+}
+
+.al-vtour-shell.is-teleporting .al-vtour-topbar,
+.al-vtour-shell.is-teleporting .al-vtour-scenes {
+  pointer-events: none;
+  opacity: 0.32;
+  transition: opacity 0.18s ease;
+}
+
+.al-vtour-canvas.is-teleporting {
+  cursor: wait;
+}
+
+.al-vtour-canvas.is-teleporting .al-vtour-hotspot {
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.72);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.al-vtour-shell.is-teleport-departing .al-vtour-css-panorama,
+.al-vtour-shell.is-teleport-departing .al-vtour-panorama-image {
+  animation: al-vtour-teleport-depart 0.46s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.al-vtour-shell.is-teleport-arriving .al-vtour-css-panorama,
+.al-vtour-shell.is-teleport-arriving .al-vtour-panorama-image {
+  animation: al-vtour-teleport-arrive 0.56s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.al-vtour-shell.is-teleport-departing .al-vtour-teleport-rush {
+  animation: al-vtour-teleport-rush-out 0.46s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.al-vtour-shell.is-teleport-arriving .al-vtour-teleport-rush {
+  animation: al-vtour-teleport-rush-in 0.56s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.al-vtour-shell.is-teleport-departing .al-vtour-teleport-flash {
+  animation: al-vtour-teleport-flash-out 0.46s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.al-vtour-shell.is-teleport-arriving .al-vtour-teleport-flash {
+  animation: al-vtour-teleport-flash-in 0.56s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes al-vtour-teleport-depart {
+  0% {
+    filter: blur(0) brightness(1) saturate(1);
+    transform: translateZ(0) scale(1);
+  }
+  58% {
+    filter: blur(2px) brightness(1.08) saturate(1.08);
+    transform: translateZ(0) scale(1.08);
+  }
+  100% {
+    filter: blur(9px) brightness(1.24) saturate(1.12);
+    transform: translateZ(0) scale(1.23);
+  }
+}
+
+@keyframes al-vtour-teleport-arrive {
+  0% {
+    filter: blur(10px) brightness(1.18) saturate(1.1);
+    transform: translateZ(0) scale(1.16);
+  }
+  70% {
+    filter: blur(1.4px) brightness(1.06) saturate(1.05);
+    transform: translateZ(0) scale(1.015);
+  }
+  100% {
+    filter: blur(0) brightness(1) saturate(1);
+    transform: translateZ(0) scale(1);
+  }
+}
+
+@keyframes al-vtour-teleport-rush-out {
+  0% {
+    opacity: 0;
+    transform: scale(0.72) rotate(0deg);
+  }
+  35% {
+    opacity: 0.72;
+  }
+  100% {
+    opacity: 0.95;
+    transform: scale(1.9) rotate(18deg);
+  }
+}
+
+@keyframes al-vtour-teleport-rush-in {
+  0% {
+    opacity: 0.82;
+    transform: scale(1.85) rotate(18deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9) rotate(28deg);
+  }
+}
+
+@keyframes al-vtour-teleport-flash-out {
+  0% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  54% {
+    opacity: 0.62;
+  }
+  100% {
+    opacity: 0.84;
+    transform: scale(1.28);
+  }
+}
+
+@keyframes al-vtour-teleport-flash-in {
+  0% {
+    opacity: 0.76;
+    transform: scale(1.18);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
 }
 
 .al-vtour-topbar {
@@ -1386,47 +1553,28 @@ header .main-menu-wrapper .main-nav > li a i {
 
 .al-vtour-hotspot span {
   position: absolute;
-  inset: 4px;
+  inset: 9px;
   border-radius: 50%;
-  background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.98) 0 13%, rgba(255, 255, 255, 0.36) 14% 22%, rgba(255, 255, 255, 0) 23%),
-    radial-gradient(circle, rgba(255, 255, 255, 0.24) 0 42%, rgba(255, 255, 255, 0) 68%);
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.96);
   box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.94),
-    0 0 0 10px rgba(255, 255, 255, 0.16),
-    0 0 26px rgba(255, 255, 255, 0.88),
-    inset 0 0 18px rgba(255, 255, 255, 0.62);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+    0 0 22px rgba(255, 255, 255, 0.72),
+    inset 0 0 12px rgba(255, 255, 255, 0.28);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .al-vtour-hotspot::before,
 .al-vtour-hotspot::after {
-  position: absolute;
-  content: "";
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.al-vtour-hotspot::before {
-  inset: 13px;
-  border: 2px solid rgba(255, 255, 255, 0.96);
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.78);
-}
-
-.al-vtour-hotspot::after {
-  inset: 24px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.9);
+  display: none;
 }
 
 .al-vtour-hotspot:hover span,
 .al-vtour-hotspot:focus-visible span {
   transform: scale(1.08);
+  background: rgba(255, 255, 255, 0.16);
   box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 1),
-    0 0 0 13px rgba(255, 255, 255, 0.2),
-    0 0 34px rgba(255, 255, 255, 0.98),
-    inset 0 0 22px rgba(255, 255, 255, 0.7);
+    0 0 30px rgba(255, 255, 255, 0.9),
+    inset 0 0 14px rgba(255, 255, 255, 0.34);
 }
 
 .al-vtour-hotspot em {
