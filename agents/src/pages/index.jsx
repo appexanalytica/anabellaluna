@@ -39,6 +39,7 @@ export { default as Automatizacion } from './Automatizacion';
 export { default as FechasImportantes } from './FechasImportantes';
 export { default as EditorImagenes } from './EditorImagenes';
 export { default as Tasaciones } from './Tasaciones';
+export { default as ToursVirtuales } from './ToursVirtuales';
 export { default as RolesPermisos } from './RolesPermisos';
 export { default as Campanas } from './Campanas';
 export { default as EmailMarketing } from './EmailMarketing';

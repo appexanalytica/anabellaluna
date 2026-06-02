@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { Link, NavLink } from 'react-router-dom';
 import { MdSpaceDashboard, MdOutlineCancel } from 'react-icons/md';
-import { FaUsers, FaRegCalendarAlt, FaDollarSign, FaChartBar, FaPlug, FaEnvelope, FaTrophy, FaBuilding, FaRobot, FaFileAlt, FaMagic, FaImage, FaBalanceScale } from 'react-icons/fa';
+import { FaUsers, FaRegCalendarAlt, FaDollarSign, FaChartBar, FaPlug, FaEnvelope, FaTrophy, FaBuilding, FaRobot, FaFileAlt, FaMagic, FaImage, FaBalanceScale, FaVrCardboard } from 'react-icons/fa';
 
 import { useStateContext } from '../contexts/ContextProvider';
 import { APP_COMMIT_COUNT, APP_VERSION } from '../config/appVersion';
@@ -19,6 +19,7 @@ const menuItems = [
   { name: 'Integraciones', path: '/crm/integraciones', icon: <FaPlug /> },
   { name: 'Archivos', path: '/crm/archivos', icon: <FaFileAlt /> },
   { name: 'Editor Imágenes', path: '/crm/editor-imagenes', icon: <FaImage /> },
+  { name: 'Tours 360', path: '/crm/tours-virtuales', icon: <FaVrCardboard /> },
   { name: 'Tasaciones', path: '/crm/tasaciones', icon: <FaBalanceScale /> },
   { name: 'Plantillas', path: '/crm/plantillas', icon: <FaMagic /> },
   { name: 'Reportes', path: '/crm/reportes', icon: <FaChartBar /> },

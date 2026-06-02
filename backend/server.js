@@ -117,6 +117,7 @@ const mercadoLibreRoutes = require('./routes/mercadolibre');
 const marketingAIRoutes = require('./routes/marketing-ai/index');
 const aiChatRoutes = require('./routes/ai-chat');
 const adminAIConfigRoutes = require('./routes/admin/ai-config');
+const virtualToursRoutes = require('./modules/tours/routes');
 
 const { buildPropertyOGRouter } = require('./openGraph');
 const { initSocket } = require('./socket');
@@ -230,6 +231,8 @@ app.use('/auth', authRouter);
 
 app.use('/auth/2fa', twoFactorRouter);
 
+app.use('/public/tours', virtualToursRoutes.publicRouter);
+
 app.use('/public', publicRoutes);
 
 app.use('/audit', auditRoutes);
@@ -271,6 +274,8 @@ app.use('/crm/automations', automationsRoutes);
 app.use('/crm/fechas-importantes', fechasImportantesRoutes);
 
 app.use('/crm/client-interactions', clientInteractionsRoutes);
+
+app.use('/crm/tours', virtualToursRoutes.crmRouter);
 
 app.use('/crm/stats', dashboardStatsRoutes);
 

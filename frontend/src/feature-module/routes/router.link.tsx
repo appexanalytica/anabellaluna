@@ -53,6 +53,7 @@ import UserCreateForm from "../../components/UserCreateForm";
 import RequireAuth from "../../core/auth/RequireAuth";
 import PropiedadRedirect from "../components/propiedad-redirect/PropiedadRedirect";
 import PropiedadesPage from "../components/propiedades-page/propiedadesPage";
+import VirtualTourEmbed from "../components/virtual-tour/VirtualTourEmbed";
 
 const routes = all_routes;
 
@@ -84,6 +85,12 @@ export const publicRoutes = [
     path: "/create-user",
     element: <UserCreateForm />,
     meta_title: "Crear Usuario CRM",
+    route: Route,
+  },
+  {
+    path: "/tour/:slug",
+    element: <VirtualTourEmbed />,
+    meta_title: "Recorrido Virtual",
     route: Route,
   },
   {

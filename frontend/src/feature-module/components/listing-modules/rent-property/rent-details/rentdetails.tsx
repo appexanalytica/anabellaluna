@@ -11,6 +11,7 @@ import RentRightForm from "./rentRightForm";
 import publicService, { type PropertyDetail } from "../../../../../services/publicService";
 import { buildHeroBackground, getAccentColor, heroTextColorClass, heroMutedColor, resolveMediaUrl } from "../../common/funnelUtils";
 import { VideoOverlay, VideoSection } from "../../common/VideoOverlay";
+import VirtualTourViewer from "../../../virtual-tour/VirtualTourViewer";
 import {
   scrollToElementForBrowser,
   useIosSafariClass,
@@ -637,6 +638,13 @@ const RentDetails = () => {
 
               {/* ── BLOCK: VIDEO TOUR ───────────────────────────────────────── */}
               <VideoSection videoUrls={videoUrls} accentColor={accentColor} SectionHeader={SectionHeader} />
+
+              {property.id && (
+                <div className="mb-5">
+                  <SectionHeader title="Recorrido virtual 360°" accent={accentColor} />
+                  <VirtualTourViewer propertyId={property.id} height={620} />
+                </div>
+              )}
 
               {property.location?.lat && property.location?.lng && (
                 <div className="mb-5">

@@ -4,6 +4,7 @@ export interface PropertyCard {
   id: string;
   slug: string;
   title: string;
+  description?: string;
   type?: string;
   operation?: 'rent' | 'buy' | '';
   featured?: boolean;
@@ -67,6 +68,71 @@ export interface PropertyCard {
   };
 }
 
+export interface VirtualTourHotspot {
+  id: string;
+  type: 'navigation' | 'info' | 'multimedia' | 'cta' | 'custom';
+  yaw: number;
+  pitch: number;
+  targetSceneId?: string;
+  label?: string;
+  payload?: Record<string, any>;
+  metadata?: Record<string, any>;
+}
+
+export interface VirtualTourScene {
+  id: string;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  thumbnailUrl?: string;
+  previewUrl?: string;
+  tilesPath?: string;
+  tileManifest?: {
+    type?: string;
+    source?: string;
+    fallbackSource?: string;
+    width?: number;
+    height?: number;
+    tileSize?: number;
+    multiResolution?: boolean;
+    generator?: string;
+  } | null;
+  order?: number;
+  isInitial?: boolean;
+  initialView?: {
+    yaw?: number;
+    pitch?: number;
+    fov?: number;
+  };
+  hotspots: VirtualTourHotspot[];
+  metadata?: Record<string, any>;
+}
+
+export interface VirtualTour {
+  id: string;
+  propertyId: string;
+  organizationId?: string;
+  createdBy?: string;
+  agenteId?: string;
+  title: string;
+  slug: string;
+  published: boolean;
+  settings?: {
+    theme?: string;
+    autorotate?: boolean;
+    gyroscope?: boolean;
+    fullscreen?: boolean;
+    showSceneNavigator?: boolean;
+    brandColor?: string;
+    initialSceneId?: string;
+  };
+  metadata?: Record<string, any>;
+  scenes: VirtualTourScene[];
+  createdAt?: string;
+  updatedAt?: string;
+  publishedAt?: string;
+}
+
 export interface PropertyDetail extends PropertyCard {
   description?: string;
   galleryUrls?: string[];
@@ -78,6 +144,7 @@ export interface PropertyDetail extends PropertyCard {
   trending?: boolean;
   visitCount?: number;
   funnelSettings?: import('../feature-module/components/listing-modules/common/funnelSettings').FunnelSettings | null;
+  virtualTour?: VirtualTour | null;
 }
 
 export interface BookingContact {
@@ -133,6 +200,14 @@ export const publicService = {
   getPropertyBySlug: async (slug: string, token?: string) => {
     const qs = token ? `?token=${encodeURIComponent(token)}` : '';
     return api.get(`/public/properties/${encodeURIComponent(slug)}${qs}`) as Promise<{ item: PropertyDetail }>;
+  },
+
+  getVirtualTour: async (slugOrId: string) => {
+    return api.get(`/public/tours/${encodeURIComponent(slugOrId)}`) as Promise<VirtualTour>;
+  },
+
+  getVirtualTourByProperty: async (propertyId: string) => {
+    return api.get(`/public/tours/property/${encodeURIComponent(propertyId)}`) as Promise<VirtualTour>;
   },
 
   createBookingRequest: async (contact: BookingContact) => {

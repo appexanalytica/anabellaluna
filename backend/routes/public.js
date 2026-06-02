@@ -26,6 +26,8 @@ const FAQ = require('../models/FAQ');
 const GlobalConfig = require('../models/GlobalConfig');
 const { triggerFollowUpAutomation } = require('../services/automationScheduler');
 const { getOGImageBuffer } = require('../services/ogImage');
+const Tour = require('../modules/tours/Tour');
+const { serializeTour } = require('../modules/tours/routes');
 
 const router = express.Router();
 
@@ -109,6 +111,7 @@ function mapPropertyCard(prop, agent, coverUrl) {
     id: String(prop._id),
     slug: prop.slug || String(prop._id),
     title: prop.title || meta.titulo || '',
+    description: prop.description || meta.descripcion || meta.description || '',
     type: meta.tipo || '',
     operation: mapOperation(meta.operacion),
     featured: !!(prop.featured != null ? prop.featured : meta.featured),
@@ -590,6 +593,9 @@ router.get('/properties/:slug', async (req, res) => {
     }
     if (!coverUrl) coverUrl = galleryUrls[0] || '';
 
+    const publishedTour = await Tour.findOne({ propertyId: String(prop._id), published: true }).sort({ publishedAt: -1, updatedAt: -1 });
+    const virtualTour = publishedTour ? await serializeTour(publishedTour) : null;
+
     const item = {
       ...mapPropertyCard(prop, agent, coverUrl),
       description: prop.description || (prop.metadata && prop.metadata.descripcion) || '',
@@ -613,6 +619,7 @@ router.get('/properties/:slug', async (req, res) => {
         return urls.filter(Boolean);
       })(),
       funnelSettings: (prop.metadata && prop.metadata.funnelSettings) || null,
+      virtualTour,
     };
 
     return res.json({ item });

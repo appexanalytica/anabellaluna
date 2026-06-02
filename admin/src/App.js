@@ -5,7 +5,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import { Navbar, Footer, Sidebar, ThemeSettings, OnboardingTutorial } from './components';
-import { Ecommerce, Orders, Calendar, Employees, Stacked, Pyramid, Customers, Kanban, Line, Area, Bar, Pie, Financial, ColorPicker, ColorMapping, Editor, DashboardEjecutivo, Propiedades, ClientesCRM, Agentes, Citas, Ventas, Documentos, Plantillas, Reportes, Integraciones, Configuracion, Workflows, Automatizacion, RolesPermisos, Campanas, EmailMarketing, AnalyticsMarketing, MiPerfil, Recompensas, Mensajeria, EditorImagenes, Tasaciones } from './pages';
+import { Ecommerce, Orders, Calendar, Employees, Stacked, Pyramid, Customers, Kanban, Line, Area, Bar, Pie, Financial, ColorPicker, ColorMapping, Editor, DashboardEjecutivo, Propiedades, ClientesCRM, Agentes, Citas, Ventas, Documentos, Plantillas, Reportes, Integraciones, Configuracion, Workflows, Automatizacion, RolesPermisos, Campanas, EmailMarketing, AnalyticsMarketing, MiPerfil, Recompensas, Mensajeria, EditorImagenes, Tasaciones, ToursVirtuales } from './pages';
 import Seguridad from './pages/Seguridad';
 import MarketingAI from './pages/MarketingAI';
 import AIProviders from './pages/AIProviders';
@@ -414,6 +414,7 @@ const App = () => {
                 <Route path="/recompensas" element={<Recompensas />} />
                 <Route path="/mensajeria" element={<Mensajeria />} />
                 <Route path="/tasaciones" element={<Tasaciones />} />
+                <Route path="/tours-virtuales" element={<ToursVirtuales />} />
 
                 {/* pages  */}
                 <Route path="/orders" element={<Orders />} />
