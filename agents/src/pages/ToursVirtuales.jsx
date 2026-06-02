@@ -23,6 +23,9 @@ const getSceneKey = (scene) => {
 };
 
 const TWO_PI = Math.PI * 2;
+const DEFAULT_FOV = Math.PI / 2;
+const MIN_FOV = 0.55;
+const MAX_FOV = 2.1;
 
 const normalizeAngle = (angle) => {
   let value = (angle + Math.PI) % TWO_PI;
@@ -39,14 +42,28 @@ const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 const isTourControlTarget = (target) => !!target?.closest?.('[data-tour-control="true"]');
 
+const getPointerDistance = (pointers) => {
+  const [first, second] = Array.from(pointers.values());
+  if (!first || !second) return 0;
+  return Math.hypot(first.x - second.x, first.y - second.y);
+};
+
+const haloRingStyle = {
+  boxShadow: '0 0 0 2px rgba(255,255,255,0.95), 0 0 0 10px rgba(255,255,255,0.16), 0 0 28px rgba(255,255,255,0.9), inset 0 0 18px rgba(255,255,255,0.62)',
+};
+
+const haloDotStyle = {
+  boxShadow: '0 0 18px rgba(255,255,255,0.9)',
+};
+
 const getSceneImageUrl = (scene) => resolveUrl(
-  scene?.previewUrl || scene?.tileManifest?.source || scene?.imageUrl || scene?.tileManifest?.fallbackSource || ''
+  scene?.imageUrl || scene?.tileManifest?.source || scene?.tileManifest?.fallbackSource || scene?.previewUrl || ''
 );
 
 const getInitialView = (scene) => ({
   yaw: getNumber(scene?.initialView?.yaw, 0),
   pitch: clamp(getNumber(scene?.initialView?.pitch, 0), -1.2, 1.2),
-  fov: clamp(getNumber(scene?.initialView?.fov, Math.PI / 2), 0.45, Math.PI),
+  fov: clamp(getNumber(scene?.initialView?.fov, DEFAULT_FOV), MIN_FOV, MAX_FOV),
 });
 
 const getHotspotScreenPosition = (yaw, pitch, view) => {
@@ -71,11 +88,13 @@ const getHotspotCoordinatesFromPointer = (event, view) => {
 const ToursVirtuales = () => {
   const canvasRef = useRef(null);
   const dragRef = useRef({ active: false, x: 0, y: 0, yaw: 0, pitch: 0 });
+  const pointersRef = useRef(new Map());
+  const pinchRef = useRef({ active: false, distance: 0, fov: DEFAULT_FOV });
   const [properties, setProperties] = useState([]);
   const [tours, setTours] = useState([]);
   const [selectedTourId, setSelectedTourId] = useState('');
   const [selectedSceneId, setSelectedSceneId] = useState('');
-  const [view, setView] = useState({ yaw: 0, pitch: 0, fov: Math.PI / 2 });
+  const [view, setView] = useState({ yaw: 0, pitch: 0, fov: DEFAULT_FOV });
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -120,6 +139,8 @@ const ToursVirtuales = () => {
     if (!selectedScene) return;
     setView(getInitialView(selectedScene));
     dragRef.current.active = false;
+    pointersRef.current.clear();
+    pinchRef.current.active = false;
     setDragging(false);
     setPlacingHotspot(false);
     setDraftPinVisible(false);
@@ -215,22 +236,50 @@ const ToursVirtuales = () => {
   const startDrag = (event) => {
     if (!sceneImageUrl || placingHotspot || isTourControlTarget(event.target)) return;
     event.currentTarget.setPointerCapture(event.pointerId);
+    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (pointersRef.current.size >= 2) {
+      pinchRef.current = {
+        active: true,
+        distance: Math.max(1, getPointerDistance(pointersRef.current)),
+        fov: view.fov,
+      };
+      dragRef.current.active = false;
+      setDragging(false);
+      return;
+    }
+
     dragRef.current = { active: true, x: event.clientX, y: event.clientY, yaw: view.yaw, pitch: view.pitch };
     setDragging(true);
   };
 
   const moveDrag = (event) => {
+    if (pointersRef.current.has(event.pointerId)) {
+      pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    }
+
+    if (pinchRef.current.active && pointersRef.current.size >= 2) {
+      event.preventDefault();
+      const distance = Math.max(1, getPointerDistance(pointersRef.current));
+      const nextFov = pinchRef.current.fov * (pinchRef.current.distance / distance);
+      setView((current) => ({ ...current, fov: clamp(nextFov, MIN_FOV, MAX_FOV) }));
+      return;
+    }
+
     if (!dragRef.current.active) return;
+    event.preventDefault();
     const dx = event.clientX - dragRef.current.x;
     const dy = event.clientY - dragRef.current.y;
     setView((current) => ({
       ...current,
       yaw: normalizeAngle(dragRef.current.yaw - dx * 0.0055),
-      pitch: clamp(dragRef.current.pitch - dy * 0.0045, -1.2, 1.2),
+      pitch: clamp(dragRef.current.pitch + dy * 0.0045, -1.2, 1.2),
     }));
   };
 
   const stopDrag = (event) => {
+    pointersRef.current.delete(event.pointerId);
+    if (pointersRef.current.size < 2) pinchRef.current.active = false;
     dragRef.current.active = false;
     setDragging(false);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
@@ -239,10 +288,9 @@ const ToursVirtuales = () => {
   const zoomPreview = (event) => {
     if (!sceneImageUrl) return;
     event.preventDefault();
-    setView((current) => ({
-      ...current,
-      fov: clamp(current.fov + event.deltaY * 0.001, 0.45, Math.PI),
-    }));
+    const modeMultiplier = event.deltaMode === 1 ? 16 : 1;
+    const delta = event.deltaY * modeMultiplier * 0.001;
+    setView((current) => ({ ...current, fov: clamp(current.fov + delta, MIN_FOV, MAX_FOV) }));
   };
 
   const placeHotspotFromCanvas = (event) => {
@@ -333,14 +381,12 @@ const ToursVirtuales = () => {
               )}
               {draftPinPosition?.visible && (
                 <div
-                  className="absolute z-30 flex -translate-x-1/2 -translate-y-full flex-col items-center text-emerald-200 pointer-events-none"
+                  className="absolute z-30 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none"
                   style={{ left: `${draftPinPosition.left}%`, top: `${draftPinPosition.top}%` }}
                 >
-                  <div className="inline-flex items-center gap-1 rounded-full border-2 border-white bg-emerald-300 px-3 py-2 text-xs font-black text-gray-950 shadow-lg">
-                    <FiMapPin /> Nuevo pin
-                  </div>
-                  <div className="h-5 w-0.5 bg-emerald-300" />
-                  <div className="h-3 w-3 rounded-full border-2 border-white bg-emerald-300" />
+                  <span className="absolute inset-1 rounded-full bg-white/20" style={haloRingStyle} />
+                  <span className="absolute rounded-full border-2 border-white" style={{ inset: 13, boxShadow: '0 0 20px rgba(255,255,255,0.78)' }} />
+                  <span className="absolute rounded-full bg-white" style={{ inset: 24, ...haloDotStyle }} />
                 </div>
               )}
               {visibleHotspots.map(({ hotspot, left, top }) => (
@@ -348,14 +394,18 @@ const ToursVirtuales = () => {
                   key={hotspot.id}
                   type="button"
                   data-tour-control="true"
-                  className="absolute z-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-yellow-300 text-gray-950 px-3 py-2 text-xs font-black shadow-lg"
+                  className="absolute z-20 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full border-0 bg-transparent p-0"
+                  aria-label={hotspot.label || 'Hotspot'}
+                  title={hotspot.label || 'Hotspot'}
                   style={{ left: `${left}%`, top: `${top}%` }}
                   onClick={() => {
                     if (placingHotspot) return;
                     if (hotspot.targetSceneId) setSelectedSceneId(hotspot.targetSceneId);
                   }}
                 >
-                  {hotspot.label || 'Hotspot'}
+                  <span className="absolute inset-1 rounded-full bg-white/20 transition-transform hover:scale-105" style={haloRingStyle} />
+                  <span className="absolute rounded-full border-2 border-white" style={{ inset: 13, boxShadow: '0 0 20px rgba(255,255,255,0.78)' }} />
+                  <span className="absolute rounded-full bg-white" style={{ inset: 24, ...haloDotStyle }} />
                 </button>
               ))}
             </div>

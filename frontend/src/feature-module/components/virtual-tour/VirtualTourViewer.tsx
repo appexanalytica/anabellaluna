@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
+import * as THREE from "three";
 import publicService, { type VirtualTour, type VirtualTourScene } from "../../../services/publicService";
 import { resolveMediaUrl } from "../listing-modules/common/funnelUtils";
 
@@ -16,15 +18,28 @@ type ViewState = {
 };
 
 const TWO_PI = Math.PI * 2;
-const DEFAULT_VIEW: ViewState = { yaw: 0, pitch: 0, fov: Math.PI / 2 };
+const DEFAULT_FOV = Math.PI / 2;
+const MIN_FOV = 0.55;
+const MAX_FOV = 2.1;
+const SOFT_SMOOTHING_MS = 180;
+const DEFAULT_VIEW: ViewState = { yaw: 0, pitch: 0, fov: DEFAULT_FOV };
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+const radiansToDegrees = (value: number) => (value * 180) / Math.PI;
 
 const normalizeAngle = (angle: number) => {
   let value = (angle + Math.PI) % TWO_PI;
   if (value < 0) value += TWO_PI;
   return value - Math.PI;
 };
+
+const shortestAngleDelta = (from: number, to: number) => normalizeAngle(to - from);
+
+const cloneView = (view: ViewState): ViewState => ({
+  yaw: normalizeAngle(view.yaw),
+  pitch: clamp(view.pitch, -1.2, 1.2),
+  fov: clamp(getNumber(view.fov, DEFAULT_FOV), MIN_FOV, MAX_FOV),
+});
 
 const getNumber = (value: unknown, fallback: number) => {
   const n = Number(value);
@@ -38,15 +53,15 @@ const isTourControlTarget = (target: EventTarget | null) => {
 const getInitialView = (scene?: VirtualTourScene | null): ViewState => ({
   yaw: getNumber(scene?.initialView?.yaw, DEFAULT_VIEW.yaw),
   pitch: clamp(getNumber(scene?.initialView?.pitch, DEFAULT_VIEW.pitch), -1.2, 1.2),
-  fov: clamp(getNumber(scene?.initialView?.fov, DEFAULT_VIEW.fov), 0.45, Math.PI),
+  fov: clamp(getNumber(scene?.initialView?.fov, DEFAULT_VIEW.fov), MIN_FOV, MAX_FOV),
 });
 
 const getSceneSourceCandidates = (scene: VirtualTourScene) => {
   const candidates = [
-    scene.previewUrl,
-    scene.tileManifest?.source,
     scene.imageUrl,
+    scene.tileManifest?.source,
     scene.tileManifest?.fallbackSource,
+    scene.previewUrl,
   ].map(resolveMediaUrl).filter(Boolean);
 
   return Array.from(new Set(candidates));
@@ -83,6 +98,26 @@ const loadSceneAsset = async (scene: VirtualTourScene): Promise<LoadedScene | nu
   return null;
 };
 
+const getTextureSize = (texture: THREE.Texture) => {
+  const image = texture.image as {
+    width?: number;
+    height?: number;
+    naturalWidth?: number;
+    naturalHeight?: number;
+  } | null;
+
+  return {
+    width: Number(image?.naturalWidth || image?.width || 0),
+    height: Number(image?.naturalHeight || image?.height || 0),
+  };
+};
+
+const getPointerDistance = (pointers: Map<number, { x: number; y: number }>) => {
+  const [first, second] = Array.from(pointers.values());
+  if (!first || !second) return 0;
+  return Math.hypot(first.x - second.x, first.y - second.y);
+};
+
 type Props = {
   tour?: VirtualTour | null;
   propertyId?: string;
@@ -92,8 +127,21 @@ type Props = {
 
 const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embedded = false }: Props) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const webglRef = useRef<HTMLDivElement | null>(null);
   const sceneSourceRef = useRef<Record<string, string>>({});
   const dragRef = useRef({ active: false, x: 0, y: 0, yaw: 0, pitch: 0 });
+  const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinchRef = useRef({ active: false, distance: 0, fov: DEFAULT_VIEW.fov });
+  const renderViewRef = useRef<ViewState>(cloneView(DEFAULT_VIEW));
+  const targetViewRef = useRef<ViewState>(cloneView(DEFAULT_VIEW));
+  const autorotateActiveRef = useRef(false);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const materialRef = useRef<THREE.MeshBasicMaterial | null>(null);
+  const textureRef = useRef<THREE.Texture | null>(null);
+  const animationRef = useRef(0);
+  const previousFrameRef = useRef(0);
+  const lastHotspotSyncRef = useRef(0);
   const [tour, setTour] = useState<VirtualTour | null>(providedTour || null);
   const [loadedScenes, setLoadedScenes] = useState<LoadedScene[]>([]);
   const [activeSceneId, setActiveSceneId] = useState("");
@@ -103,6 +151,7 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
   const [autorotateEnabled, setAutorotateEnabled] = useState(true);
   const [fallbackImageUrl, setFallbackImageUrl] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [isWebglReady, setIsWebglReady] = useState(false);
 
   useEffect(() => {
     setTour(providedTour || null);
@@ -164,11 +213,14 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
 
         const nextSceneSources = Object.fromEntries(nextLoadedScenes.map((item) => [item.scene.id, item.sourceUrl]));
         const startScene = nextLoadedScenes.find((item) => item.scene.id === initialScene?.id) || nextLoadedScenes[0];
+        const startView = cloneView(getInitialView(startScene.scene));
 
         sceneSourceRef.current = nextSceneSources;
+        renderViewRef.current = startView;
+        targetViewRef.current = startView;
         setLoadedScenes(nextLoadedScenes);
         setActiveSceneId(startScene.scene.id);
-        setCurrentView(getInitialView(startScene.scene));
+        setCurrentView(startView);
         setFallbackImageUrl(startScene.sourceUrl);
       } catch (err: any) {
         if (!cancelled) setError(err?.message || "No se pudo iniciar el recorrido 360°");
@@ -189,24 +241,195 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
     return loadedScenes.find((item) => item.scene.id === activeSceneId) || loadedScenes[0] || null;
   }, [activeSceneId, loadedScenes]);
 
+  const hasRenderableTour = !!tour && orderedScenes.length > 0;
   const activeScene = activeLoadedScene?.scene || initialScene || orderedScenes[0] || null;
   const panoramaUrl = activeLoadedScene?.sourceUrl || fallbackImageUrl;
+  const textureSourceCandidates = useMemo(() => {
+    if (activeScene) return getSceneSourceCandidates(activeScene);
+    return panoramaUrl ? [panoramaUrl] : [];
+  }, [activeScene, panoramaUrl]);
 
   useEffect(() => {
-    if (!tour?.settings?.autorotate || !autorotateEnabled || !activeScene) return undefined;
+    autorotateActiveRef.current = !!(tour?.settings?.autorotate && autorotateEnabled && activeScene);
+  }, [activeScene, autorotateEnabled, tour?.settings?.autorotate]);
 
-    let frame = 0;
-    let previous = performance.now();
-    const tick = (now: number) => {
-      const delta = now - previous;
-      previous = now;
-      setCurrentView((view) => ({ ...view, yaw: normalizeAngle(view.yaw + delta * 0.00008) }));
-      frame = requestAnimationFrame(tick);
+  useEffect(() => {
+    if (!hasRenderableTour) return undefined;
+
+    const host = webglRef.current;
+    if (!host) return undefined;
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: "high-performance",
+    });
+    renderer.setClearColor(0x020617, 0);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.5));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    host.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(radiansToDegrees(DEFAULT_VIEW.fov), 1, 0.1, 1100);
+    const geometry = new THREE.SphereGeometry(500, 128, 64);
+    geometry.scale(-1, 1, 1);
+    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    rendererRef.current = renderer;
+    cameraRef.current = camera;
+    materialRef.current = material;
+
+    const resize = () => {
+      const rect = host.getBoundingClientRect();
+      const width = Math.max(1, Math.round(rect.width));
+      const height = Math.max(1, Math.round(rect.height));
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
     };
 
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [activeScene, autorotateEnabled, tour?.settings?.autorotate]);
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(host);
+    window.addEventListener("resize", resize);
+    resize();
+
+    const animate = (now: number) => {
+      const previous = previousFrameRef.current || now;
+      const delta = Math.min(64, Math.max(1, now - previous));
+      previousFrameRef.current = now;
+
+      const targetView = targetViewRef.current;
+      if (autorotateActiveRef.current && !dragRef.current.active) {
+        targetView.yaw = normalizeAngle(targetView.yaw + delta * 0.00008);
+      }
+
+      const renderView = renderViewRef.current;
+      const smoothing = 1 - Math.exp(-delta / SOFT_SMOOTHING_MS);
+      renderView.yaw = normalizeAngle(renderView.yaw + shortestAngleDelta(renderView.yaw, targetView.yaw) * smoothing);
+      renderView.pitch += (targetView.pitch - renderView.pitch) * smoothing;
+      renderView.pitch = clamp(renderView.pitch, -1.2, 1.2);
+      renderView.fov += (targetView.fov - renderView.fov) * smoothing;
+      renderView.fov = clamp(renderView.fov, MIN_FOV, MAX_FOV);
+      camera.fov = radiansToDegrees(renderView.fov);
+      camera.updateProjectionMatrix();
+
+      const phi = Math.PI / 2 - renderView.pitch;
+      const theta = renderView.yaw;
+      camera.lookAt(
+        Math.sin(phi) * Math.cos(theta),
+        Math.cos(phi),
+        Math.sin(phi) * Math.sin(theta),
+      );
+      renderer.render(scene, camera);
+
+      if (now - lastHotspotSyncRef.current > 50) {
+        lastHotspotSyncRef.current = now;
+        setCurrentView({ ...renderView });
+      }
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationRef.current);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", resize);
+      textureRef.current?.dispose();
+      textureRef.current = null;
+      material.dispose();
+      geometry.dispose();
+      renderer.dispose();
+      renderer.domElement.remove();
+      rendererRef.current = null;
+      cameraRef.current = null;
+      materialRef.current = null;
+      pointersRef.current.clear();
+      pinchRef.current.active = false;
+    };
+  }, [hasRenderableTour]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return undefined;
+
+    const onWheelZoom = (event: WheelEvent) => {
+      if (isTourControlTarget(event.target)) return;
+      event.preventDefault();
+      const modeMultiplier = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : 1;
+      const delta = event.deltaY * modeMultiplier * 0.001;
+      const nextView = cloneView({ ...targetViewRef.current, fov: targetViewRef.current.fov + delta });
+      targetViewRef.current = nextView;
+      setCurrentView(nextView);
+    };
+
+    el.addEventListener("wheel", onWheelZoom, { passive: false });
+    return () => el.removeEventListener("wheel", onWheelZoom);
+  }, [hasRenderableTour]);
+
+  useEffect(() => {
+    const renderer = rendererRef.current;
+    const material = materialRef.current;
+    if (!renderer || !material || !textureSourceCandidates.length) return undefined;
+
+    let cancelled = false;
+    const loader = new THREE.TextureLoader();
+    const maxTextureSize = renderer.capabilities.maxTextureSize || 4096;
+
+    loader.setCrossOrigin("anonymous");
+    setIsWebglReady(false);
+
+    const loadCandidate = (index: number) => {
+      const candidate = textureSourceCandidates[index];
+      if (!candidate) {
+        if (!cancelled) setError("No se pudo cargar la textura premium del panorama 360°");
+        return;
+      }
+
+      loader.load(
+        candidate,
+        (texture) => {
+          if (cancelled) {
+            texture.dispose();
+            return;
+          }
+
+          const { width, height } = getTextureSize(texture);
+          if ((width && width > maxTextureSize) || (height && height > maxTextureSize)) {
+            texture.dispose();
+            loadCandidate(index + 1);
+            return;
+          }
+
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.wrapS = THREE.RepeatWrapping;
+          texture.wrapT = THREE.ClampToEdgeWrapping;
+          texture.minFilter = THREE.LinearMipmapLinearFilter;
+          texture.magFilter = THREE.LinearFilter;
+          texture.anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
+          texture.needsUpdate = true;
+
+          textureRef.current?.dispose();
+          textureRef.current = texture;
+          material.map = texture;
+          material.needsUpdate = true;
+          setError("");
+          setIsWebglReady(true);
+        },
+        undefined,
+        () => loadCandidate(index + 1),
+      );
+    };
+
+    loadCandidate(0);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [textureSourceCandidates]);
 
   const visibleHotspots = useMemo(() => {
     const hotspots = activeScene?.hotspots || [];
@@ -225,8 +448,11 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
   const switchScene = (sceneId: string) => {
     const loadedScene = loadedScenes.find((item) => item.scene.id === sceneId);
     if (!loadedScene) return;
+    const nextView = cloneView(getInitialView(loadedScene.scene));
     setActiveSceneId(sceneId);
-    setCurrentView(getInitialView(loadedScene.scene));
+    renderViewRef.current = nextView;
+    targetViewRef.current = nextView;
+    setCurrentView(nextView);
     setFallbackImageUrl(sceneSourceRef.current[sceneId] || loadedScene.sourceUrl);
   };
 
@@ -235,57 +461,81 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
     if (el?.requestFullscreen) el.requestFullscreen().catch(() => {});
   };
 
-  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!panoramaUrl || isTourControlTarget(event.target)) return;
+    event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
+    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (pointersRef.current.size >= 2) {
+      pinchRef.current = {
+        active: true,
+        distance: Math.max(1, getPointerDistance(pointersRef.current)),
+        fov: targetViewRef.current.fov,
+      };
+      dragRef.current.active = false;
+      setIsDragging(false);
+      if (tour?.settings?.autorotate) setAutorotateEnabled(false);
+      return;
+    }
+
+    const targetView = targetViewRef.current;
     dragRef.current = {
       active: true,
       x: event.clientX,
       y: event.clientY,
-      yaw: currentView.yaw,
-      pitch: currentView.pitch,
+      yaw: targetView.yaw,
+      pitch: targetView.pitch,
     };
     setIsDragging(true);
     if (tour?.settings?.autorotate) setAutorotateEnabled(false);
   };
 
-  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (pointersRef.current.has(event.pointerId)) {
+      pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    }
+
+    if (pinchRef.current.active && pointersRef.current.size >= 2) {
+      event.preventDefault();
+      const distance = Math.max(1, getPointerDistance(pointersRef.current));
+      const nextFov = pinchRef.current.fov * (pinchRef.current.distance / distance);
+      const nextView = cloneView({ ...targetViewRef.current, fov: nextFov });
+      targetViewRef.current = nextView;
+      setCurrentView(nextView);
+      return;
+    }
+
     if (!dragRef.current.active) return;
+    event.preventDefault();
     const dx = event.clientX - dragRef.current.x;
     const dy = event.clientY - dragRef.current.y;
-    setCurrentView((view) => ({
-      ...view,
+    const nextView = cloneView({
       yaw: normalizeAngle(dragRef.current.yaw - dx * 0.0055),
-      pitch: clamp(dragRef.current.pitch - dy * 0.0045, -1.2, 1.2),
-    }));
+      pitch: clamp(dragRef.current.pitch + dy * 0.0045, -1.2, 1.2),
+      fov: targetViewRef.current.fov,
+    });
+    targetViewRef.current = nextView;
+    setCurrentView(nextView);
   };
 
-  const stopDragging = (event: React.PointerEvent<HTMLDivElement>) => {
+  const stopDragging = (event: ReactPointerEvent<HTMLDivElement>) => {
+    pointersRef.current.delete(event.pointerId);
     dragRef.current.active = false;
+    if (pointersRef.current.size < 2) pinchRef.current.active = false;
     setIsDragging(false);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   };
-
-  const onWheel = (event: React.WheelEvent<HTMLDivElement>) => {
-    if (!panoramaUrl) return;
-    event.preventDefault();
-    setCurrentView((view) => ({
-      ...view,
-      fov: clamp(view.fov + event.deltaY * 0.001, 0.45, Math.PI),
-    }));
-  };
-
-  const backgroundScale = activeLoadedScene
-    ? clamp((TWO_PI / currentView.fov) * 100, 220, 900)
-    : 400;
-  const backgroundPositionX = ((normalizeAngle(currentView.yaw) + Math.PI) / TWO_PI) * 100;
-  const backgroundPositionY = 50 - clamp(currentView.pitch, -1.2, 1.2) * 28;
 
   if (isLoading && (!tour || !orderedScenes.length)) {
     return <div className="al-vtour-shell" style={{ height }}><div className="al-vtour-loading">Cargando recorrido 360°...</div></div>;
   }
 
   if (!tour || !orderedScenes.length) return null;
+
+  const fallbackBackgroundScale = Math.max(220, Math.min(900, (TWO_PI / currentView.fov) * 100));
+  const fallbackBackgroundPositionX = ((normalizeAngle(currentView.yaw) + Math.PI) / TWO_PI) * 100;
+  const fallbackBackgroundPositionY = 50 - clamp(currentView.pitch, -1.2, 1.2) * 28;
 
   return (
     <section className={`al-vtour-shell ${embedded ? "al-vtour-embedded" : ""}`} style={{ height }}>
@@ -300,18 +550,18 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
         onPointerMove={onPointerMove}
         onPointerUp={stopDragging}
         onPointerCancel={stopDragging}
-        onWheel={onWheel}
       >
         {panoramaUrl && (
           <div
-            className="al-vtour-panorama-image"
+            className="al-vtour-css-panorama"
             style={{
               backgroundImage: `url(${JSON.stringify(panoramaUrl)})`,
-              backgroundSize: `${backgroundScale}% auto`,
-              backgroundPosition: `${backgroundPositionX}% ${backgroundPositionY}%`,
+              backgroundSize: `${fallbackBackgroundScale}% auto`,
+              backgroundPosition: `${fallbackBackgroundPositionX}% ${fallbackBackgroundPositionY}%`,
             }}
           />
         )}
+        <div ref={webglRef} className={`al-vtour-panorama-image ${isWebglReady ? "is-ready" : ""}`} />
         <div className="al-vtour-gradient" />
         {visibleHotspots.map(({ hotspot, left, top }) => (
           <button
@@ -330,7 +580,7 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
               }
             }}
           >
-            <span>{hotspot.type === "navigation" ? "⌁" : "i"}</span>
+            <span aria-hidden="true" />
             {hotspot.label && <em>{hotspot.label}</em>}
           </button>
         ))}

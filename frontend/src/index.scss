@@ -1214,20 +1214,42 @@ header .main-menu-wrapper .main-nav > li a i {
   cursor: grabbing;
 }
 
-.al-vtour-panorama-image {
+.al-vtour-css-panorama {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background-color: #030712;
+  background-color: #020617;
   background-repeat: repeat-x;
   background-position: center;
+  pointer-events: none;
+  transform: translateZ(0);
   will-change: background-position;
+}
+
+.al-vtour-panorama-image {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background-color: transparent;
+  opacity: 0;
+  transform: translateZ(0);
+  transition: opacity 0.22s ease;
+}
+
+.al-vtour-panorama-image.is-ready {
+  opacity: 1;
+}
+
+.al-vtour-panorama-image canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .al-vtour-gradient {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 3;
   pointer-events: none;
   background:
     linear-gradient(180deg, rgba(3, 7, 18, 0.65) 0%, rgba(3, 7, 18, 0) 30%),
@@ -1347,42 +1369,90 @@ header .main-menu-wrapper .main-nav > li a i {
 
 .al-vtour-hotspot {
   position: absolute;
-  z-index: 3;
+  z-index: 4;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
   border: 0;
+  border-radius: 50%;
   background: transparent;
   color: #fff;
   cursor: pointer;
   transform: translate(-50%, -50%);
-  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.28));
+  filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.3));
 }
 
 .al-vtour-hotspot span {
-  display: inline-grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
+  position: absolute;
+  inset: 4px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 25%, #fff 0%, #f6d86a 34%, #d4af37 100%);
-  color: #111827;
-  font-size: 1.2rem;
-  font-weight: 900;
-  box-shadow: 0 0 0 8px rgba(212, 175, 55, 0.18);
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.98) 0 13%, rgba(255, 255, 255, 0.36) 14% 22%, rgba(255, 255, 255, 0) 23%),
+    radial-gradient(circle, rgba(255, 255, 255, 0.24) 0 42%, rgba(255, 255, 255, 0) 68%);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.94),
+    0 0 0 10px rgba(255, 255, 255, 0.16),
+    0 0 26px rgba(255, 255, 255, 0.88),
+    inset 0 0 18px rgba(255, 255, 255, 0.62);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.al-vtour-hotspot::before,
+.al-vtour-hotspot::after {
+  position: absolute;
+  content: "";
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.al-vtour-hotspot::before {
+  inset: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.96);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.78);
+}
+
+.al-vtour-hotspot::after {
+  inset: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.9);
+}
+
+.al-vtour-hotspot:hover span,
+.al-vtour-hotspot:focus-visible span {
+  transform: scale(1.08);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 1),
+    0 0 0 13px rgba(255, 255, 255, 0.2),
+    0 0 34px rgba(255, 255, 255, 0.98),
+    inset 0 0 22px rgba(255, 255, 255, 0.7);
 }
 
 .al-vtour-hotspot em {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  transform: translateX(-50%) translateY(-3px);
+  opacity: 0;
+  pointer-events: none;
   max-width: 180px;
   padding: 7px 10px;
   border-radius: 999px;
-  background: rgba(3, 7, 18, 0.68);
+  background: rgba(3, 7, 18, 0.74);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   font-size: 0.76rem;
   font-style: normal;
   font-weight: 800;
   white-space: nowrap;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.al-vtour-hotspot:hover em,
+.al-vtour-hotspot:focus-visible em {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
 }
 
 .al-vtour-loading,

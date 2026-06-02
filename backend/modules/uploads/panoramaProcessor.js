@@ -4,6 +4,13 @@ const minio = require('../../minio');
 
 const DEFAULT_TILE_SIZE = 512;
 
+const MIME_EXTENSION = {
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
+
 function sanitizeSegment(value) {
   return String(value || 'asset')
     .trim()
@@ -26,6 +33,15 @@ async function putBuffer(bucket, objectKey, buffer, contentType, cacheControl) {
     'Content-Type': contentType,
     'Cache-Control': cacheControl || 'public, max-age=31536000, immutable',
   });
+}
+
+function resolveImageExtension(file) {
+  const mimetype = String(file.mimetype || '').toLowerCase();
+  if (MIME_EXTENSION[mimetype]) return MIME_EXTENSION[mimetype];
+
+  const ext = String(path.extname(file.originalname || '') || '').toLowerCase().replace('.', '');
+  if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) return ext === 'jpeg' ? 'jpg' : ext;
+  return 'jpg';
 }
 
 async function processPanoramaUpload({ file, tourId, sceneId }) {
@@ -52,18 +68,13 @@ async function processPanoramaUpload({ file, tourId, sceneId }) {
   const bucket = resolveBucket();
   const safeTourId = sanitizeSegment(tourId);
   const safeSceneId = sanitizeSegment(sceneId);
-  const ext = String(path.extname(file.originalname || '') || '').toLowerCase() === '.webp' ? 'webp' : 'jpg';
+  const ext = resolveImageExtension(file);
   const basePrefix = `tours/${safeTourId}/${safeSceneId}`;
 
   const input = sharp(file.buffer, { limitInputPixels: false });
   const meta = await input.metadata();
   const width = Number(meta.width || 0);
   const height = Number(meta.height || 0);
-
-  const optimized = await sharp(file.buffer, { limitInputPixels: false })
-    .resize({ width: Math.min(width || 8192, 8192), withoutEnlargement: true })
-    .jpeg({ quality: 86, mozjpeg: true })
-    .toBuffer();
 
   const preview = await sharp(file.buffer, { limitInputPixels: false })
     .resize({ width: 2048, withoutEnlargement: true })
@@ -75,34 +86,35 @@ async function processPanoramaUpload({ file, tourId, sceneId }) {
     .webp({ quality: 72 })
     .toBuffer();
 
-  const optimizedMeta = await sharp(optimized, { limitInputPixels: false }).metadata();
   const previewMeta = await sharp(preview, { limitInputPixels: false }).metadata();
-  const optimizedWidth = Number(optimizedMeta.width || width || 0);
-  const optimizedHeight = Number(optimizedMeta.height || height || 0);
   const previewWidth = Number(previewMeta.width || width || 0);
   const previewHeight = Number(previewMeta.height || height || 0);
 
-  const originalKey = `${basePrefix}/preview.${ext}`;
+  const originalKey = `${basePrefix}/original.${ext}`;
   const previewKey = `${basePrefix}/preview-2048.jpg`;
   const thumbnailKey = `${basePrefix}/thumb.webp`;
   const tilesPrefix = `${basePrefix}/tiles`;
+  const originalContentType = MIME_EXTENSION[String(file.mimetype || '').toLowerCase()]
+    ? String(file.mimetype || '').toLowerCase().replace('image/jpg', 'image/jpeg')
+    : `image/${ext === 'jpg' ? 'jpeg' : ext}`;
 
-  await putBuffer(bucket, originalKey, optimized, ext === 'webp' ? 'image/webp' : 'image/jpeg');
+  await putBuffer(bucket, originalKey, file.buffer, originalContentType);
   await putBuffer(bucket, previewKey, preview, 'image/jpeg');
   await putBuffer(bucket, thumbnailKey, thumbnail, 'image/webp');
 
   const tileManifest = {
     type: 'equirectangular',
-    source: objectUrl(previewKey),
-    fallbackSource: objectUrl(originalKey),
-    width: previewWidth,
-    height: previewHeight,
-    fallbackWidth: optimizedWidth,
-    fallbackHeight: optimizedHeight,
+    source: objectUrl(originalKey),
+    fallbackSource: objectUrl(previewKey),
+    width,
+    height,
+    previewWidth,
+    previewHeight,
     tileSize: DEFAULT_TILE_SIZE,
     multiResolution: false,
-    generator: 'sharp-fallback',
+    generator: 'original-preserved',
     readyForMarzipanoTools: true,
+    originalPreserved: true,
   };
 
   return {
@@ -119,13 +131,14 @@ async function processPanoramaUpload({ file, tourId, sceneId }) {
     metadata: {
       originalName: file.originalname || '',
       mimetype: file.mimetype || '',
-      size: file.size || optimized.length,
+      size: file.size || file.buffer.length,
       width,
       height,
       previewWidth,
       previewHeight,
-      optimizedWidth,
-      optimizedHeight,
+      originalWidth: width,
+      originalHeight: height,
+      originalPreserved: true,
       processedAt: new Date().toISOString(),
       source: 'virtual_tours_upload',
     },
