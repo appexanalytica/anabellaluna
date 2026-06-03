@@ -141,7 +141,7 @@ async function syncAdminCredentials() {
 
   const adminPassword = process.env.ADMIN_PASSWORD;
 
-  
+
 
   if (!adminUsername || !adminPassword) {
 
@@ -151,7 +151,7 @@ async function syncAdminCredentials() {
 
   }
 
-  
+
 
   try {
 

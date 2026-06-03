@@ -25,6 +25,7 @@ const SOFT_SMOOTHING_MS = 180;
 const TELEPORT_DEPART_MS = 460;
 const TELEPORT_ARRIVE_MS = 560;
 const TELEPORT_TEXTURE_WAIT_MS = 260;
+const PANORAMA_TEXTURE_CENTER_OFFSET = Math.PI;
 const DEFAULT_VIEW: ViewState = { yaw: 0, pitch: 0, fov: DEFAULT_FOV };
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -53,11 +54,7 @@ const isTourControlTarget = (target: EventTarget | null) => {
   return target instanceof Element && !!target.closest("[data-vtour-control='true']");
 };
 
-const getInitialView = (scene?: VirtualTourScene | null): ViewState => ({
-  yaw: getNumber(scene?.initialView?.yaw, DEFAULT_VIEW.yaw),
-  pitch: clamp(getNumber(scene?.initialView?.pitch, DEFAULT_VIEW.pitch), -1.2, 1.2),
-  fov: clamp(getNumber(scene?.initialView?.fov, DEFAULT_VIEW.fov), MIN_FOV, MAX_FOV),
-});
+const getCenteredView = (): ViewState => cloneView(DEFAULT_VIEW);
 
 const getSceneSourceCandidates = (scene: VirtualTourScene) => {
   const candidates = [
@@ -312,7 +309,7 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
 
         const nextSceneSources = Object.fromEntries(nextLoadedScenes.map((item) => [item.scene.id, item.sourceUrl]));
         const startScene = nextLoadedScenes.find((item) => item.scene.id === initialScene?.id) || nextLoadedScenes[0];
-        const startView = cloneView(getInitialView(startScene.scene));
+        const startView = getCenteredView();
 
         sceneSourceRef.current = nextSceneSources;
         renderViewRef.current = startView;
@@ -411,7 +408,7 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
       camera.updateProjectionMatrix();
 
       const phi = Math.PI / 2 - renderView.pitch;
-      const theta = renderView.yaw;
+      const theta = renderView.yaw + PANORAMA_TEXTURE_CENTER_OFFSET;
       camera.lookAt(
         Math.sin(phi) * Math.cos(theta),
         Math.cos(phi),
@@ -525,7 +522,7 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
   }, [clearTransitionTimers]);
 
   const applyScene = (loadedScene: LoadedScene) => {
-    const nextView = cloneView(getInitialView(loadedScene.scene));
+    const nextView = getCenteredView();
     setActiveSceneId(loadedScene.scene.id);
     renderViewRef.current = nextView;
     targetViewRef.current = nextView;
