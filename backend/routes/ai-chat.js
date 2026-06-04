@@ -16,6 +16,7 @@ const { authenticateToken } = require('../auth');
 const { resolvePermissions } = require('../middlewares/rbac');
 const { aiRateLimit } = require('../middlewares/aiRateLimit');
 const { chat } = require('../services/ai/mcpChatService');
+const { chatCompletion } = require('../services/ai/providerAbstraction');
 const AIConversation = require('../models/AIConversation');
 const AIMessage = require('../models/AIMessage');
 
@@ -159,6 +160,71 @@ router.patch('/conversations/:id', async (req, res) => {
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /ai/generate-description — generate property description with AI
+router.post('/generate-description', async (req, res) => {
+  try {
+    const { propertyData } = req.body;
+    if (!propertyData) {
+      return res.status(400).json({ error: 'propertyData is required' });
+    }
+
+    const p = propertyData;
+    const parts = [];
+    if (p.tipo) parts.push(`Tipo: ${p.tipo}`);
+    if (p.operacion) parts.push(`Operación: ${p.operacion}`);
+    if (p.titulo) parts.push(`Título: ${p.titulo}`);
+    if (p.direccion) parts.push(`Dirección: ${p.direccion}`);
+    if (p.barrio) parts.push(`Barrio: ${p.barrio}`);
+    if (p.ciudad) parts.push(`Ciudad: ${p.ciudad}`);
+    if (p.precio) parts.push(`Precio: ${p.moneda || 'USD'} ${p.precio}`);
+    if (p.m2Totales) parts.push(`Superficie total: ${p.m2Totales} m²`);
+    if (p.m2Cubiertos) parts.push(`Superficie cubierta: ${p.m2Cubiertos} m²`);
+    if (p.ambientes) parts.push(`Ambientes: ${p.ambientes}`);
+    if (p.dormitorios) parts.push(`Dormitorios: ${p.dormitorios}`);
+    if (p.baños) parts.push(`Baños: ${p.baños}`);
+    if (p.cocheras) parts.push(`Cocheras: ${p.cocheras}`);
+    if (p.anioConstruccion) parts.push(`Año de construcción: ${p.anioConstruccion}`);
+    if (p.antiguedad) parts.push(`Antigüedad: ${p.antiguedad}`);
+    if (p.tipoCalefaccion) parts.push(`Calefacción: ${p.tipoCalefaccion}`);
+    if (p.amenities && p.amenities.length) parts.push(`Amenities: ${p.amenities.join(', ')}`);
+    if (p.estado) parts.push(`Estado: ${p.estado}`);
+
+    const propertyInfo = parts.join('\n');
+
+    const messages = [
+      {
+        role: 'system',
+        content: `Sos un copywriter inmobiliario profesional argentino. Generás descripciones atractivas, naturales y persuasivas para publicaciones de propiedades.
+Reglas:
+- Escribí en español rioplatense, profesional pero cálido.
+- Destacá los puntos fuertes de la propiedad.
+- Usá un tono que invite a visitar la propiedad.
+- Máximo 3-4 párrafos cortos.
+- No inventés datos que no estén en la información proporcionada.
+- No incluyas el precio en la descripción.
+- Devolvé SOLO la descripción, sin títulos ni etiquetas.`,
+      },
+      {
+        role: 'user',
+        content: `Generá una descripción atractiva para esta propiedad:\n\n${propertyInfo}`,
+      },
+    ];
+
+    const result = await chatCompletion({
+      messages,
+      userId: currentUserId(req),
+      agenteId: req.user.agenteId || '',
+      maxTokens: 1024,
+    });
+
+    const description = result.choices[0]?.message?.content || '';
+    res.json({ description: description.trim() });
+  } catch (err) {
+    console.error('[AI/GenerateDescription] Error:', err.message);
+    res.status(err.statusCode || 500).json({ error: err.message });
   }
 });
 

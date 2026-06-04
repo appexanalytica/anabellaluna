@@ -4,7 +4,8 @@ import PropiedadesMapView from './PropiedadesMapView';
 import PropiedadInforme from '../components/PropiedadInforme';
 import { toast } from 'react-toastify';
 import { confirmToast } from '../utils/confirmToast';
-import { FaPlus, FaUpload, FaSearch, FaFilter, FaHome, FaEye, FaDollarSign, FaUser, FaCamera, FaMapMarkerAlt, FaBuilding, FaTimes, FaSave, FaArrowLeft, FaList, FaThLarge, FaBed, FaBath, FaCar, FaRulerCombined, FaCalendar, FaEdit, FaTrash, FaChevronRight, FaChevronLeft, FaFileAlt, FaChartLine, FaDownload, FaLink, FaCopy, FaGlobe, FaLock, FaGripVertical } from 'react-icons/fa';
+import { FaPlus, FaUpload, FaSearch, FaFilter, FaHome, FaEye, FaDollarSign, FaUser, FaCamera, FaMapMarkerAlt, FaBuilding, FaTimes, FaSave, FaArrowLeft, FaList, FaThLarge, FaBed, FaBath, FaCar, FaRulerCombined, FaCalendar, FaEdit, FaTrash, FaChevronRight, FaChevronLeft, FaFileAlt, FaChartLine, FaDownload, FaLink, FaCopy, FaGlobe, FaLock, FaGripVertical, FaMagic } from 'react-icons/fa';
+import { aiService } from '../services/aiService';
 import { useStateContext } from '../contexts/ContextProvider';
 import { crmService } from '../services/crmService';
 import { documentService } from '../services/documentService';
@@ -82,6 +83,7 @@ const Propiedades = () => {
     fetchReservadasCount();
   }, []);
   const [formStep, setFormStep] = useState(1);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
   const [funnelEditorOpen, setFunnelEditorOpen] = useState(false);
 
   const createEmptyClienteForm = () => ({
@@ -846,6 +848,25 @@ const Propiedades = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const handleGenerateDescription = async () => {
+    setGeneratingDescription(true);
+    try {
+      const res = await aiService.generatePropertyDescription(nuevaPropiedad);
+      const desc = res.data?.description || res.description || '';
+      if (desc) {
+        setNuevaPropiedad(prev => ({ ...prev, descripcion: desc }));
+        toast.success('Descripción generada con IA');
+      } else {
+        toast.error('No se pudo generar la descripción');
+      }
+    } catch (err) {
+      console.error('Error generating description:', err);
+      toast.error(err.response?.data?.error || 'Error al generar la descripción');
+    } finally {
+      setGeneratingDescription(false);
+    }
   };
 
   const handleClienteInputChange = (e) => {
@@ -3075,9 +3096,22 @@ const Propiedades = () => {
 
                   {/* Descripción */}
                   <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">
-                      Descripción
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium dark:text-gray-200">
+                        Descripción
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleGenerateDescription}
+                        disabled={generatingDescription}
+                        className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ backgroundColor: generatingDescription ? '#9CA3AF' : currentColor }}
+                        title="Generar descripción con IA"
+                      >
+                        <FaMagic className={generatingDescription ? 'animate-spin' : ''} />
+                        {generatingDescription ? 'Generando...' : 'Generar con IA'}
+                      </button>
+                    </div>
                     <textarea
                       name="descripcion"
                       value={nuevaPropiedad.descripcion}

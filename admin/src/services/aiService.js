@@ -69,6 +69,11 @@ export const aiService = {
   rollbackExecution: (executionId) =>
     api.post(`${BASE}/tools/executions/${executionId}/rollback`, {}),
 
+  // ── Property Description Generation ────────────────────────────────────────
+
+  generatePropertyDescription: (propertyData) =>
+    api.post('/ai/generate-description', { propertyData }),
+
   // ── Admin — AI Config ─────────────────────────────────────────────────────
 
   getProviders: () => api.get('/admin/config/ai/providers'),
