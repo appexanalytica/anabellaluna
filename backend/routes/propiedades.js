@@ -74,6 +74,48 @@ router.get('/', authenticateToken, requireCRMUser, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// All agency properties without owner data — accessible to all CRM users (agents and admins)
+router.get('/inmobiliaria', authenticateToken, requireCRMUser, async (req, res) => {
+  try {
+    const { q } = req.query;
+    const filter = q ? { $or: [{ title: { $regex: q, $options: 'i' } }, { description: { $regex: q, $options: 'i' } }] } : {};
+    // No agentId scope — returns ALL properties
+
+    const items = await Propiedad.find(filter).sort({ updatedAt: -1 }).limit(1000).lean();
+    if (!items.length) return res.json([]);
+
+    const propIds = items.map((p) => String(p._id));
+    const links = await DocumentLink.find({
+      entity_type: 'propiedad',
+      entity_id: { $in: propIds },
+    }).sort({ order: 1, created_at: 1 }).populate({ path: 'document', select: 'nombre mimetype url' }).lean();
+
+    const byProp = {};
+    for (const l of links) {
+      const pid = l.entity_id;
+      if (!byProp[pid]) byProp[pid] = [];
+      if (l.document) byProp[pid].push(l.document);
+    }
+
+    const result = items.map((p) => {
+      const docs = byProp[String(p._id)] || [];
+      const images = docs.filter(isImageDoc);
+      const coverDoc = images[0] || null;
+      // Strip owner identity from response
+      // eslint-disable-next-line no-unused-vars
+      const { ownerId, ...rest } = p;
+      return {
+        ...rest,
+        coverUrl: coverDoc ? (coverDoc.url || '') : '',
+        imageCount: images.length,
+        ownerData: null,
+      };
+    });
+
+    res.json(result);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 router.get('/:id', authenticateToken, requireCRMUser, async (req, res) => {
   try {
     const item = await Propiedad.findById(req.params.id).lean();

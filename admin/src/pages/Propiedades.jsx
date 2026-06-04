@@ -1,13 +1,14 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import FunnelDesignEditor from '../components/FunnelDesignEditor';
 import PropiedadesMapView from './PropiedadesMapView';
 import PropiedadInforme from '../components/PropiedadInforme';
 import { toast } from 'react-toastify';
 import { confirmToast } from '../utils/confirmToast';
-import { FaPlus, FaUpload, FaSearch, FaFilter, FaHome, FaEye, FaDollarSign, FaUser, FaCamera, FaMapMarkerAlt, FaBuilding, FaTimes, FaSave, FaArrowLeft, FaList, FaThLarge, FaBed, FaBath, FaCar, FaRulerCombined, FaCalendar, FaEdit, FaTrash, FaChevronRight, FaChevronLeft, FaFileAlt, FaChartLine, FaDownload, FaLink, FaCopy, FaGlobe, FaLock, FaGripVertical, FaMagic } from 'react-icons/fa';
+import { FaPlus, FaUpload, FaSearch, FaFilter, FaHome, FaEye, FaDollarSign, FaUser, FaCamera, FaMapMarkerAlt, FaBuilding, FaTimes, FaSave, FaArrowLeft, FaList, FaThLarge, FaBed, FaBath, FaCar, FaRulerCombined, FaCalendar, FaEdit, FaTrash, FaChevronRight, FaChevronLeft, FaFileAlt, FaChartLine, FaDownload, FaLink, FaCopy, FaGlobe, FaLock, FaGripVertical, FaMagic, FaExternalLinkAlt } from 'react-icons/fa';
 import { aiService } from '../services/aiService';
 import { useStateContext } from '../contexts/ContextProvider';
 import { crmService } from '../services/crmService';
+import { authService } from '../services/authService';
 import { documentService } from '../services/documentService';
 import API_CONFIG, { getAuthToken } from '../config/api';
 import Chart from 'react-apexcharts';
@@ -47,6 +48,16 @@ const Propiedades = () => {
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Agent-specific: detect role and load all agency properties
+  const currentUser = useMemo(() => authService.getCurrentUser() || {}, []);
+  const isAgent = currentUser.role === 'agent';
+  const [propiedadesInmobiliaria, setPropiedadesInmobiliaria] = useState([]);
+  const [loadingInmobiliaria, setLoadingInmobiliaria] = useState(false);
+  // Track whether the open detail came from the agent's own captaciones or the inmobiliaria tab
+  const [detailReadOnly, setDetailReadOnly] = useState(false);
+  const [inmobiliariaSearch, setInmobiliariaSearch] = useState('');
+  const [inmobiliariaCoverUrls, setInmobiliariaCoverUrls] = useState({});
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -591,18 +602,21 @@ const Propiedades = () => {
         setLoading(true);
         setError('');
 
-        const [agentesData, propiedadesData, adminsData] = await Promise.all([
+        const fetchList = [
           crmService.agentes.getAll(),
           crmService.propiedades.getAll(),
           crmService.agentes.getAdmins().catch(() => []),
-        ]);
+        ];
+        if (isAgent) fetchList.push(crmService.propiedades.getAllInmobiliaria().catch(() => []));
+
+        const [agentesData, propiedadesData, adminsData, inmobiliariaData] = await Promise.all(fetchList);
 
         if (!mounted) return;
         setAgentes(Array.isArray(agentesData) ? agentesData : []);
         setAdmins(Array.isArray(adminsData) ? adminsData : []);
 
         const agentesById = new Map((Array.isArray(agentesData) ? agentesData : []).map((a) => [String(a._id), a]));
-        const mapped = (Array.isArray(propiedadesData) ? propiedadesData : []).map((p) => {
+        const mapPropRow = (p) => {
           const meta = p.metadata || {};
           const agenteDoc = p.agentId ? agentesById.get(String(p.agentId)) : null;
           const agenteNombre = meta.agenteNombre || (agenteDoc ? agenteDoc.nombre : '');
@@ -674,9 +688,14 @@ const Propiedades = () => {
             ownerData: p.ownerData || null,
             funnelSettings: meta.funnelSettings || null,
           };
-        });
+        };
+        const mapped = (Array.isArray(propiedadesData) ? propiedadesData : []).map(mapPropRow);
 
         setPropiedades(mapped);
+
+        if (isAgent && Array.isArray(inmobiliariaData)) {
+          setPropiedadesInmobiliaria(inmobiliariaData.map(mapPropRow));
+        }
       } catch (e) {
         if (!mounted) return;
         setError(e?.message || 'Error al cargar propiedades');
@@ -721,6 +740,36 @@ const Propiedades = () => {
     })();
     return () => { cancelled = true; created.forEach((u) => URL.revokeObjectURL(u)); };
   }, [propiedades]);
+
+  // Load authenticated cover images for inmobiliaria property cards (agent view)
+  useEffect(() => {
+    const propsWithCover = propiedadesInmobiliaria.filter((p) => p.coverUrl);
+    if (!propsWithCover.length) { setInmobiliariaCoverUrls({}); return undefined; }
+    let cancelled = false;
+    const created = [];
+    (async () => {
+      const token = getAuthToken();
+      const result = {};
+      await Promise.allSettled(propsWithCover.map(async (p) => {
+        if (cancelled) return;
+        const raw = String(p.coverUrl);
+        if (raw.startsWith('http')) { result[p.id] = raw; return; }
+        try {
+          const res = await fetch(`${API_CONFIG.baseURL}${raw}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (cancelled || !res.ok) return;
+          const blob = await res.blob();
+          if (cancelled) return;
+          const blobUrl = URL.createObjectURL(blob);
+          created.push(blobUrl);
+          result[p.id] = blobUrl;
+        } catch { /* skip */ }
+      }));
+      if (!cancelled) setInmobiliariaCoverUrls(result);
+    })();
+    return () => { cancelled = true; created.forEach((u) => URL.revokeObjectURL(u)); };
+  }, [propiedadesInmobiliaria]);
 
   // KPIs de Propiedades
   const totalValorPortfolio = propiedades.reduce((sum, p) => sum + (Number(p.precio || 0) || 0), 0);
@@ -1204,8 +1253,9 @@ const Propiedades = () => {
     'Laundry', 'SUM', 'Solarium', 'Sauna', 'Ascensor'
   ];
 
-  // Función para ver detalle de propiedad
+  // Función para ver detalle de propiedad (propias del agente / admin)
   const verDetalle = async (propiedad) => {
+    setDetailReadOnly(false);
     setPropiedadSeleccionada(propiedad);
     setVistaActual('detalle');
 
@@ -1233,6 +1283,7 @@ const Propiedades = () => {
   const volverAlDashboard = () => {
     setVistaActual('dashboard');
     setPropiedadSeleccionada(null);
+    setDetailReadOnly(false);
   };
 
   const getSuggestions = () => {
@@ -1328,30 +1379,40 @@ const Propiedades = () => {
       
       {/* Botones de Navegación */}
       <div className="flex flex-wrap gap-3 mb-6">
-        <button 
+        <button
           onClick={volverAlDashboard}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm hover:shadow-md ${vistaActual === 'dashboard' ? 'bg-blue-500 text-white' : isDark ? 'border border-gray-600 text-gray-200 hover:bg-gray-700' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
         >
           <FaChartLine /> Métricas
         </button>
-        <button 
+        <button
           onClick={() => setVistaActual('lista')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm hover:shadow-md ${vistaActual === 'lista' ? 'bg-emerald-500 text-white' : isDark ? 'border border-gray-600 text-gray-200 hover:bg-gray-700' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
         >
-          <FaThLarge /> Todas las Propiedades
+          <FaThLarge /> {isAgent ? 'Mis Captaciones' : 'Todas las Propiedades'}
         </button>
+        {isAgent && (
+          <button
+            onClick={() => setVistaActual('inmobiliaria')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm hover:shadow-md ${vistaActual === 'inmobiliaria' ? 'bg-indigo-500 text-white' : isDark ? 'border border-gray-600 text-gray-200 hover:bg-gray-700' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+          >
+            <FaBuilding /> Propiedades de la Inmobiliaria
+          </button>
+        )}
         <button
           onClick={() => setVistaActual('mapa')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm hover:shadow-md ${vistaActual === 'mapa' ? 'bg-violet-500 text-white' : isDark ? 'border border-gray-600 text-gray-200 hover:bg-gray-700' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
         >
           <FaMapMarkerAlt /> Mapa
         </button>
-        <button 
-          onClick={openCreateModal}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-blue-500 hover:bg-blue-600 transition-all shadow-sm hover:shadow-md"
-        >
-          <FaPlus /> Nueva Propiedad
-        </button>
+        {vistaActual !== 'inmobiliaria' && (
+          <button
+            onClick={openCreateModal}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-blue-500 hover:bg-blue-600 transition-all shadow-sm hover:shadow-md"
+          >
+            <FaPlus /> Nueva Propiedad
+          </button>
+        )}
       </div>
 
       {/* Vista Dashboard */}
@@ -1887,6 +1948,102 @@ const Propiedades = () => {
         </>
       )}
 
+      {/* Vista Propiedades de la Inmobiliaria (solo agentes) */}
+      {vistaActual === 'inmobiliaria' && (
+        <>
+          <div className="mb-4 flex items-center gap-3">
+            <div className="relative flex-1 max-w-md">
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+              <input
+                type="text"
+                value={inmobiliariaSearch}
+                onChange={(e) => setInmobiliariaSearch(e.target.value)}
+                placeholder="Buscar propiedades de la inmobiliaria..."
+                className="w-full pl-9 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100 text-sm"
+              />
+              {inmobiliariaSearch && (
+                <button type="button" onClick={() => setInmobiliariaSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <FaTimes className="text-sm" />
+                </button>
+              )}
+            </div>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              {propiedadesInmobiliaria.filter((p) => !inmobiliariaSearch || p.titulo?.toLowerCase().includes(inmobiliariaSearch.toLowerCase()) || p.barrio?.toLowerCase().includes(inmobiliariaSearch.toLowerCase()) || p.direccion?.toLowerCase().includes(inmobiliariaSearch.toLowerCase())).length} propiedades
+            </p>
+          </div>
+          {loadingInmobiliaria ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {propiedadesInmobiliaria
+                .filter((p) => !inmobiliariaSearch || p.titulo?.toLowerCase().includes(inmobiliariaSearch.toLowerCase()) || p.barrio?.toLowerCase().includes(inmobiliariaSearch.toLowerCase()) || p.direccion?.toLowerCase().includes(inmobiliariaSearch.toLowerCase()))
+                .map((propiedad) => {
+                  const estadoClass = propiedad.estado === 'Disponible' ? 'bg-green-500 text-white' : propiedad.estado === 'Reservada' ? 'bg-yellow-500 text-white' : propiedad.estado === 'Vendida' ? 'bg-gray-500 text-white' : 'bg-blue-500 text-white';
+                  return (
+                    <div
+                      key={propiedad.id}
+                      className={cardBase + ' hover:shadow-xl cursor-pointer'}
+                      onClick={() => {
+                        setDetailReadOnly(true);
+                        setPropiedadSeleccionada(propiedad);
+                        setVistaActual('detalle');
+                        setCarouselIdx(0);
+                        setAdjuntos([]);
+                      }}
+                    >
+                      <div className="h-48 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-lg mb-4 relative overflow-hidden">
+                        {inmobiliariaCoverUrls[propiedad.id] ? (
+                          <img src={inmobiliariaCoverUrls[propiedad.id]} alt={propiedad.titulo} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <FaHome className="text-6xl text-white opacity-30" />
+                          </div>
+                        )}
+                        <div className="absolute top-3 right-3">
+                          <span className={'px-3 py-1 rounded-full text-xs font-semibold ' + estadoClass}>{propiedad.estado}</span>
+                        </div>
+                        <div className="absolute bottom-3 left-3 bg-black bg-opacity-60 text-white px-3 py-1 rounded-lg text-sm flex items-center gap-1">
+                          <FaCamera /> {propiedad.fotos} fotos
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <h3 className="text-lg font-bold dark:text-gray-100">{propiedad.titulo}</h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                            <FaMapMarkerAlt className="text-red-500" /> {propiedad.barrio}, {propiedad.ciudad}
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-2xl font-bold" style={{ color: currentColor }}>{propiedad.moneda} ${propiedad.precio.toLocaleString()}</span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">{propiedad.operacion}</span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2 pt-3 border-t dark:border-gray-700">
+                          <div className="text-center"><FaRulerCombined className="text-gray-400 mx-auto mb-1" /><p className="text-xs font-semibold dark:text-gray-200">{propiedad.m2}m²</p></div>
+                          <div className="text-center"><FaHome className="text-gray-400 mx-auto mb-1" /><p className="text-xs font-semibold dark:text-gray-200">{propiedad.ambientes} amb</p></div>
+                          <div className="text-center"><FaBed className="text-gray-400 mx-auto mb-1" /><p className="text-xs font-semibold dark:text-gray-200">{propiedad.dormitorios} dorm</p></div>
+                          <div className="text-center"><FaBath className="text-gray-400 mx-auto mb-1" /><p className="text-xs font-semibold dark:text-gray-200">{propiedad.baños} baños</p></div>
+                        </div>
+                        <div className="flex items-center gap-2 pt-3 border-t dark:border-gray-700">
+                          <FaUser className="text-gray-400" />
+                          <span className="text-sm dark:text-gray-300">{propiedad.agente || '—'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              {propiedadesInmobiliaria.length === 0 && (
+                <div className="col-span-full text-center py-12">
+                  <FaBuilding className="text-6xl text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">No hay propiedades disponibles</p>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
       {/* Vista Detalle de Propiedad */}
       {vistaActual === 'detalle' && propiedadSeleccionada && (
         <div className="space-y-6">
@@ -1926,6 +2083,13 @@ const Propiedades = () => {
                   </>
                 )}
               </div>
+            ) : detailReadOnly && inmobiliariaCoverUrls[propiedadSeleccionada.id] ? (
+              <img
+                src={inmobiliariaCoverUrls[propiedadSeleccionada.id]}
+                alt={propiedadSeleccionada.titulo}
+                className="w-full h-full object-cover"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                 <FaHome className="text-9xl text-white opacity-20" />
@@ -1940,15 +2104,24 @@ const Propiedades = () => {
               }`}>
                 {propiedadSeleccionada.estado}
               </span>
-              <button type="button" onClick={() => setShowInforme(true)} className="px-4 py-2 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors flex items-center gap-2">
-                <FaFileAlt /> Informe
-              </button>
-              <button type="button" onClick={() => handleEditPropiedad(propiedadSeleccionada)} className="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors flex items-center gap-2">
-                <FaEdit /> Editar
-              </button>
-              <button type="button" onClick={() => eliminarPropiedad(propiedadSeleccionada)} className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors flex items-center gap-2" disabled={loading}>
-                <FaTrash /> Eliminar
-              </button>
+              {!detailReadOnly && (
+                <>
+                  <button type="button" onClick={() => setShowInforme(true)} className="px-4 py-2 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors flex items-center gap-2">
+                    <FaFileAlt /> Informe
+                  </button>
+                  <button type="button" onClick={() => handleEditPropiedad(propiedadSeleccionada)} className="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors flex items-center gap-2">
+                    <FaEdit /> Editar
+                  </button>
+                  <button type="button" onClick={() => eliminarPropiedad(propiedadSeleccionada)} className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors flex items-center gap-2" disabled={loading}>
+                    <FaTrash /> Eliminar
+                  </button>
+                </>
+              )}
+              {detailReadOnly && (
+                <button type="button" onClick={() => { setVistaActual('inmobiliaria'); setPropiedadSeleccionada(null); setDetailReadOnly(false); }} className="px-4 py-2 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition-colors flex items-center gap-2">
+                  <FaArrowLeft /> Volver
+                </button>
+              )}
             </div>
             <div className="absolute bottom-6 left-6 text-white z-10" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>
               <h1 className="text-4xl font-bold mb-2">{propiedadSeleccionada.titulo}</h1>
@@ -2329,7 +2502,8 @@ const Propiedades = () => {
                 </div>
               </div>
 
-              {/* Propietario */}
+              {/* Propietario — oculto en vista de solo lectura (inmobiliaria) */}
+              {!detailReadOnly && (
               <div className={cardBase}>
                 <h3 className="text-lg font-bold mb-4 dark:text-gray-100 flex items-center gap-2">
                   <FaUser className="text-blue-500" /> Propietario
@@ -2366,6 +2540,7 @@ const Propiedades = () => {
                   </div>
                 )}
               </div>
+              )}
 
               {/* Ubicación con mapa */}
               <div className={cardBase}>
@@ -2432,8 +2607,8 @@ const Propiedades = () => {
                 </div>
               </div>
 
-              {/* Publicación y Link Privado */}
-              <div className={cardBase}>
+              {/* Publicación y Link Privado — oculto en vista de solo lectura (inmobiliaria) */}
+              {!detailReadOnly && <div className={cardBase}>
                 <h3 className="text-lg font-bold mb-4 dark:text-gray-100 flex items-center gap-2">
                   <FaGlobe className="text-green-500" /> Publicación
                 </h3>
@@ -2457,6 +2632,31 @@ const Propiedades = () => {
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">
                     {propiedadSeleccionada.published ? 'Visible en el sitio web público' : 'No visible en el sitio web público'}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={`https://anabellaluna.com.ar/propiedad/${propiedadSeleccionada.id}`}
+                      className="flex-1 px-3 py-2 text-xs border dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-200 truncate"
+                    />
+                    <button
+                      type="button"
+                      title="Copiar link público"
+                      onClick={() => navigator.clipboard.writeText(`https://anabellaluna.com.ar/propiedad/${propiedadSeleccionada.id}`)}
+                      className="p-2 rounded-lg border dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <FaCopy className="text-sm dark:text-gray-300" />
+                    </button>
+                    <a
+                      href={`https://anabellaluna.com.ar/propiedad/${propiedadSeleccionada.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Ver en sitio web"
+                      className="p-2 rounded-lg border dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <FaExternalLinkAlt className="text-sm text-green-500" />
+                    </a>
                   </div>
                   <hr className="dark:border-gray-700" />
                   <div>
@@ -2521,7 +2721,7 @@ const Propiedades = () => {
                     )}
                   </div>
                 </div>
-              </div>
+              </div>}
             </div>
           </div>
         </div>

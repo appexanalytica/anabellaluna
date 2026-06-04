@@ -29,6 +29,7 @@ export const crmService = {
   // ============ PROPIEDADES ============
   propiedades: {
     getAll: () => api.get('/crm/propiedades'),
+    getAllInmobiliaria: () => api.get('/crm/propiedades/inmobiliaria'),
     getById: (id) => api.get(`/crm/propiedades/${id}`),
     create: (data) => requirePersisted(api.post('/crm/propiedades', data), 'La propiedad'),
     update: (id, data) => requirePersisted(api.put(`/crm/propiedades/${id}`, data), 'La propiedad'),
