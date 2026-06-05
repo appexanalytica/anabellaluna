@@ -292,6 +292,28 @@ router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
   }
 });
 
+router.patch('/:id/stage', authenticateToken, requireCRMUser, async (req, res) => {
+  try {
+    const { stage } = req.body;
+    const VALID_STAGES = ['Lead', 'Contactado', 'Calificado', 'En Negociación', 'Propuesta', 'Convertido', 'Perdido'];
+    if (!stage || !VALID_STAGES.includes(stage)) {
+      return res.status(400).json({ error: 'Etapa inválida' });
+    }
+    const scopeId = agentScopeId(req);
+    const filter = { _id: req.params.id };
+    if (scopeId) filter.agenteId = scopeId;
+    const updated = await Cliente.findOneAndUpdate(
+      filter,
+      { $set: { 'metadata.estado': stage } },
+      { new: true }
+    ).lean();
+    if (!updated) return res.status(404).json({ error: 'Not found' });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.delete('/:id', authenticateToken, requireCRMUser, async (req, res) => {
   attachRequestId(req, res);
   try {

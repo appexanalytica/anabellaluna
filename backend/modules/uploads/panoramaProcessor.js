@@ -11,6 +11,10 @@ const MIME_EXTENSION = {
   'image/webp': 'webp',
 };
 
+function getFileExt(file) {
+  return String(path.extname(file.originalname || '') || '').toLowerCase().replace('.', '');
+}
+
 function sanitizeSegment(value) {
   return String(value || 'asset')
     .trim()
@@ -39,7 +43,8 @@ function resolveImageExtension(file) {
   const mimetype = String(file.mimetype || '').toLowerCase();
   if (MIME_EXTENSION[mimetype]) return MIME_EXTENSION[mimetype];
 
-  const ext = String(path.extname(file.originalname || '') || '').toLowerCase().replace('.', '');
+  const ext = getFileExt(file);
+  if (ext === 'insp') return 'jpg';
   if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) return ext === 'jpeg' ? 'jpg' : ext;
   return 'jpg';
 }
@@ -51,8 +56,8 @@ async function processPanoramaUpload({ file, tourId, sceneId }) {
     throw error;
   }
 
-  if (!/^image\/(jpeg|jpg|webp|png)$/i.test(String(file.mimetype || ''))) {
-    const error = new Error('Only JPG, PNG or WebP panoramas are supported');
+  if (getFileExt(file) !== 'insp' && !/^image\/(jpeg|jpg|webp|png)$/i.test(String(file.mimetype || ''))) {
+    const error = new Error('Only JPG, PNG, WebP or .insp (Insta360) panoramas are supported');
     error.statusCode = 400;
     throw error;
   }

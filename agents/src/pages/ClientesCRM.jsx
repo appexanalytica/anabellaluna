@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Chart from 'react-apexcharts';
-import { FaPlus, FaSearch, FaTags, FaEnvelope, FaWhatsapp, FaPhone, FaBell, FaUsers, FaChartLine, FaFire, FaTimes, FaSave, FaUser, FaMapMarkerAlt, FaDollarSign, FaStar, FaCalendar, FaBuilding, FaHome, FaEdit, FaTrash, FaHistory, FaComments, FaBriefcase, FaPercentage, FaFunnelDollar, FaArrowUp, FaHeart, FaUserClock, FaThermometerHalf, FaGlobe, FaDesktop, FaMobileAlt, FaLink, FaMousePointer, FaHeartbeat, FaClock, FaEye, FaHandshake, FaFileAlt } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaTags, FaEnvelope, FaWhatsapp, FaPhone, FaBell, FaUsers, FaChartLine, FaFire, FaTimes, FaSave, FaUser, FaMapMarkerAlt, FaDollarSign, FaStar, FaCalendar, FaBuilding, FaHome, FaEdit, FaTrash, FaHistory, FaComments, FaBriefcase, FaPercentage, FaFunnelDollar, FaArrowUp, FaHeart, FaUserClock, FaThermometerHalf, FaGlobe, FaDesktop, FaMobileAlt, FaLink, FaMousePointer, FaHeartbeat, FaClock, FaEye, FaHandshake, FaFileAlt, FaStream } from 'react-icons/fa';
 
 import { confirmToast } from '../utils/confirmToast';
 import { useStateContext } from '../contexts/ContextProvider';
 import { crmService } from '../services/crmService';
+import ClienteFunnel from './ClienteFunnel';
 
 const ClientesCRM = () => {
   const { currentMode, currentColor } = useStateContext();
@@ -251,6 +252,16 @@ const ClientesCRM = () => {
     }
   }, [normalizeCliente]);
 
+  const handleFunnelStageChange = useCallback((clienteId, newStage) => {
+    setClientesEjemplo((prev) =>
+      prev.map((c) =>
+        String(c.id) === String(clienteId) || String(c._id) === String(clienteId)
+          ? { ...c, estado: newStage, metadata: { ...c.metadata, estado: newStage } }
+          : c
+      )
+    );
+  }, []);
+
   useEffect(() => {
     reloadClientes();
     crmService.stats.getDashboard().then(setDashStats).catch(() => {});
@@ -462,17 +473,19 @@ const ClientesCRM = () => {
   const kpisClientes = [
     { title: 'Total Clientes', value: clientesEjemplo.length, desc: `${dashStats?.clientesNuevosMes ?? 0} nuevos este mes`, icon: <FaUsers />, color: 'from-blue-500 to-blue-600' },
     { title: 'Leads Calientes', value: clientesEjemplo.filter((c) => c.scoring >= 80).length, desc: 'Scoring > 80', icon: <FaFire />, color: 'from-red-500 to-red-600' },
-    { title: 'En Negociación', value: clientesEjemplo.filter((c) => c.estado === 'Negociación').length, desc: 'Próximos a cerrar', icon: <FaChartLine />, color: 'from-green-500 to-green-600' },
+    { title: 'En Negociación', value: clientesEjemplo.filter((c) => c.estado === 'En Negociación').length, desc: 'Próximos a cerrar', icon: <FaChartLine />, color: 'from-green-500 to-green-600' },
     { title: 'Coef. de Cierre', value: '0%', desc: 'Lead → Cliente', icon: <FaTags />, color: 'from-purple-500 to-purple-600' },
   ];
 
   // Datos para gráficos
   const cicloVidaData = [
-    { etapa: 'Lead', cantidad: clientesEjemplo.filter((c) => c.estado === 'Lead').length, fill: '#F59E0B' },
-    { etapa: 'Contacto', cantidad: clientesEjemplo.filter((c) => c.estado === 'Contacto').length, fill: '#3B82F6' },
-    { etapa: 'Prospecto', cantidad: clientesEjemplo.filter((c) => c.estado === 'Prospecto').length, fill: '#8B5CF6' },
-    { etapa: 'Negociación', cantidad: clientesEjemplo.filter((c) => c.estado === 'Negociación').length, fill: '#F97316' },
-    { etapa: 'Cerrado', cantidad: clientesEjemplo.filter((c) => c.estado === 'Cerrado').length, fill: '#10B981' },
+    { etapa: 'Lead', cantidad: clientesEjemplo.filter((c) => c.estado === 'Lead').length, fill: '#3B82F6' },
+    { etapa: 'Contactado', cantidad: clientesEjemplo.filter((c) => c.estado === 'Contactado').length, fill: '#8B5CF6' },
+    { etapa: 'Calificado', cantidad: clientesEjemplo.filter((c) => c.estado === 'Calificado').length, fill: '#F59E0B' },
+    { etapa: 'En Negociación', cantidad: clientesEjemplo.filter((c) => c.estado === 'En Negociación').length, fill: '#F97316' },
+    { etapa: 'Propuesta', cantidad: clientesEjemplo.filter((c) => c.estado === 'Propuesta').length, fill: '#EC4899' },
+    { etapa: 'Convertido', cantidad: clientesEjemplo.filter((c) => c.estado === 'Convertido').length, fill: '#10B981' },
+    { etapa: 'Perdido', cantidad: clientesEjemplo.filter((c) => c.estado === 'Perdido').length, fill: '#EF4444' },
   ];
 
   const segmentacionData = [
@@ -484,8 +497,8 @@ const ClientesCRM = () => {
   // ApexCharts - Ciclo de Vida del Lead (Pie Chart)
   const cicloVidaPieOptions = {
     chart: { type: 'pie', height: 280, background: 'transparent' },
-    labels: ['Lead', 'Contacto', 'Prospecto', 'Negociación', 'Cerrado'],
-    colors: ['#F59E0B', '#3B82F6', '#8B5CF6', '#F97316', '#10B981'],
+    labels: ['Lead', 'Contactado', 'Calificado', 'En Negociación', 'Propuesta', 'Convertido', 'Perdido'],
+    colors: ['#3B82F6', '#8B5CF6', '#F59E0B', '#F97316', '#EC4899', '#10B981', '#EF4444'],
     plotOptions: { pie: { expandOnClick: true, donut: { size: '0%' } } },
     dataLabels: { enabled: true, style: { fontSize: '11px', fontWeight: 600, colors: ['#fff'] }, dropShadow: { enabled: false } },
     legend: { show: true, position: 'bottom', fontSize: '11px', labels: { colors: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280' }, markers: { width: 10, height: 10, radius: 2 } },
@@ -523,7 +536,7 @@ const ClientesCRM = () => {
     plotOptions: { bar: { borderRadius: 4, horizontal: true, distributed: true, barHeight: '70%' } },
     colors: ['#F59E0B', '#3B82F6', '#8B5CF6', '#F97316', '#10B981'],
     dataLabels: { enabled: true, textAnchor: 'start', style: { colors: ['#fff'], fontSize: '10px', fontWeight: 600 }, formatter: (val) => val, offsetX: 5 },
-    xaxis: { categories: ['Lead', 'Contactado', 'Prospecto', 'Negociación', 'Cerrado'], labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
+    xaxis: { categories: ['Lead', 'Contactado', 'Calificado', 'En Negociación', 'Propuesta', 'Convertido', 'Perdido'], labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
     yaxis: { labels: { style: { colors: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280', fontSize: '10px' } } },
     grid: { show: false },
     legend: { show: false },
@@ -804,12 +817,29 @@ const ClientesCRM = () => {
         </button>
         <button
           type="button"
+          onClick={() => { volverAlDashboard(); setActiveTab('funnel'); }}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm hover:shadow-md ${vistaActual !== 'detalle' && activeTab === 'funnel' ? 'bg-violet-500 text-white' : isDark ? 'border border-gray-600 text-gray-200 hover:bg-gray-700' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+        >
+          <FaStream /> Funnel de Ventas
+        </button>
+        <button
+          type="button"
           onClick={openCreateModal}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-blue-500 hover:bg-blue-600 transition-all shadow-sm hover:shadow-md"
         >
           <FaPlus /> Nuevo Cliente
         </button>
       </div>
+
+      {/* Tab: Funnel de Ventas */}
+      {vistaActual !== 'detalle' && activeTab === 'funnel' && (
+        <ClienteFunnel
+          clientes={clientesEjemplo}
+          lifebars={lifebars}
+          isDark={isDark}
+          onStageChange={handleFunnelStageChange}
+        />
+      )}
 
       {/* Tab: Métricas de Clientes */}
       {vistaActual !== 'detalle' && activeTab === 'metricas' && (
@@ -1286,10 +1316,14 @@ const ClientesCRM = () => {
                       <div className="flex items-center gap-2 mb-0.5">
                         <h4 className="font-semibold text-sm dark:text-gray-100 truncate">{cliente.nombre}</h4>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                          cliente.estado === 'Lead' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                            : cliente.estado === 'Negociación' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
-                              : cliente.estado === 'Cerrado' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                                : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                          cliente.estado === 'Lead' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                            : cliente.estado === 'Contactado' ? 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300'
+                              : cliente.estado === 'Calificado' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                                : cliente.estado === 'En Negociación' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                                  : cliente.estado === 'Propuesta' ? 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300'
+                                    : cliente.estado === 'Convertido' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                      : cliente.estado === 'Perdido' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                                        : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                         }`}>{cliente.estado}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
@@ -1370,14 +1404,17 @@ const ClientesCRM = () => {
               </div>
               <div className="flex gap-3">
                 <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                  clienteSeleccionado.estado === 'Lead' ? 'bg-yellow-500 text-white'
-                    : clienteSeleccionado.estado === 'Contacto' ? 'bg-blue-500 text-white'
-                      : clienteSeleccionado.estado === 'Prospecto' ? 'bg-purple-500 text-white'
-                        : clienteSeleccionado.estado === 'Negociación' ? 'bg-orange-500 text-white'
-                          : 'bg-green-500 text-white'
+                  clienteSeleccionado.estado === 'Lead' ? 'bg-blue-500 text-white'
+                    : clienteSeleccionado.estado === 'Contactado' ? 'bg-violet-500 text-white'
+                      : clienteSeleccionado.estado === 'Calificado' ? 'bg-yellow-500 text-white'
+                        : clienteSeleccionado.estado === 'En Negociación' ? 'bg-orange-500 text-white'
+                          : clienteSeleccionado.estado === 'Propuesta' ? 'bg-pink-500 text-white'
+                            : clienteSeleccionado.estado === 'Convertido' ? 'bg-emerald-500 text-white'
+                              : clienteSeleccionado.estado === 'Perdido' ? 'bg-red-500 text-white'
+                                : 'bg-gray-500 text-white'
                 }`}
                 >
-                  {clienteSeleccionado.estado}
+                  {clienteSeleccionado.estado || 'Lead'}
                 </span>
                 <button type="button" onClick={() => handleEditCliente(clienteSeleccionado)} className="px-4 py-2 bg-white text-blue-600 rounded-full hover:bg-opacity-90 transition-colors flex items-center gap-2 font-semibold">
                   <FaEdit /> Editar
@@ -2563,10 +2600,12 @@ const ClientesCRM = () => {
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                       >
                         <option value="Lead">Lead</option>
-                        <option value="Contacto">Contacto</option>
-                        <option value="Prospecto">Prospecto</option>
-                        <option value="Negociación">Negociación</option>
-                        <option value="Cerrado">Cerrado</option>
+                        <option value="Contactado">Contactado</option>
+                        <option value="Calificado">Calificado</option>
+                        <option value="En Negociación">En Negociación</option>
+                        <option value="Propuesta">Propuesta</option>
+                        <option value="Convertido">Convertido</option>
+                        <option value="Perdido">Perdido</option>
                       </select>
                     </div>
 
@@ -2972,13 +3011,17 @@ const ClientesCRM = () => {
                         <p className="text-sm text-gray-500 dark:text-gray-400">{cliente.email}</p>
                       </div>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        cliente.estado === 'Lead' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
-                          : cliente.estado === 'Contactado' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                            : cliente.estado === 'Negociación' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
-                              : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                        cliente.estado === 'Lead' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                          : cliente.estado === 'Contactado' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300'
+                            : cliente.estado === 'Calificado' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                              : cliente.estado === 'En Negociación' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+                                : cliente.estado === 'Propuesta' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300'
+                                  : cliente.estado === 'Convertido' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                    : cliente.estado === 'Perdido' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                                      : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                       }`}
                       >
-                        {cliente.estado}
+                        {cliente.estado || 'Lead'}
                       </span>
                     </div>
                     <div className="space-y-2">
@@ -3060,7 +3103,7 @@ const ClientesCRM = () => {
                           <p className="text-sm text-gray-500 dark:text-gray-400">{cliente.email} • {cliente.telefono}</p>
                           <div className="flex items-center gap-3 mt-2 flex-wrap">
                             <span className={`px-2 py-1 rounded text-xs ${
-                              cliente.estado === 'Negociación' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+                              cliente.estado === 'En Negociación' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
                                 : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                             }`}
                             >
@@ -3104,7 +3147,7 @@ const ClientesCRM = () => {
                   <FaChartLine /> En Negociación
                 </h2>
                 <p className="text-green-100 text-sm mt-1">
-                  {clientesEjemplo.filter((c) => c.estado === 'Negociación').length} clientes próximos a cerrar
+                  {clientesEjemplo.filter((c) => c.estado === 'En Negociación').length} clientes próximos a cerrar
                 </p>
               </div>
               <button type="button" onClick={() => setShowModalEnNegociacion(false)} className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors">
@@ -3115,7 +3158,7 @@ const ClientesCRM = () => {
             <div className="flex-1 overflow-y-auto p-6">
               <div className="space-y-3">
                 {clientesEjemplo
-                  .filter((c) => c.estado === 'Negociación')
+                  .filter((c) => c.estado === 'En Negociación')
                   .sort((a, b) => b.scoring - a.scoring)
                   .map((cliente) => (
                     <div key={cliente.id} className={`${currentMode === 'Dark' ? 'bg-gray-800' : 'bg-gray-50'} rounded-lg p-4 border-2 ${currentMode === 'Dark' ? 'border-green-700' : 'border-green-200'} hover:shadow-md transition-shadow`}>
@@ -3163,7 +3206,7 @@ const ClientesCRM = () => {
                   ))}
               </div>
 
-              {clientesEjemplo.filter((c) => c.estado === 'Negociación').length === 0 && (
+              {clientesEjemplo.filter((c) => c.estado === 'En Negociación').length === 0 && (
                 <div className="text-center py-12">
                   <FaChartLine className="text-6xl text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                   <p className="text-gray-500 dark:text-gray-400">No hay clientes en negociación</p>
@@ -3196,10 +3239,12 @@ const ClientesCRM = () => {
                 <h3 className="text-lg font-semibold mb-4 dark:text-gray-100">Embudo de Conversión</h3>
                 <div className="space-y-4">
                   {[
-                    { estado: 'Lead', count: clientesEjemplo.filter((c) => c.estado === 'Lead').length, color: 'yellow', width: '100%' },
-                    { estado: 'Contactado', count: clientesEjemplo.filter((c) => c.estado === 'Contactado').length, color: 'blue', width: '75%' },
-                    { estado: 'Negociación', count: clientesEjemplo.filter((c) => c.estado === 'Negociación').length, color: 'orange', width: '50%' },
-                    { estado: 'Cliente', count: clientesEjemplo.filter((c) => c.estado === 'Cliente').length, color: 'green', width: '32%' },
+                    { estado: 'Lead', count: clientesEjemplo.filter((c) => c.estado === 'Lead').length, color: 'blue', width: '100%' },
+                    { estado: 'Contactado', count: clientesEjemplo.filter((c) => c.estado === 'Contactado').length, color: 'violet', width: '80%' },
+                    { estado: 'Calificado', count: clientesEjemplo.filter((c) => c.estado === 'Calificado').length, color: 'yellow', width: '65%' },
+                    { estado: 'En Negociación', count: clientesEjemplo.filter((c) => c.estado === 'En Negociación').length, color: 'orange', width: '50%' },
+                    { estado: 'Propuesta', count: clientesEjemplo.filter((c) => c.estado === 'Propuesta').length, color: 'pink', width: '35%' },
+                    { estado: 'Convertido', count: clientesEjemplo.filter((c) => c.estado === 'Convertido').length, color: 'green', width: '22%' },
                   ].map((etapa) => (
                     <div key={etapa.estado} className="relative">
                       <div className="flex items-center justify-between mb-2">
@@ -3233,23 +3278,23 @@ const ClientesCRM = () => {
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Contactado → Negociación</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Contactado → En Negociación</p>
                     <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 my-2">
                       {clientesEjemplo.filter((c) => c.estado === 'Contactado').length > 0
-                        ? Math.round((clientesEjemplo.filter((c) => c.estado === 'Negociación' || c.estado === 'Cliente').length / clientesEjemplo.filter((c) => c.estado === 'Contactado').length) * 100)
+                        ? Math.round((clientesEjemplo.filter((c) => c.estado === 'En Negociación' || c.estado === 'Propuesta' || c.estado === 'Convertido').length / clientesEjemplo.filter((c) => c.estado === 'Contactado').length) * 100)
                         : 0}%
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {clientesEjemplo.filter((c) => c.estado === 'Negociación' || c.estado === 'Cliente').length} conversiones
+                      {clientesEjemplo.filter((c) => c.estado === 'En Negociación' || c.estado === 'Propuesta' || c.estado === 'Convertido').length} avanzaron
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Lead → Cliente</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Lead → Convertido</p>
                     <p className="text-3xl font-bold text-green-600 dark:text-green-400 my-2">
-                      {Math.round((clientesEjemplo.filter((c) => c.estado === 'Cliente').length / clientesEjemplo.length) * 100)}%
+                      {clientesEjemplo.length > 0 ? Math.round((clientesEjemplo.filter((c) => c.estado === 'Convertido').length / clientesEjemplo.length) * 100) : 0}%
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {clientesEjemplo.filter((c) => c.estado === 'Cliente').length} clientes cerrados
+                      {clientesEjemplo.filter((c) => c.estado === 'Convertido').length} clientes ganados
                     </p>
                   </div>
                 </div>
@@ -3258,10 +3303,13 @@ const ClientesCRM = () => {
               {/* Clientes por Estado */}
               <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { estado: 'Lead', color: 'yellow', icon: '📋' },
-                  { estado: 'Contactado', color: 'blue', icon: '📞' },
-                  { estado: 'Negociación', color: 'orange', icon: '💼' },
-                  { estado: 'Cliente', color: 'green', icon: '✅' },
+                  { estado: 'Lead', color: 'blue', icon: '🎯' },
+                  { estado: 'Contactado', color: 'violet', icon: '📞' },
+                  { estado: 'Calificado', color: 'yellow', icon: '⭐' },
+                  { estado: 'En Negociación', color: 'orange', icon: '🤝' },
+                  { estado: 'Propuesta', color: 'pink', icon: '📋' },
+                  { estado: 'Convertido', color: 'green', icon: '✅' },
+                  { estado: 'Perdido', color: 'red', icon: '❌' },
                 ].map((item) => (
                   <div key={item.estado} className={`${currentMode === 'Dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg p-4 border ${currentMode === 'Dark' ? 'border-gray-700' : 'border-gray-200'} text-center`}>
                     <div className="text-3xl mb-2">{item.icon}</div>

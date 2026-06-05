@@ -430,7 +430,7 @@ const ToursVirtuales = () => {
             <form onSubmit={uploadScene} className="space-y-3">
               <h2 className="font-black flex items-center gap-2"><FiUploadCloud /> Upload panorama</h2>
               <input value={sceneForm.title} onChange={(e) => setSceneForm({ ...sceneForm, title: e.target.value })} placeholder="Nombre de ambiente" className="w-full rounded-xl bg-white/10 border border-white/10 px-3 py-3 text-sm" />
-              <input type="file" accept="image/jpeg,image/jpg,image/webp,image/png" onChange={(e) => setSceneForm({ ...sceneForm, file: e.target.files?.[0] || null })} className="w-full text-sm" />
+              <input type="file" accept="image/jpeg,image/jpg,image/webp,image/png,.insp" onChange={(e) => setSceneForm({ ...sceneForm, file: e.target.files?.[0] || null })} className="w-full text-sm" />
               <button disabled={uploading || !selectedTour} className="w-full rounded-xl bg-yellow-400 text-gray-950 py-3 font-bold disabled:opacity-40">{uploading ? 'Procesando...' : 'Subir escena'}</button>
             </form>
 
