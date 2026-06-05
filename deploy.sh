@@ -62,7 +62,7 @@ log "═════════════════════════
 
 # ── 1. Git Pull ──────────────────────────────────────────────
 log "📥 Descargando últimos cambios..."
-mkdir -p /var/log/anabella 2>/dev/null || sudo mkdir -p /var/log/anabella
+mkdir -p /var/log/anabella 2>/dev/null || true
 cd "$PROJECT_DIR"
 git stash --include-untracked 2>/dev/null || true
 git clean -ffd --exclude="backend/.env" --exclude="evolution-api/.env" --exclude="evolution-api/evolution.db" 2>/dev/null || true
@@ -124,33 +124,14 @@ if should_run "backend"; then
   EVOLUTION_DIR="$PROJECT_DIR/evolution-api"
   BACKEND_ENV="$PROJECT_DIR/backend/.env"
 
-  if [ -d "$EVOLUTION_DIR" ] && [ -f "$EVOLUTION_DIR/package.json" ]; then
+  # IMPORTANTE: Este script NUNCA instala paquetes ni usa sudo.
+  # PostgreSQL y la base de datos de Evolution API deben estar pre-configurados
+  # manualmente en el servidor antes del primer deploy.
+  # Si EVOLUTION_DB_URI no está en backend/.env, el setup de Evolution se omite
+  # silenciosamente para no romper el auto-deploy vía webhook.
+  EVOLUTION_DB_URI=$(grep -E '^EVOLUTION_DB_URI=' "$BACKEND_ENV" 2>/dev/null | cut -d= -f2- | tr -d '"' | tr -d "'")
 
-    # ── PostgreSQL: instalar si no está ───────────────────────
-    if ! command -v psql &>/dev/null; then
-      log "Instalando PostgreSQL..."
-      sudo apt-get update -qq
-      sudo apt-get install -y postgresql postgresql-contrib
-      sudo systemctl enable --now postgresql
-      ok "PostgreSQL instalado"
-    fi
-
-    # ── Crear base de datos si no existe ──────────────────────
-    EVOLUTION_DB_URI=$(grep -E '^EVOLUTION_DB_URI=' "$BACKEND_ENV" 2>/dev/null | cut -d= -f2- | tr -d '"' | tr -d "'")
-    if [ -z "$EVOLUTION_DB_URI" ]; then
-      log "Creando base de datos PostgreSQL para Evolution API..."
-      DB_PASS=$(sudo -u postgres psql -tAc "SELECT passwd FROM pg_shadow WHERE usename='evolution'" 2>/dev/null | head -1)
-      if [ -z "$DB_PASS" ]; then
-        DB_PASS=$(openssl rand -hex 16)
-        sudo -u postgres psql -c "CREATE USER evolution WITH PASSWORD '$DB_PASS';" 2>/dev/null || true
-        sudo -u postgres psql -c "CREATE DATABASE evolution_api OWNER evolution;" 2>/dev/null || true
-        sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE evolution_api TO evolution;" 2>/dev/null || true
-      fi
-      EVOLUTION_DB_URI="postgresql://evolution:${DB_PASS}@localhost:5432/evolution_api?schema=evolution_api"
-      echo "" >> "$BACKEND_ENV"
-      echo "EVOLUTION_DB_URI=${EVOLUTION_DB_URI}" >> "$BACKEND_ENV"
-      ok "Base de datos PostgreSQL creada"
-    fi
+  if [ -d "$EVOLUTION_DIR" ] && [ -f "$EVOLUTION_DIR/package.json" ] && [ -n "$EVOLUTION_DB_URI" ]; then
 
     # ── Generar .env de Evolution si no existe ────────────────
     if [ ! -f "$EVOLUTION_DIR/.env" ]; then
@@ -223,6 +204,8 @@ EOF
     fi
     pm2 save 2>/dev/null
     ok "Evolution API lista"
+  elif [ -d "$EVOLUTION_DIR" ] && [ -z "$EVOLUTION_DB_URI" ]; then
+    warn "Evolution API omitida — EVOLUTION_DB_URI no está en backend/.env"
     cd "$PROJECT_DIR"
   fi
 fi
