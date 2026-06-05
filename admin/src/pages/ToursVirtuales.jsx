@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
-import { FiBox, FiUploadCloud, FiPlus, FiPlay, FiEye, FiTrash2, FiMapPin, FiX } from 'react-icons/fi';
+import { FiBox, FiUploadCloud, FiPlus, FiPlay, FiEye, FiTrash2, FiMapPin } from 'react-icons/fi';
 import { crmService } from '../services/crmService';
 import tourService from '../services/tourService';
 
@@ -428,18 +428,20 @@ const ToursVirtuales = () => {
                   const sceneKey = getSceneKey(scene) || `scene-${index}`;
                   const renderKey = `${sceneKey}-${index}`;
                   return (
-                  <div key={renderKey} className={`relative min-w-[160px] rounded-2xl overflow-hidden border ${getSceneKey(selectedScene) === sceneKey ? 'border-yellow-300' : 'border-white/10'}`}>
-                    <button type="button" onClick={() => setSelectedSceneId(sceneKey)} className="block w-full text-left">
-                      {scene.thumbnailUrl && <img src={resolveUrl(scene.thumbnailUrl)} alt="" className="w-full h-20 object-cover" />}
+                  <div key={renderKey} className={`flex flex-col min-w-[160px] rounded-2xl overflow-hidden border ${getSceneKey(selectedScene) === sceneKey ? 'border-yellow-300' : 'border-white/10'}`}>
+                    <button type="button" onClick={() => setSelectedSceneId(sceneKey)} className="block w-full text-left flex-1">
+                      {scene.thumbnailUrl
+                        ? <img src={resolveUrl(scene.thumbnailUrl)} alt="" className="w-full h-20 object-cover" />
+                        : <div className="w-full h-20 bg-white/5 grid place-items-center text-gray-500 text-xs">Sin preview</div>
+                      }
                       <span className="block p-2 text-sm">{scene.title}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => removeScene(sceneKey)}
-                      className="absolute top-1 right-1 z-10 rounded-full bg-black/60 p-1 text-white hover:bg-red-600 transition-colors"
-                      title="Eliminar panorama"
+                      className="flex items-center justify-center gap-1 w-full py-1.5 text-xs text-red-400 hover:bg-red-500/20 transition-colors border-t border-white/10"
                     >
-                      <FiX size={12} />
+                      <FiTrash2 size={11} /> Eliminar
                     </button>
                   </div>
                   );
@@ -482,8 +484,8 @@ const ToursVirtuales = () => {
               <button disabled={!selectedScene} className="w-full rounded-xl bg-white/10 border border-white/10 py-3 font-bold disabled:opacity-40">Agregar hotspot</button>
             </form>
 
-            {selectedTour?.slug && (
-              <a href={`/tour/${selectedTour.slug}`} target="_blank" rel="noreferrer" className="block rounded-xl bg-white/10 border border-white/10 py-3 text-center font-bold text-white"><FiEye className="inline mr-2" />Preview público</a>
+            {selectedTour?.propertyId && (
+              <a href={`https://anabellaluna.com.ar/propiedad/${selectedTour.propertyId}`} target="_blank" rel="noreferrer" className="block rounded-xl bg-white/10 border border-white/10 py-3 text-center font-bold text-white"><FiEye className="inline mr-2" />Ver propiedad</a>
             )}
           </aside>
         </div>
