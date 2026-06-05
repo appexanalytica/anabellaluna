@@ -720,30 +720,11 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
           <span>Recorrido virtual</span>
           <strong>{tour.title}</strong>
         </div>
-        <div className="al-vtour-actions">
-          {tour.settings?.autorotate && (
-            <button type="button" onClick={() => setAutorotateEnabled((value) => !value)}>
-              {autorotateEnabled ? "Pausar" : "Auto"}
-            </button>
-          )}
-          {tour.settings?.fullscreen !== false && <button type="button" onClick={enterFullscreen}>Pantalla completa</button>}
-        </div>
       </div>
-      {tour.settings?.showSceneNavigator !== false && (
-        <div className="al-vtour-scenes">
-          {orderedScenes.map((scene) => (
-            <button
-              type="button"
-              key={scene.id}
-              className={scene.id === activeSceneId ? "active" : ""}
-              disabled={!sceneSourceRef.current[scene.id]}
-              onClick={() => switchScene(scene.id)}
-            >
-              {scene.thumbnailUrl && <img src={resolveMediaUrl(scene.thumbnailUrl)} alt="" loading="lazy" />}
-              <span>{scene.title}</span>
-            </button>
-          ))}
-        </div>
+      {tour.settings?.fullscreen !== false && (
+        <button type="button" className="al-vtour-start-btn" onClick={enterFullscreen} data-vtour-control="true">
+          Iniciar recorrido
+        </button>
       )}
       {isLoading && <div className="al-vtour-loading">Cargando recorrido 360°...</div>}
       {error && <div className="al-vtour-error">{error}</div>}

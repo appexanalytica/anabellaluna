@@ -1300,7 +1300,7 @@ header .main-menu-wrapper .main-nav > li a i {
 }
 
 .al-vtour-shell.is-teleporting .al-vtour-topbar,
-.al-vtour-shell.is-teleporting .al-vtour-scenes {
+.al-vtour-shell.is-teleporting .al-vtour-start-btn {
   pointer-events: none;
   opacity: 0.32;
   transition: opacity 0.18s ease;
@@ -1421,6 +1421,36 @@ header .main-menu-wrapper .main-nav > li a i {
     opacity: 0;
     transform: scale(0.96);
   }
+}
+
+.al-vtour-start-btn {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 18px 40px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+.al-vtour-start-btn:hover {
+  background: rgba(212, 175, 55, 0.72);
+  border-color: #d4af37;
+  transform: translate(-50%, -50%) scale(1.04);
+  box-shadow: 0 12px 40px rgba(212, 175, 55, 0.35);
 }
 
 .al-vtour-topbar {
