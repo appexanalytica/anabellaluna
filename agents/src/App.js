@@ -14,6 +14,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { Navbar, Footer, Sidebar, ThemeSettings, Celebration, OnboardingTutorial } from './components';
 import { AgentDashboard, Propiedades, ClientesCRM, Citas, Ventas, Documentos, Plantillas, Reportes, Integraciones, Consultas, MiPerfil, Recompensas, Automatizacion, FechasImportantes, EditorImagenes, Tasaciones, ToursVirtuales } from './pages';
 import MarketingAI from './pages/MarketingAI';
+import MisSesiones from './pages/MisSesiones';
 import LoginAgente from './pages/LoginAgente';
 import Seguridad from './pages/Seguridad';
 import AIFloatingOrb from './components/ai/AIFloatingOrb';
@@ -174,6 +175,7 @@ const App = () => {
           <Route path="tasaciones" element={<Tasaciones />} />
           <Route path="tours-virtuales" element={<ToursVirtuales />} />
           <Route path="marketing-ai" element={<MarketingAI />} />
+          <Route path="mis-sesiones" element={<MisSesiones />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

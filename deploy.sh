@@ -79,14 +79,62 @@ if should_run "backend"; then
   npm install --no-audit --no-fund || fail "npm install backend falló"
   ok "Dependencias del backend instaladas"
 
-  log "🔄 Backend — Reiniciando con PM2..."
-  if pm2 describe backend > /dev/null 2>&1; then
-    pm2 restart backend --update-env
+  log "🔄 Backend — Gestionando procesos PM2..."
+  cd "$PROJECT_DIR"
+
+  # Función para reiniciar o iniciar un proceso PM2
+  restart_or_start_pm2() {
+    local name="$1"
+    local script="$2"
+    local cwd="$3"
+    if pm2 describe "$name" > /dev/null 2>&1; then
+      pm2 restart "$name" --update-env
+      ok "PM2 '$name' reiniciado"
+    else
+      pm2 start "$script" --name "$name" --cwd "$cwd"
+      ok "PM2 '$name' iniciado"
+    fi
+  }
+
+  # Si existe ecosystem.config.js, usarlo; si no, iniciar manualmente
+  if [ -f "$PROJECT_DIR/ecosystem.config.js" ]; then
+    # Iniciar todos los procesos definidos en ecosystem.config.js
+    if pm2 describe backend > /dev/null 2>&1; then
+      # Ya existe al menos un proceso — recargar todos
+      pm2 reload ecosystem.config.js --update-env 2>/dev/null \
+        || pm2 restart ecosystem.config.js --update-env
+    else
+      # Primera vez — iniciar todos
+      pm2 start ecosystem.config.js
+    fi
+    ok "Todos los procesos PM2 gestionados con ecosystem.config.js"
   else
-    pm2 start server.js --name backend --cwd "$PROJECT_DIR/backend"
+    # Fallback: iniciar manualmente si no hay ecosystem.config.js
+    restart_or_start_pm2 "backend"          "backend/server.js"            "$PROJECT_DIR"
+    restart_or_start_pm2 "ai-worker"        "backend/workers/ai-worker.js" "$PROJECT_DIR"
+    restart_or_start_pm2 "scheduler-worker" "backend/workers/scheduler-worker.js" "$PROJECT_DIR"
   fi
+
   pm2 save 2>/dev/null
-  ok "Backend reiniciado"
+  ok "Estado PM2 guardado"
+
+  # ── Actualizar Evolution API si ya está instalada ─────────
+  EVOLUTION_DIR="$PROJECT_DIR/evolution-api"
+  if [ -d "$EVOLUTION_DIR/.git" ]; then
+    log "Evolution API — actualizando..."
+    cd "$EVOLUTION_DIR"
+    git pull origin main 2>/dev/null || warn "Evolution API git pull falló — usando versión existente"
+    npm install --no-audit --no-fund 2>/dev/null || true
+    npm run db:deploy 2>/dev/null || true
+    npm run build 2>/dev/null || warn "Evolution API build falló"
+    if pm2 describe evolution-api > /dev/null 2>&1; then
+      pm2 restart evolution-api --update-env
+      ok "Evolution API reiniciada"
+    fi
+    cd "$PROJECT_DIR"
+  else
+    warn "Evolution API no instalada — ejecutar: bash setup-evolution.sh"
+  fi
 fi
 
 # ── 3. Admin (ERP) ──────────────────────────────────────────
@@ -98,7 +146,7 @@ if should_run "admin"; then
 
   log "🏗️  Admin (ERP) — Compilando..."
   NODE_ENV=production DISABLE_ESLINT_PLUGIN=true npm run build || fail "Admin build falló"
-  ok "Admin build completado"
+  ok "Admin build completado → admin/build/"
 fi
 
 # ── 4. Agents (CRM) ─────────────────────────────────────────
@@ -110,7 +158,7 @@ if should_run "agents"; then
 
   log "🏗️  Agents (CRM) — Compilando..."
   NODE_ENV=production DISABLE_ESLINT_PLUGIN=true npm run build || fail "Agents build falló"
-  ok "Agents build completado"
+  ok "Agents build completado → agents/build/"
 fi
 
 # ── 5. Frontend (Público) ───────────────────────────────────
@@ -122,7 +170,7 @@ if should_run "frontend"; then
 
   log "🏗️  Frontend (Público) — Compilando..."
   NODE_ENV=production npm run build || fail "Frontend build falló"
-  ok "Frontend build completado"
+  ok "Frontend build completado → frontend/dist/"
 fi
 
 # ── 6. Resumen ───────────────────────────────────────────────
@@ -134,6 +182,7 @@ log "═════════════════════════
 if should_run "backend"; then
   echo ""
   log "Estado PM2:"
+  cd "$PROJECT_DIR"
   pm2 list
 fi
 

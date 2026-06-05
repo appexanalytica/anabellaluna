@@ -4,6 +4,10 @@ import { Link, NavLink } from 'react-router-dom';
 import { MdSpaceDashboard, MdOutlineCancel } from 'react-icons/md';
 import { FaUsers, FaRegCalendarAlt, FaDollarSign, FaChartBar, FaPlug, FaEnvelope, FaTrophy, FaBuilding, FaRobot, FaFileAlt, FaMagic, FaImage, FaBalanceScale, FaVrCardboard } from 'react-icons/fa';
 
+const WhatsAppIcon = () => (
+  <img src="/whatsapp.svg" width="18" height="18" alt="WhatsApp" />
+);
+
 import { useStateContext } from '../contexts/ContextProvider';
 import { APP_COMMIT_COUNT, APP_VERSION } from '../config/appVersion';
 
@@ -14,6 +18,7 @@ const menuItems = [
   { name: 'Operaciones', path: '/crm/operaciones', icon: <FaDollarSign /> },
   { name: 'Agenda', path: '/crm/citas', icon: <FaRegCalendarAlt /> },
   { name: 'Consultas', path: '/crm/consultas', icon: <FaEnvelope /> },
+  { name: 'Mi WhatsApp', path: '/crm/mis-sesiones', icon: <WhatsAppIcon /> },
   { name: 'Automatización', path: '/crm/automatizacion', icon: <FaRobot /> },
   { name: 'Recompensas', path: '/crm/recompensas', icon: <FaTrophy /> },
   { name: 'Integraciones', path: '/crm/integraciones', icon: <FaPlug /> },

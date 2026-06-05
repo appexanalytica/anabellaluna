@@ -129,4 +129,23 @@ function emitToAdmin(event, data) {
   _io.to('admin').emit(event, data);
 }
 
-module.exports = { initSocket, getIO, emitToUser, emitToAdmin };
+/**
+ * Emite un evento a todos los sockets conectados (broadcast global).
+ */
+function emitToAll(event, data) {
+  if (!_io) return;
+  _io.emit(event, data);
+}
+
+/**
+ * Emite un evento a todos los sockets en una sala específica.
+ * @param {string} room - Nombre de la sala (ej: 'admin', 'user:123')
+ * @param {string} event
+ * @param {any} data
+ */
+function emitToRoom(room, event, data) {
+  if (!_io) return;
+  _io.to(room).emit(event, data);
+}
+
+module.exports = { initSocket, getIO, emitToUser, emitToAdmin, emitToAll, emitToRoom };

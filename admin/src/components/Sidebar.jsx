@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { MdSpaceDashboard, MdOutlineCancel, MdOutlineIntegrationInstructions } from 'react-icons/md';
-import { FaUsers, FaRegCalendarAlt, FaDollarSign, FaChartBar, FaTrophy, FaBuilding, FaUserTie, FaComments, FaFileAlt, FaMagic, FaImage, FaBalanceScale, FaRobot, FaCog, FaVrCardboard } from 'react-icons/fa';
+import { FaUsers, FaRegCalendarAlt, FaDollarSign, FaChartBar, FaTrophy, FaBuilding, FaUserTie, FaFileAlt, FaMagic, FaImage, FaBalanceScale, FaRobot, FaCog, FaVrCardboard } from 'react-icons/fa';
+
+const WhatsAppSessionIcon = () => (
+  <img src="/whatsapp.svg" width="18" height="18" alt="WhatsApp" />
+);
 
 import { useStateContext } from '../contexts/ContextProvider';
 import { APP_COMMIT_COUNT, APP_VERSION } from '../config/appVersion';
@@ -13,7 +17,7 @@ const menuItems = [
   { name: 'Agentes', path: '/agentes', icon: <FaUserTie /> },
   { name: 'Operaciones', path: '/operaciones', icon: <FaDollarSign /> },
   { name: 'Agenda', path: '/citas', icon: <FaRegCalendarAlt /> },
-  { name: 'Mensajería', path: '/mensajeria', icon: <FaComments /> },
+  { name: 'Sesiones WA', path: '/whatsapp-sesiones', icon: <WhatsAppSessionIcon /> },
   { name: 'Archivos', path: '/archivos', icon: <FaFileAlt /> },
   { name: 'Editor', path: '/editor-imagenes', icon: <FaImage /> },
   { name: 'Tours 360', path: '/tours-virtuales', icon: <FaVrCardboard /> },

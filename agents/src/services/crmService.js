@@ -47,6 +47,7 @@ export const crmService = {
     create: (data) => requirePersisted(api.post('/crm/clientes', data), 'El cliente'),
     update: (id, data) => requirePersisted(api.put(`/crm/clientes/${id}`, data), 'El cliente'),
     delete: (id) => api.delete(`/crm/clientes/${id}`),
+    updateStage: (id, stage) => api.patch(`/crm/clientes/${id}/stage`, { stage }),
   },
 
   // ============ CLIENT INTERACTIONS ============

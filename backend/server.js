@@ -118,6 +118,8 @@ const marketingAIRoutes = require('./routes/marketing-ai/index');
 const aiChatRoutes = require('./routes/ai-chat');
 const adminAIConfigRoutes = require('./routes/admin/ai-config');
 const virtualToursRoutes = require('./modules/tours/routes');
+const whatsappRoutes = require('./routes/whatsapp');
+const whatsappSessionRoutes = require('./routes/whatsappSessions');
 
 const { buildPropertyOGRouter } = require('./openGraph');
 const { initSocket } = require('./socket');
@@ -329,6 +331,12 @@ app.use('/api/push', pushRoutes);
 // Marketing AI routes
 app.use('/marketing-ai', marketingAIRoutes);
 app.use('/ai', aiChatRoutes);
+
+// WhatsApp sessions route MUST be before /whatsapp to avoid prefix interception
+app.use('/whatsapp/sessions', whatsappSessionRoutes);
+
+// WhatsApp Business API routes (webhook + internal API)
+app.use('/whatsapp', whatsappRoutes);
 
 // Generic CRM routes (links) - MUST come after specific routes
 
