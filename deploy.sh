@@ -118,21 +118,84 @@ if should_run "backend"; then
   pm2 save 2>/dev/null
   ok "Estado PM2 guardado"
 
-  # ── Rebuild Evolution API si ya está instalada ────────────
+  # ── Evolution API — setup automático + restart ────────────
   EVOLUTION_DIR="$PROJECT_DIR/evolution-api"
+  BACKEND_ENV="$PROJECT_DIR/backend/.env"
+
   if [ -d "$EVOLUTION_DIR" ] && [ -f "$EVOLUTION_DIR/package.json" ]; then
-    log "Evolution API — rebuild..."
+    log "Evolution API — instalando dependencias..."
     cd "$EVOLUTION_DIR"
-    npm install --no-audit --no-fund 2>/dev/null || true
-    npm run db:deploy 2>/dev/null || true
-    npm run build 2>/dev/null || warn "Evolution API build falló"
+    npm install --no-audit --no-fund || warn "Evolution API npm install falló"
+
+    # Generar .env de Evolution si no existe
+    if [ ! -f "$EVOLUTION_DIR/.env" ]; then
+      log "Evolution API — generando .env..."
+
+      EVOLUTION_API_KEY=$(grep -E '^EVOLUTION_API_KEY=' "$BACKEND_ENV" 2>/dev/null | cut -d= -f2- | tr -d '"' | tr -d "'" | tr -d '[:space:]')
+      BACKEND_PUBLIC_URL=$(grep -E '^BACKEND_PUBLIC_URL=' "$BACKEND_ENV" 2>/dev/null | cut -d= -f2- | tr -d '"' | tr -d "'" | tr -d '[:space:]')
+      WEBHOOK_URL="${BACKEND_PUBLIC_URL}/whatsapp/webhook/evolution"
+
+      cat > "$EVOLUTION_DIR/.env" <<EOF
+SERVER_TYPE=http
+SERVER_PORT=8080
+SERVER_URL=${BACKEND_PUBLIC_URL}
+CORS_ORIGIN=*
+CORS_METHODS=GET,POST,PUT,PATCH,DELETE
+CORS_CREDENTIALS=true
+LOG_LEVEL=ERROR,WARN,INFO
+LOG_COLOR=true
+LOG_BAILEYS=error
+DEL_INSTANCE=false
+DATABASE_PROVIDER=sqlite
+DATABASE_CONNECTION_URI=file:${EVOLUTION_DIR}/evolution.db
+DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+DATABASE_SAVE_DATA_INSTANCE=true
+DATABASE_SAVE_DATA_NEW_MESSAGE=true
+DATABASE_SAVE_MESSAGE_UPDATE=true
+DATABASE_SAVE_DATA_CONTACTS=true
+DATABASE_SAVE_DATA_CHATS=true
+DATABASE_SAVE_DATA_HISTORIC=true
+CACHE_REDIS_ENABLED=false
+CACHE_LOCAL_ENABLED=false
+AUTHENTICATION_TYPE=apikey
+AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY}
+AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
+WEBHOOK_GLOBAL_ENABLED=true
+WEBHOOK_GLOBAL_URL=${WEBHOOK_URL}
+WEBHOOK_GLOBAL_WEBHOOK_BY_EVENTS=false
+WEBHOOK_GLOBAL_WEBHOOK_BASE64=false
+WEBHOOK_EVENTS_QRCODE_UPDATED=true
+WEBHOOK_EVENTS_MESSAGES_UPSERT=true
+WEBHOOK_EVENTS_MESSAGES_UPDATED=true
+WEBHOOK_EVENTS_CONNECTION_UPDATE=true
+WEBHOOK_EVENTS_APPLICATION_STARTUP=false
+CONFIG_SESSION_PHONE_CLIENT=AnabellaLuna
+CONFIG_SESSION_PHONE_NAME=Chrome
+QRCODE_LIMIT=30
+EOF
+      ok "Evolution API .env generado"
+    fi
+
+    # Migrar base de datos y compilar
+    npm run db:generate 2>/dev/null || true
+    npm run db:deploy   2>/dev/null || warn "Evolution API db:deploy falló"
+    npm run build || warn "Evolution API build falló"
+
+    # Iniciar o reiniciar en PM2
     if pm2 describe evolution-api > /dev/null 2>&1; then
       pm2 restart evolution-api --update-env
-      ok "Evolution API reiniciada"
+    else
+      pm2 start "$EVOLUTION_DIR/dist/main.js" \
+        --name "evolution-api" \
+        --cwd "$EVOLUTION_DIR" \
+        --max-memory-restart 512M \
+        --restart-delay 5000 \
+        --max-restarts 10 \
+        -- --max-old-space-size=512
     fi
+    pm2 save 2>/dev/null
+    ok "Evolution API lista"
     cd "$PROJECT_DIR"
-  else
-    warn "Evolution API no instalada — ejecutar: bash setup-evolution.sh"
   fi
 fi
 
