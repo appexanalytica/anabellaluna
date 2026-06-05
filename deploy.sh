@@ -64,6 +64,7 @@ log "═════════════════════════
 log "📥 Descargando últimos cambios..."
 cd "$PROJECT_DIR"
 git stash --include-untracked 2>/dev/null || true
+git clean -fd --exclude="backend/.env" --exclude="evolution-api/.env" --exclude="evolution-api/evolution.db" 2>/dev/null || true
 git pull origin main || fail "git pull falló"
 ok "Código actualizado"
 
