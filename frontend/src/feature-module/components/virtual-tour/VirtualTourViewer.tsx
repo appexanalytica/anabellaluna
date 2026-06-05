@@ -158,6 +158,7 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
   const [fallbackImageUrl, setFallbackImageUrl] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [isWebglReady, setIsWebglReady] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [teleportTransition, setTeleportTransition] = useState({
     phase: "idle" as "idle" | "departing" | "arriving",
     left: 50,
@@ -521,6 +522,12 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
     return () => clearTransitionTimers();
   }, [clearTransitionTimers]);
 
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
   const applyScene = (loadedScene: LoadedScene) => {
     const nextView = getCenteredView();
     setActiveSceneId(loadedScene.scene.id);
@@ -721,7 +728,7 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
           <strong>{tour.title}</strong>
         </div>
       </div>
-      {tour.settings?.fullscreen !== false && (
+      {tour.settings?.fullscreen !== false && !isFullscreen && (
         <button type="button" className="al-vtour-start-btn" onClick={enterFullscreen} data-vtour-control="true">
           Iniciar recorrido
         </button>
