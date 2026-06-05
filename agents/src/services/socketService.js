@@ -1,9 +1,11 @@
 import { api } from '../config/api';
 
-const API_BASE = process.env.REACT_APP_API_URL
-  || (typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname)
-    ? 'https://api.anabellaluna.com.ar'
-    : 'http://localhost:4000');
+const isLocal = typeof window !== 'undefined'
+  && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
+const API_BASE = isLocal
+  ? (process.env.REACT_APP_API_URL || 'http://localhost:4000')
+  : 'https://api.anabellaluna.com.ar';
 
 let _socket   = null;
 let _handlers = {};
