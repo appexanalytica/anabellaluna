@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
-import { FiBox, FiUploadCloud, FiPlus, FiPlay, FiEye, FiTrash2, FiMapPin } from 'react-icons/fi';
+import { FiBox, FiUploadCloud, FiPlus, FiPlay, FiEye, FiTrash2, FiMapPin, FiX } from 'react-icons/fi';
 import { crmService } from '../services/crmService';
 import tourService from '../services/tourService';
 
@@ -222,6 +222,18 @@ const ToursVirtuales = () => {
     toast.success('Tour eliminado');
   };
 
+  const removeScene = async (sceneId) => {
+    if (!selectedTourKey || !window.confirm('¿Eliminar este panorama?')) return;
+    try {
+      const tour = await tourService.deleteScene(selectedTourKey, sceneId);
+      setTours((prev) => [tour, ...prev.filter((item) => (item.id || item._id) !== tour.id)]);
+      if (getSceneKey(selectedScene) === sceneId) setSelectedSceneId('');
+      toast.success('Panorama eliminado');
+    } catch (err) {
+      toast.error(err.message || 'No se pudo eliminar el panorama');
+    }
+  };
+
   const sceneImageUrl = getSceneImageUrl(selectedScene);
   const backgroundScale = Math.max(220, Math.min(900, (TWO_PI / view.fov) * 100));
   const backgroundPositionX = ((normalizeAngle(view.yaw) + Math.PI) / TWO_PI) * 100;
@@ -416,10 +428,20 @@ const ToursVirtuales = () => {
                   const sceneKey = getSceneKey(scene) || `scene-${index}`;
                   const renderKey = `${sceneKey}-${index}`;
                   return (
-                  <button key={renderKey} type="button" onClick={() => setSelectedSceneId(sceneKey)} className={`min-w-[160px] rounded-2xl overflow-hidden border ${getSceneKey(selectedScene) === sceneKey ? 'border-yellow-300' : 'border-white/10'}`}>
-                    {scene.thumbnailUrl && <img src={resolveUrl(scene.thumbnailUrl)} alt="" className="w-full h-20 object-cover" />}
-                    <span className="block p-2 text-sm text-left">{scene.title}</span>
-                  </button>
+                  <div key={renderKey} className={`relative min-w-[160px] rounded-2xl overflow-hidden border ${getSceneKey(selectedScene) === sceneKey ? 'border-yellow-300' : 'border-white/10'}`}>
+                    <button type="button" onClick={() => setSelectedSceneId(sceneKey)} className="block w-full text-left">
+                      {scene.thumbnailUrl && <img src={resolveUrl(scene.thumbnailUrl)} alt="" className="w-full h-20 object-cover" />}
+                      <span className="block p-2 text-sm">{scene.title}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeScene(sceneKey)}
+                      className="absolute top-1 right-1 z-10 rounded-full bg-black/60 p-1 text-white hover:bg-red-600 transition-colors"
+                      title="Eliminar panorama"
+                    >
+                      <FiX size={12} />
+                    </button>
+                  </div>
                   );
                 })}
               </div>
