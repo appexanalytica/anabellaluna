@@ -118,12 +118,11 @@ if should_run "backend"; then
   pm2 save 2>/dev/null
   ok "Estado PM2 guardado"
 
-  # ── Actualizar Evolution API si ya está instalada ─────────
+  # ── Rebuild Evolution API si ya está instalada ────────────
   EVOLUTION_DIR="$PROJECT_DIR/evolution-api"
-  if [ -d "$EVOLUTION_DIR/.git" ]; then
-    log "Evolution API — actualizando..."
+  if [ -d "$EVOLUTION_DIR" ] && [ -f "$EVOLUTION_DIR/package.json" ]; then
+    log "Evolution API — rebuild..."
     cd "$EVOLUTION_DIR"
-    git pull origin main 2>/dev/null || warn "Evolution API git pull falló — usando versión existente"
     npm install --no-audit --no-fund 2>/dev/null || true
     npm run db:deploy 2>/dev/null || true
     npm run build 2>/dev/null || warn "Evolution API build falló"

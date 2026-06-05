@@ -80,15 +80,9 @@ fi
 EVOLUTION_DB_URI="file:$EVOLUTION_DIR/evolution.db"
 ok "Usando SQLite (sin dependencias externas de base de datos)"
 
-# ── 5. Clonar / actualizar Evolution API ─────────────────────
-if [ -d "$EVOLUTION_DIR/.git" ]; then
-  log "Evolution API ya existe — actualizando..."
-  cd "$EVOLUTION_DIR"
-  git pull origin "$EVOLUTION_BRANCH" || warn "git pull falló — usando versión existente"
-else
-  log "Clonando Evolution API..."
-  git clone --depth=1 --branch "$EVOLUTION_BRANCH" "$EVOLUTION_REPO" "$EVOLUTION_DIR" \
-    || fail "No se pudo clonar Evolution API"
+# ── 5. Verificar que Evolution API esté presente ─────────────
+if [ ! -d "$EVOLUTION_DIR" ] || [ ! -f "$EVOLUTION_DIR/package.json" ]; then
+  fail "No se encontró $EVOLUTION_DIR — asegurarse de que el repo esté clonado completo"
 fi
 ok "Código de Evolution API listo"
 
