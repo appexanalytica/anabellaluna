@@ -1,21 +1,8 @@
-import {
-  GoogleMap,
-  InfoWindow,
-  Marker,
-  useLoadScript,
-} from "@react-google-maps/api";
-import { useState } from "react";
 import { Link } from "react-router";
+import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 
-const containerStyle = {
-  width: "100%",
-  height: "100%",
-};
-
-const center = {
-  lat: 53.470692,
-  lng: -2.220328,
-};
+const center: [number, number] = [-34.6037, -58.3816];
 
 interface Location {
   id: number;
@@ -37,8 +24,8 @@ interface Location {
 const locations: Location[] = [
   {
     id: 1,
-    lat: 53.470692,
-    lng: -2.220328,
+    lat: -34.6037,
+    lng: -58.3816,
     rent_prize: "$1,100 ",
     rent_bed: "4",
     rent_baths: "4",
@@ -53,8 +40,8 @@ const locations: Location[] = [
   },
   {
     id: 2,
-    lat: 53.469189,
-    lng: -2.199262,
+    lat: -34.615,
+    lng: -58.370,
     rent_prize: "$1,400 ",
     rent_bed: "4",
     rent_baths: "4",
@@ -69,8 +56,8 @@ const locations: Location[] = [
   },
   {
     id: 3,
-    lat: 53.468665,
-    lng: -2.189269,
+    lat: -34.590,
+    lng: -58.395,
     rent_prize: "$1,700 ",
     rent_bed: "4",
     rent_baths: "4",
@@ -83,88 +70,60 @@ const locations: Location[] = [
     image: "assets/img/buy/buy-grid-img-03.jpg",
     profile_image: "assets/img/profiles/avatar-03.jpg",
   },
-  // ... Continue with the rest (IDs 4 to 9)
 ];
 
 const BuyRightMap = () => {
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: "AIzaSyD6adZVdzTvBpE2yBRK8cDfsss8QXChK0I", // Replace with your API key
-  });
-
-  const [selectedMarker, setSelectedMarker] = useState<Location | null>(
-    locations[0]
-  );
-
-  if (!isLoaded) return <div>Loading Map...</div>;
-
   return (
     <div id="map" className="map-listing">
-      <GoogleMap
-        mapContainerStyle={containerStyle}
+      <MapContainer
         center={center}
-        zoom={14}
-        options={{
-          scrollwheel: false,
-          mapTypeId: "roadmap",
-        }}
+        zoom={13}
+        style={{ width: "100%", height: "100%" }}
+        scrollWheelZoom={false}
       >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
         {locations.map((location) => (
-          <Marker
+          <CircleMarker
             key={location.id}
-            position={{ lat: location.lat, lng: location.lng }}
-            onClick={() => setSelectedMarker(location)}
-          />
-        ))}
-
-        {selectedMarker && (
-          <InfoWindow
-            position={{ lat: selectedMarker.lat, lng: selectedMarker.lng }}
-            onCloseClick={() => setSelectedMarker(null)}
+            center={[location.lat, location.lng]}
+            radius={10}
+            pathOptions={{ fillColor: "#6366f1", fillOpacity: 1, color: "#fff", weight: 2 }}
           >
-            <div>
-              <div className="card">
+            <Popup>
+              <div className="card" style={{ minWidth: 200 }}>
                 <div className="card-img">
                   <div className="buy-grid-img mb-0 rounded-0 position-relative">
                     <Link to="#" className="property-img">
-                      <img
-                        className="img-fluid w-100"
-                        alt="img"
-                        src={selectedMarker.image}
-                      />
+                      <img className="img-fluid w-100" alt="img" src={location.image} />
                     </Link>
                     <div className="d-flex align-items-center justify-content-between position-absolute bottom-0 end-0 start-0 p-3 z-1">
-                      <h6 className="text-white mb-0">{selectedMarker.rent_prize}</h6>
+                      <h6 className="text-white mb-0">{location.rent_prize}</h6>
                     </div>
                   </div>
                 </div>
                 <div className="card-body">
                   <h5 className="title mb-2">
-                    <Link to="#" tabIndex={-1}>
-                      {selectedMarker.rent_name}
-                    </Link>
+                    <Link to="#" tabIndex={-1}>{location.rent_name}</Link>
                   </h5>
                   <p className="mb-3">
                     <i className="isax isax-location"></i>
-                    {selectedMarker.rent_address}
+                    {location.rent_address}
                   </p>
-
                   <div className="mt-2 d-flex align-items-center justify-content-between flex-wrap gap-1">
                     <p className="text-dark fs-14 fw-medium">
-                      Listed on:{" "}
-                      <span className="fw-medium text-body">
-                        {selectedMarker.rent_listedon}
-                      </span>{" "}
+                      Listed on: <span className="fw-medium text-body">{location.rent_listedon}</span>
                     </p>
-                    <span className="ms-2 badge bg-secondary">
-                      {selectedMarker.rent_Category}
-                    </span>
+                    <span className="ms-2 badge bg-secondary">{location.rent_Category}</span>
                   </div>
                 </div>
               </div>
-            </div>
-          </InfoWindow>
-        )}
-      </GoogleMap>
+            </Popup>
+          </CircleMarker>
+        ))}
+      </MapContainer>
     </div>
   );
 };

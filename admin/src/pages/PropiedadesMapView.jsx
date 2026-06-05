@@ -1,36 +1,15 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { FaMapMarkerAlt, FaSearch, FaTimes, FaFilter, FaHome, FaSpinner } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaSearch, FaTimes, FaFilter, FaHome } from 'react-icons/fa';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
-const MAPS_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
-const DEFAULT_CENTER = { lat: -34.6037, lng: -58.3816 }; // Buenos Aires
-
-function loadGoogleMapsScript(cb) {
-  if (window.google && window.google.maps) { cb(); return; }
-  const existing = document.getElementById('gmaps-erp-script');
-  if (existing) { existing.addEventListener('load', cb); return; }
-  if (!MAPS_KEY) return;
-  const script = document.createElement('script');
-  script.id = 'gmaps-erp-script';
-  script.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places`;
-  script.async = true;
-  script.onload = cb;
-  document.head.appendChild(script);
-}
-
-const DARK_STYLES = [
-  { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#38414e' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#17263c' }] },
-];
+const DEFAULT_CENTER = [-34.6037, -58.3816]; // Buenos Aires
 
 const PropiedadesMapView = ({ propiedades = [], isDark = false, verDetalle, cardBase }) => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
-  const infoWindowRef = useRef(null);
-  const [mapReady, setMapReady] = useState(false);
+  const tileLayerRef = useRef(null);
   const [filtros, setFiltros] = useState({
     texto: '',
     operacion: '',
@@ -64,66 +43,61 @@ const PropiedadesMapView = ({ propiedades = [], isDark = false, verDetalle, card
 
   // Init map
   useEffect(() => {
-    loadGoogleMapsScript(() => {
-      if (!mapRef.current || mapInstanceRef.current) return;
-      mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
-        center: DEFAULT_CENTER,
-        zoom: 12,
-        styles: isDark ? DARK_STYLES : [],
-        mapTypeControl: false,
-        streetViewControl: false,
-      });
-      infoWindowRef.current = new window.google.maps.InfoWindow();
-      setMapReady(true);
-    });
+    if (!mapRef.current || mapInstanceRef.current) return;
+    const map = L.map(mapRef.current).setView(DEFAULT_CENTER, 12);
+    mapInstanceRef.current = map;
+
+    const tileUrl = isDark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    const attribution = isDark
+      ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+      : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+    tileLayerRef.current = L.tileLayer(tileUrl, { attribution, maxZoom: 19 }).addTo(map);
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update markers
   useEffect(() => {
-    if (!mapReady || !mapInstanceRef.current || !window.google) return;
-    markersRef.current.forEach((m) => m.setMap(null));
+    if (!mapInstanceRef.current) return;
+    markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
     propConCoordenadas.forEach((prop) => {
-      const marker = new window.google.maps.Marker({
-        position: { lat: Number(prop.lat), lng: Number(prop.lng) },
-        map: mapInstanceRef.current,
-        title: prop.titulo,
-        icon: {
-          path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 10,
-          fillColor: prop.operacion === 'Venta' ? '#10b981' : '#6366f1',
-          fillOpacity: 1,
-          strokeColor: '#fff',
-          strokeWeight: 2,
-        },
-      });
+      const color = prop.operacion === 'Venta' ? '#10b981' : '#6366f1';
+      const marker = L.circleMarker([Number(prop.lat), Number(prop.lng)], {
+        radius: 10,
+        fillColor: color,
+        fillOpacity: 1,
+        color: '#fff',
+        weight: 2,
+      }).addTo(mapInstanceRef.current);
 
-      marker.addListener('click', () => {
-        const content = `
-          <div style="max-width:240px;font-family:sans-serif;padding:4px">
-            <p style="font-weight:bold;margin:0 0 3px;font-size:14px">${prop.titulo}</p>
-            <p style="margin:0 0 2px;color:#666;font-size:12px">${prop.tipo} · ${prop.operacion}</p>
-            <p style="margin:0 0 6px;font-weight:bold;color:#111;font-size:13px">${prop.moneda} ${prop.precio?.toLocaleString()}</p>
-            <p style="margin:0 0 8px;color:#888;font-size:11px"><span>📍</span> ${prop.barrio}${prop.ciudad ? ', ' + prop.ciudad : ''}</p>
-            <button onclick="window.__mapVerDetalle__('${prop.id}')" style="background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px">Ver detalle →</button>
-          </div>`;
-        infoWindowRef.current.setContent(content);
-        infoWindowRef.current.open(mapInstanceRef.current, marker);
-      });
+      const popupContent = `
+        <div style="max-width:240px;font-family:sans-serif;padding:4px">
+          <p style="font-weight:bold;margin:0 0 3px;font-size:14px">${prop.titulo}</p>
+          <p style="margin:0 0 2px;color:#666;font-size:12px">${prop.tipo} · ${prop.operacion}</p>
+          <p style="margin:0 0 6px;font-weight:bold;color:#111;font-size:13px">${prop.moneda} ${prop.precio?.toLocaleString()}</p>
+          <p style="margin:0 0 8px;color:#888;font-size:11px">📍 ${prop.barrio}${prop.ciudad ? ', ' + prop.ciudad : ''}</p>
+          <button onclick="window.__mapVerDetalle__('${prop.id}')" style="background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px">Ver detalle →</button>
+        </div>`;
 
+      marker.bindPopup(popupContent);
       markersRef.current.push(marker);
     });
 
     if (propConCoordenadas.length > 0) {
-      const bounds = new window.google.maps.LatLngBounds();
-      propConCoordenadas.forEach((p) => bounds.extend({ lat: Number(p.lat), lng: Number(p.lng) }));
-      mapInstanceRef.current.fitBounds(bounds);
-      if (propConCoordenadas.length === 1) mapInstanceRef.current.setZoom(15);
+      const bounds = L.latLngBounds(propConCoordenadas.map((p) => [Number(p.lat), Number(p.lng)]));
+      mapInstanceRef.current.fitBounds(bounds, { maxZoom: 15 });
     }
-  }, [mapReady, propConCoordenadas]);
+  }, [propConCoordenadas]);
 
-  // Bridge verDetalle to InfoWindow button (runs in plain JS context)
+  // Bridge verDetalle to popup button
   useEffect(() => {
     window.__mapVerDetalle__ = (id) => {
       const prop = propiedades.find((p) => String(p.id) === String(id));
@@ -140,7 +114,6 @@ const PropiedadesMapView = ({ propiedades = [], isDark = false, verDetalle, card
       {/* Filter bar */}
       <div className={`mb-4 p-4 rounded-xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-sm`}>
         <div className="flex flex-wrap items-center gap-3">
-          {/* Text search */}
           <div className="flex-1 min-w-52 relative">
             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
             <input
@@ -216,22 +189,9 @@ const PropiedadesMapView = ({ propiedades = [], isDark = false, verDetalle, card
       </div>
 
       {/* Map */}
-      {!MAPS_KEY ? (
-        <div className={`flex flex-col items-center justify-center h-96 rounded-xl border-2 border-dashed ${isDark ? 'border-gray-600 text-gray-400' : 'border-gray-300 text-gray-500'}`}>
-          <FaMapMarkerAlt className="text-4xl mb-3 text-gray-300" />
-          <p className="font-semibold mb-1">API Key de Google Maps no configurada</p>
-          <p className="text-sm">Agregá <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">REACT_APP_GOOGLE_MAPS_API_KEY</code> en <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">admin/.env</code></p>
-        </div>
-      ) : (
-        <div className="relative rounded-xl overflow-hidden shadow-lg border dark:border-gray-700" style={{ height: 600 }}>
-          {!mapReady && (
-            <div className={`absolute inset-0 flex items-center justify-center z-10 ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
-              <FaSpinner className="text-3xl text-violet-500 animate-spin" />
-            </div>
-          )}
-          <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
-        </div>
-      )}
+      <div className="relative rounded-xl overflow-hidden shadow-lg border dark:border-gray-700" style={{ height: 600 }}>
+        <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+      </div>
 
       {/* Properties without coordinates */}
       {propSinCoordenadas.length > 0 && (

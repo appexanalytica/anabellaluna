@@ -156,9 +156,12 @@ const Propiedades = () => {
   // Drag-and-drop refs for adjuntos reordering (detail view)
   const adjDragItem = useRef(null);
   const adjDragOverItem = useRef(null);
-  // Google Maps refs
+  // Address geocoder refs/state
   const addressInputRef = useRef(null);
   const autocompleteRef = useRef(null);
+  const nominatimTimer = useRef(null);
+  const [nominatimSuggestions, setNominatimSuggestions] = useState([]);
+  const [showNominatim, setShowNominatim] = useState(false);
   const mapViewRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const mapMarkersRef = useRef([]);
@@ -549,50 +552,44 @@ const Propiedades = () => {
   // Reset carousel when switching properties
   useEffect(() => { setCarouselIdx(0); }, [propiedadSeleccionada?.id]);
 
-  // Load Google Maps script once
-  useEffect(() => {
-    const key = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
-    if (!key || (window.google && window.google.maps)) return;
-    if (document.getElementById('gmaps-erp-script')) return;
-    const script = document.createElement('script');
-    script.id = 'gmaps-erp-script';
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&loading=async`;
-    script.async = true;
-    document.head.appendChild(script);
-  }, []);
 
-  // Places Autocomplete on direccion input when modal is open
-  useEffect(() => {
-    if (!showModal) { autocompleteRef.current = null; return; }
-    const timer = setTimeout(() => {
-      if (!addressInputRef.current || !window.google || !window.google.maps || !window.google.maps.places) return;
-      if (autocompleteRef.current) return;
-      autocompleteRef.current = new window.google.maps.places.Autocomplete(
-        addressInputRef.current,
-        { fields: ['formatted_address', 'geometry', 'address_components'] },
-      );
-      autocompleteRef.current.addListener('place_changed', () => {
-        const place = autocompleteRef.current.getPlace();
-        if (!place || !place.geometry) return;
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        const comps = {};
-        (place.address_components || []).forEach((c) => c.types.forEach((t) => { comps[t] = c.long_name; }));
-        setNuevaPropiedad((prev) => ({
-          ...prev,
-          direccion: place.formatted_address || prev.direccion,
-          barrio: comps.neighborhood || comps.sublocality_level_1 || comps.sublocality || prev.barrio,
-          ciudad: comps.locality || prev.ciudad,
-          provincia: comps.administrative_area_level_1 || prev.provincia,
-          pais: comps.country || prev.pais,
-          codigoPostal: comps.postal_code || prev.codigoPostal,
-          lat: String(lat),
-          lng: String(lng),
-        }));
-      });
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [showModal]);
+  // Nominatim geocoder: search as user types the address
+  const handleDireccionChange = (e) => {
+    handleInputChange(e);
+    const query = e.target.value;
+    setShowNominatim(false);
+    setNominatimSuggestions([]);
+    clearTimeout(nominatimTimer.current);
+    if (query.length < 4) return;
+    nominatimTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6`,
+          { headers: { 'Accept-Language': 'es' } },
+        );
+        const data = await res.json();
+        setNominatimSuggestions(data);
+        setShowNominatim(data.length > 0);
+      } catch { /* ignore network errors */ }
+    }, 500);
+  };
+
+  const handleNominatimSelect = (item) => {
+    const addr = item.address || {};
+    setNuevaPropiedad((prev) => ({
+      ...prev,
+      direccion: item.display_name,
+      barrio: addr.neighbourhood || addr.suburb || addr.quarter || prev.barrio,
+      ciudad: addr.city || addr.town || addr.village || prev.ciudad,
+      provincia: addr.state || prev.provincia,
+      pais: addr.country || prev.pais,
+      codigoPostal: addr.postcode || prev.codigoPostal,
+      lat: String(item.lat),
+      lng: String(item.lon),
+    }));
+    setNominatimSuggestions([]);
+    setShowNominatim(false);
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -2982,22 +2979,39 @@ const Propiedades = () => {
                         <label className="block text-sm font-medium mb-2 dark:text-gray-200">
                           Dirección *
                         </label>
-                        <input
-                          ref={addressInputRef}
-                          type="text"
-                          name="direccion"
-                          value={nuevaPropiedad.direccion}
-                          onChange={handleInputChange}
-                          required
-                          placeholder="Av. Santa Fe 1234"
-                          autoComplete="off"
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
-                        />
-                        {process.env.REACT_APP_GOOGLE_MAPS_API_KEY && (
-                          <p className="text-xs text-blue-400 mt-1 flex items-center gap-1">
-                            <FaMapMarkerAlt size={10} /> Tip: escribí y seleccioná de la lista para autocompletar coordenadas
-                          </p>
-                        )}
+                        <div className="relative">
+                          <input
+                            ref={addressInputRef}
+                            type="text"
+                            name="direccion"
+                            value={nuevaPropiedad.direccion}
+                            onChange={handleDireccionChange}
+                            onBlur={() => setTimeout(() => setShowNominatim(false), 150)}
+                            required
+                            placeholder="Av. Santa Fe 1234"
+                            autoComplete="off"
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
+                          />
+                          {showNominatim && nominatimSuggestions.length > 0 && (
+                            <ul className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                              {nominatimSuggestions.map((item) => (
+                                <li key={item.place_id}>
+                                  <button
+                                    type="button"
+                                    onMouseDown={() => handleNominatimSelect(item)}
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 flex items-start gap-2"
+                                  >
+                                    <FaMapMarkerAlt className="mt-0.5 shrink-0 text-blue-400" size={12} />
+                                    <span>{item.display_name}</span>
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                        <p className="text-xs text-blue-400 mt-1 flex items-center gap-1">
+                          <FaMapMarkerAlt size={10} /> Escribí la dirección y seleccioná de la lista para autocompletar coordenadas
+                        </p>
                         {nuevaPropiedad.lat && nuevaPropiedad.lng && (
                           <p className="text-xs text-emerald-500 mt-1">✓ Coordenadas guardadas ({Number(nuevaPropiedad.lat).toFixed(5)}, {Number(nuevaPropiedad.lng).toFixed(5)})</p>
                         )}
