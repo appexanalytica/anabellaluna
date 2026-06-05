@@ -176,10 +176,10 @@ EOF
       ok "Evolution API .env generado"
     fi
 
-    # Migrar base de datos y compilar
-    npm run db:generate 2>/dev/null || true
-    npm run db:deploy   2>/dev/null || warn "Evolution API db:deploy falló"
-    npm run build || warn "Evolution API build falló"
+    # Generar cliente Prisma (obligatorio antes del build)
+    npm run db:generate || fail "Evolution API db:generate falló"
+    npm run db:deploy   || warn "Evolution API db:deploy falló"
+    npm run build       || fail "Evolution API build falló"
 
     # Iniciar o reiniciar en PM2
     if pm2 describe evolution-api > /dev/null 2>&1; then
