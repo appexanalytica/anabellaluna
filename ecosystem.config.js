@@ -97,26 +97,6 @@ module.exports = {
       max_restarts: 5,
     },
 
-    // ── Evolution API (WhatsApp multi-sesión vía Baileys) ────────────────────
-    // Requiere instalación previa: bash /var/www/anabella/setup-evolution.sh
-    {
-      name: 'evolution-api',
-      script: './dist/main.js',
-      cwd: '/var/www/anabella/evolution-api',
-      instances: 1,
-      exec_mode: 'fork',
-      watch: false,
-      max_memory_restart: '512M',
-      node_args: '--max-old-space-size=512',
-      env: {
-        NODE_ENV: 'production',
-      },
-      error_file: '/var/log/anabella/evolution-error.log',
-      out_file:   '/var/log/anabella/evolution-out.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss',
-      restart_delay: 5000,
-      max_restarts: 10,
-      min_uptime: '10s',
-    },
+    // evolution-api es gestionada directamente por deploy.sh (build + pm2 start)
   ],
 };
