@@ -62,6 +62,7 @@ log "═════════════════════════
 
 # ── 1. Git Pull ──────────────────────────────────────────────
 log "📥 Descargando últimos cambios..."
+mkdir -p /var/log/anabella 2>/dev/null || sudo mkdir -p /var/log/anabella
 cd "$PROJECT_DIR"
 git stash --include-untracked 2>/dev/null || true
 git clean -ffd --exclude="backend/.env" --exclude="evolution-api/.env" --exclude="evolution-api/evolution.db" 2>/dev/null || true
