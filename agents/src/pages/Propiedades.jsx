@@ -4,7 +4,7 @@ import PropiedadesMapView from './PropiedadesMapView';
 import PropiedadInforme from '../components/PropiedadInforme';
 
 import Chart from 'react-apexcharts';
-import { FaPlus, FaHome, FaEye, FaDollarSign, FaUser, FaCamera, FaMapMarkerAlt, FaBuilding, FaTimes, FaSave, FaArrowLeft, FaBed, FaBath, FaCar, FaRulerCombined, FaCalendar, FaEdit, FaTrash, FaChartLine, FaSearch, FaFilter, FaChevronLeft, FaChevronRight, FaFileAlt, FaDownload, FaLink, FaCopy, FaGlobe, FaLock, FaGripVertical, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaPlus, FaHome, FaEye, FaDollarSign, FaUser, FaCamera, FaMapMarkerAlt, FaBuilding, FaTimes, FaSave, FaArrowLeft, FaBed, FaBath, FaCar, FaRulerCombined, FaCalendar, FaEdit, FaTrash, FaChartLine, FaSearch, FaFilter, FaChevronLeft, FaChevronRight, FaFileAlt, FaDownload, FaLink, FaCopy, FaGlobe, FaLock, FaGripVertical, FaExternalLinkAlt, FaHandshake, FaCheck } from 'react-icons/fa';
 
 import { confirmToast } from '../utils/confirmToast';
 import { useStateContext } from '../contexts/ContextProvider';
@@ -52,6 +52,13 @@ const Propiedades = () => {
   const [inmobiliariaSearch, setInmobiliariaSearch] = useState('');
   // Flag para distinguir si el detalle abierto es de una propiedad propia (editable) o de la inmobiliaria (solo lectura)
   const [detailReadOnly, setDetailReadOnly] = useState(false);
+
+  // Clientes propios del agente (para registrar interacciones desde el detalle de propiedad)
+  const [misClientes, setMisClientes] = useState([]);
+  const EMPTY_PROP_INTERACTION = { clienteId: '', tipo: 'visita_agendada', visitaFecha: '', descripcion: '', nivelInteres: '' };
+  const [propInteractionForm, setPropInteractionForm] = useState(EMPTY_PROP_INTERACTION);
+  const [propInteractionSubmitting, setPropInteractionSubmitting] = useState(false);
+  const [propInteractionSuccess, setPropInteractionSuccess] = useState(false);
 
   const [formStep, setFormStep] = useState(1);
   const [funnelEditorOpen, setFunnelEditorOpen] = useState(false);
@@ -133,9 +140,12 @@ const Propiedades = () => {
   // Drag-and-drop refs for adjuntos reordering (detail view)
   const adjDragItem = useRef(null);
   const adjDragOverItem = useRef(null);
-  // Google Maps refs
+  // Address geocoder refs/state
   const addressInputRef = useRef(null);
   const autocompleteRef = useRef(null);
+  const nominatimTimer = useRef(null);
+  const [nominatimSuggestions, setNominatimSuggestions] = useState([]);
+  const [showNominatim, setShowNominatim] = useState(false);
 
   const reorderFiles = useCallback((setter) => {
     setter((prev) => {
@@ -527,50 +537,44 @@ const Propiedades = () => {
     return docBlobUrls[doc._id] || null;
   };
 
-  // Load Google Maps script once
-  useEffect(() => {
-    const key = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
-    if (!key || (window.google && window.google.maps)) return;
-    if (document.getElementById('gmaps-crm-script')) return;
-    const script = document.createElement('script');
-    script.id = 'gmaps-crm-script';
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&loading=async`;
-    script.async = true;
-    document.head.appendChild(script);
-  }, []);
 
-  // Places Autocomplete on direccion input when modal is open
-  useEffect(() => {
-    if (!showModal) { autocompleteRef.current = null; return; }
-    const timer = setTimeout(() => {
-      if (!addressInputRef.current || !window.google || !window.google.maps || !window.google.maps.places) return;
-      if (autocompleteRef.current) return;
-      autocompleteRef.current = new window.google.maps.places.Autocomplete(
-        addressInputRef.current,
-        { fields: ['formatted_address', 'geometry', 'address_components'] },
-      );
-      autocompleteRef.current.addListener('place_changed', () => {
-        const place = autocompleteRef.current.getPlace();
-        if (!place || !place.geometry) return;
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        const comps = {};
-        (place.address_components || []).forEach((c) => c.types.forEach((t) => { comps[t] = c.long_name; }));
-        setNuevaPropiedad((prev) => ({
-          ...prev,
-          direccion: place.formatted_address || prev.direccion,
-          barrio: comps.neighborhood || comps.sublocality_level_1 || comps.sublocality || prev.barrio,
-          ciudad: comps.locality || prev.ciudad,
-          provincia: comps.administrative_area_level_1 || prev.provincia,
-          pais: comps.country || prev.pais,
-          codigoPostal: comps.postal_code || prev.codigoPostal,
-          lat: String(lat),
-          lng: String(lng),
-        }));
-      });
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [showModal]);
+  // Nominatim geocoder: search as user types the address
+  const handleDireccionChange = (e) => {
+    handleInputChange(e);
+    const query = e.target.value;
+    setShowNominatim(false);
+    setNominatimSuggestions([]);
+    clearTimeout(nominatimTimer.current);
+    if (query.length < 4) return;
+    nominatimTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6`,
+          { headers: { 'Accept-Language': 'es' } },
+        );
+        const data = await res.json();
+        setNominatimSuggestions(data);
+        setShowNominatim(data.length > 0);
+      } catch { /* ignore network errors */ }
+    }, 500);
+  };
+
+  const handleNominatimSelect = (item) => {
+    const addr = item.address || {};
+    setNuevaPropiedad((prev) => ({
+      ...prev,
+      direccion: item.display_name,
+      barrio: addr.neighbourhood || addr.suburb || addr.quarter || prev.barrio,
+      ciudad: addr.city || addr.town || addr.village || prev.ciudad,
+      provincia: addr.state || prev.provincia,
+      pais: addr.country || prev.pais,
+      codigoPostal: addr.postcode || prev.codigoPostal,
+      lat: String(item.lat),
+      lng: String(item.lon),
+    }));
+    setNominatimSuggestions([]);
+    setShowNominatim(false);
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -579,11 +583,12 @@ const Propiedades = () => {
         setLoading(true);
         setError('');
 
-        const [agentesData, propiedadesData, adminsData, inmobiliariaData] = await Promise.all([
+        const [agentesData, propiedadesData, adminsData, inmobiliariaData, clientesData] = await Promise.all([
           crmService.agentes.getAll(),
           crmService.propiedades.getAll(),
           crmService.agentes.getAdmins().catch(() => []),
           crmService.propiedades.getAllInmobiliaria().catch(() => []),
+          crmService.clientes.getAll().catch(() => []),
         ]);
 
         if (!mounted) return;
@@ -675,6 +680,7 @@ const Propiedades = () => {
         if (Array.isArray(inmobiliariaData)) {
           setPropiedadesInmobiliaria(inmobiliariaData.map(mapPropRow));
         }
+        setMisClientes(Array.isArray(clientesData) ? clientesData : []);
 
         setPropiedades(mapped);
       } catch (e) {
@@ -1262,6 +1268,8 @@ const Propiedades = () => {
   const verDetalle = async (propiedad) => {
     setDetailReadOnly(false);
     setPropiedadSeleccionada(propiedad);
+    setPropInteractionForm(EMPTY_PROP_INTERACTION);
+    setPropInteractionSuccess(false);
     setVistaActual('detalle');
 
     const previousVisitas = Number(propiedad.visitas || 0);
@@ -1289,6 +1297,30 @@ const Propiedades = () => {
     setVistaActual('dashboard');
     setPropiedadSeleccionada(null);
     setDetailReadOnly(false);
+  };
+
+  const handlePropInteraction = async (e) => {
+    e.preventDefault();
+    const { clienteId, tipo, visitaFecha, descripcion, nivelInteres } = propInteractionForm;
+    if (!clienteId || !tipo || !propiedadSeleccionada?.id) return;
+    const isVisita = ['visita_agendada', 'visita_realizada'].includes(tipo);
+    if (isVisita && !visitaFecha) return;
+    if (!isVisita && tipo !== 'propiedad_interes' && !descripcion.trim()) return;
+    setPropInteractionSubmitting(true);
+    try {
+      const payload = { tipo, propiedadId: String(propiedadSeleccionada.id) };
+      if (visitaFecha) payload.visitaFecha = visitaFecha;
+      if (descripcion.trim()) payload.descripcion = descripcion.trim();
+      if (tipo === 'propiedad_interes' && nivelInteres) payload.nivelInteres = nivelInteres;
+      await crmService.clientInteractions.create(clienteId, payload);
+      setPropInteractionForm(EMPTY_PROP_INTERACTION);
+      setPropInteractionSuccess(true);
+      setTimeout(() => setPropInteractionSuccess(false), 3000);
+    } catch (err) {
+      setError(err?.message || 'Error al registrar interacción');
+    } finally {
+      setPropInteractionSubmitting(false);
+    }
   };
 
   // Obtener sugerencias de búsqueda basadas en el texto
@@ -2060,6 +2092,8 @@ const Propiedades = () => {
                       setVistaActual('detalle');
                       setCarouselIdx(0);
                       setAdjuntos([]);
+                      setPropInteractionForm(EMPTY_PROP_INTERACTION);
+                      setPropInteractionSuccess(false);
                     }}
                   >
                     <div className="h-48 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-lg mb-4 relative overflow-hidden">
@@ -2594,6 +2628,96 @@ const Propiedades = () => {
                 </div>
               </div>
 
+              {/* Registrar Interacción — visible para todas las propiedades */}
+              <div className={cardBase}>
+                <h3 className="text-lg font-bold mb-3 dark:text-gray-100 flex items-center gap-2">
+                  <FaHandshake className="text-indigo-500" /> Registrar Interacción
+                </h3>
+                {propInteractionSuccess ? (
+                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm py-2">
+                    <FaCheck /> Interacción registrada correctamente
+                  </div>
+                ) : (
+                  <form onSubmit={handlePropInteraction} className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium mb-1 dark:text-gray-300">Cliente <span className="text-red-400">*</span></label>
+                      <select
+                        value={propInteractionForm.clienteId}
+                        onChange={(e) => setPropInteractionForm((p) => ({ ...p, clienteId: e.target.value }))}
+                        className={`w-full px-3 py-2 rounded-lg border text-sm ${isDark ? 'bg-gray-800 border-gray-600 text-gray-100' : 'border-gray-300'}`}
+                        required
+                      >
+                        <option value="">Seleccionar cliente...</option>
+                        {misClientes.map((c) => (
+                          <option key={c._id || c.id} value={c._id || c.id}>
+                            {c.nombre || c.metadata?.nombre || c.email || 'Sin nombre'}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1 dark:text-gray-300">Tipo <span className="text-red-400">*</span></label>
+                      <select
+                        value={propInteractionForm.tipo}
+                        onChange={(e) => setPropInteractionForm((p) => ({ ...p, tipo: e.target.value }))}
+                        className={`w-full px-3 py-2 rounded-lg border text-sm ${isDark ? 'bg-gray-800 border-gray-600 text-gray-100' : 'border-gray-300'}`}
+                      >
+                        <option value="visita_agendada">Visita Agendada</option>
+                        <option value="visita_realizada">Visita Realizada</option>
+                        <option value="propiedad_interes">Interés en Propiedad</option>
+                        <option value="nota">Nota</option>
+                        <option value="recontacto">Recontacto</option>
+                      </select>
+                    </div>
+                    {['visita_agendada', 'visita_realizada'].includes(propInteractionForm.tipo) && (
+                      <div>
+                        <label className="block text-xs font-medium mb-1 dark:text-gray-300">Fecha <span className="text-red-400">*</span></label>
+                        <input
+                          type="datetime-local"
+                          value={propInteractionForm.visitaFecha}
+                          onChange={(e) => setPropInteractionForm((p) => ({ ...p, visitaFecha: e.target.value }))}
+                          className={`w-full px-3 py-2 rounded-lg border text-sm ${isDark ? 'bg-gray-800 border-gray-600 text-gray-100' : 'border-gray-300'}`}
+                        />
+                      </div>
+                    )}
+                    {propInteractionForm.tipo === 'propiedad_interes' && (
+                      <div>
+                        <label className="block text-xs font-medium mb-1 dark:text-gray-300">Nivel de Interés</label>
+                        <select
+                          value={propInteractionForm.nivelInteres}
+                          onChange={(e) => setPropInteractionForm((p) => ({ ...p, nivelInteres: e.target.value }))}
+                          className={`w-full px-3 py-2 rounded-lg border text-sm ${isDark ? 'bg-gray-800 border-gray-600 text-gray-100' : 'border-gray-300'}`}
+                        >
+                          <option value="">Seleccionar...</option>
+                          <option value="bajo">Bajo</option>
+                          <option value="medio">Medio</option>
+                          <option value="alto">Alto</option>
+                        </select>
+                      </div>
+                    )}
+                    <div>
+                      <label className="block text-xs font-medium mb-1 dark:text-gray-300">
+                        Descripción {!['visita_agendada', 'visita_realizada', 'propiedad_interes'].includes(propInteractionForm.tipo) && <span className="text-red-400">*</span>}
+                      </label>
+                      <textarea
+                        value={propInteractionForm.descripcion}
+                        onChange={(e) => setPropInteractionForm((p) => ({ ...p, descripcion: e.target.value }))}
+                        rows={2}
+                        className={`w-full px-3 py-2 rounded-lg border text-sm resize-none ${isDark ? 'bg-gray-800 border-gray-600 text-gray-100' : 'border-gray-300'}`}
+                        placeholder="Notas de la interacción..."
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={propInteractionSubmitting || !propInteractionForm.clienteId}
+                      className="w-full px-4 py-2 rounded-lg bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                    >
+                      <FaSave /> {propInteractionSubmitting ? 'Guardando...' : 'Registrar'}
+                    </button>
+                  </form>
+                )}
+              </div>
+
               {/* Propietario — oculto en vista de solo lectura (inmobiliaria) */}
               {!detailReadOnly && (
               <div className={cardBase}>
@@ -3061,23 +3185,40 @@ const Propiedades = () => {
                           <label htmlFor="field-101" className="block text-sm font-medium mb-2 dark:text-gray-200">
                             Dirección *
                           </label>
-                          <input
-                            ref={addressInputRef}
-                            id="field-101"
-                            type="text"
-                            name="direccion"
-                            value={nuevaPropiedad.direccion}
-                            onChange={handleInputChange}
-                            required
-                            placeholder="Av. Santa Fe 1234"
-                            autoComplete="off"
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
-                          />
-                          {process.env.REACT_APP_GOOGLE_MAPS_API_KEY && (
-                            <p className="text-xs text-blue-400 mt-1 flex items-center gap-1">
-                              <FaMapMarkerAlt size={10} /> Tip: escribí y seleccioná de la lista para autocompletar coordenadas
-                            </p>
-                          )}
+                          <div className="relative">
+                            <input
+                              ref={addressInputRef}
+                              id="field-101"
+                              type="text"
+                              name="direccion"
+                              value={nuevaPropiedad.direccion}
+                              onChange={handleDireccionChange}
+                              onBlur={() => setTimeout(() => setShowNominatim(false), 150)}
+                              required
+                              placeholder="Av. Santa Fe 1234"
+                              autoComplete="off"
+                              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
+                            />
+                            {showNominatim && nominatimSuggestions.length > 0 && (
+                              <ul className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                {nominatimSuggestions.map((item) => (
+                                  <li key={item.place_id}>
+                                    <button
+                                      type="button"
+                                      onMouseDown={() => handleNominatimSelect(item)}
+                                      className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 flex items-start gap-2"
+                                    >
+                                      <FaMapMarkerAlt className="mt-0.5 shrink-0 text-blue-400" size={12} />
+                                      <span>{item.display_name}</span>
+                                    </button>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                          <p className="text-xs text-blue-400 mt-1 flex items-center gap-1">
+                            <FaMapMarkerAlt size={10} /> Escribí la dirección y seleccioná de la lista para autocompletar coordenadas
+                          </p>
                           {nuevaPropiedad.lat && nuevaPropiedad.lng && (
                             <p className="text-xs text-emerald-500 mt-1">✓ Coordenadas guardadas ({Number(nuevaPropiedad.lat).toFixed(5)}, {Number(nuevaPropiedad.lng).toFixed(5)})</p>
                           )}
