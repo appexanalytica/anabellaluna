@@ -123,14 +123,36 @@ if should_run "backend"; then
   BACKEND_ENV="$PROJECT_DIR/backend/.env"
 
   if [ -d "$EVOLUTION_DIR" ] && [ -f "$EVOLUTION_DIR/package.json" ]; then
-    log "Evolution API — instalando dependencias..."
-    cd "$EVOLUTION_DIR"
-    npm install --no-audit --no-fund || warn "Evolution API npm install falló"
 
-    # Generar .env de Evolution si no existe
+    # ── PostgreSQL: instalar si no está ───────────────────────
+    if ! command -v psql &>/dev/null; then
+      log "Instalando PostgreSQL..."
+      sudo apt-get update -qq
+      sudo apt-get install -y postgresql postgresql-contrib
+      sudo systemctl enable --now postgresql
+      ok "PostgreSQL instalado"
+    fi
+
+    # ── Crear base de datos si no existe ──────────────────────
+    EVOLUTION_DB_URI=$(grep -E '^EVOLUTION_DB_URI=' "$BACKEND_ENV" 2>/dev/null | cut -d= -f2- | tr -d '"' | tr -d "'")
+    if [ -z "$EVOLUTION_DB_URI" ]; then
+      log "Creando base de datos PostgreSQL para Evolution API..."
+      DB_PASS=$(sudo -u postgres psql -tAc "SELECT passwd FROM pg_shadow WHERE usename='evolution'" 2>/dev/null | head -1)
+      if [ -z "$DB_PASS" ]; then
+        DB_PASS=$(openssl rand -hex 16)
+        sudo -u postgres psql -c "CREATE USER evolution WITH PASSWORD '$DB_PASS';" 2>/dev/null || true
+        sudo -u postgres psql -c "CREATE DATABASE evolution_api OWNER evolution;" 2>/dev/null || true
+        sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE evolution_api TO evolution;" 2>/dev/null || true
+      fi
+      EVOLUTION_DB_URI="postgresql://evolution:${DB_PASS}@localhost:5432/evolution_api?schema=evolution_api"
+      echo "" >> "$BACKEND_ENV"
+      echo "EVOLUTION_DB_URI=${EVOLUTION_DB_URI}" >> "$BACKEND_ENV"
+      ok "Base de datos PostgreSQL creada"
+    fi
+
+    # ── Generar .env de Evolution si no existe ────────────────
     if [ ! -f "$EVOLUTION_DIR/.env" ]; then
       log "Evolution API — generando .env..."
-
       EVOLUTION_API_KEY=$(grep -E '^EVOLUTION_API_KEY=' "$BACKEND_ENV" 2>/dev/null | cut -d= -f2- | tr -d '"' | tr -d "'" | tr -d '[:space:]')
       BACKEND_PUBLIC_URL=$(grep -E '^BACKEND_PUBLIC_URL=' "$BACKEND_ENV" 2>/dev/null | cut -d= -f2- | tr -d '"' | tr -d "'" | tr -d '[:space:]')
       WEBHOOK_URL="${BACKEND_PUBLIC_URL}/whatsapp/webhook/evolution"
@@ -146,8 +168,8 @@ LOG_LEVEL=ERROR,WARN,INFO
 LOG_COLOR=true
 LOG_BAILEYS=error
 DEL_INSTANCE=false
-DATABASE_PROVIDER=sqlite
-DATABASE_CONNECTION_URI=file:${EVOLUTION_DIR}/evolution.db
+DATABASE_PROVIDER=postgresql
+DATABASE_CONNECTION_URI=${EVOLUTION_DB_URI}
 DATABASE_CONNECTION_CLIENT_NAME=evolution_api
 DATABASE_SAVE_DATA_INSTANCE=true
 DATABASE_SAVE_DATA_NEW_MESSAGE=true
@@ -176,7 +198,11 @@ EOF
       ok "Evolution API .env generado"
     fi
 
-    # Generar cliente Prisma (obligatorio antes del build)
+    log "Evolution API — instalando dependencias..."
+    cd "$EVOLUTION_DIR"
+    npm install --no-audit --no-fund || warn "Evolution API npm install falló"
+
+    # Generar cliente Prisma y migrar BD
     npm run db:generate || fail "Evolution API db:generate falló"
     npm run db:deploy   || warn "Evolution API db:deploy falló"
     npm run build       || fail "Evolution API build falló"
