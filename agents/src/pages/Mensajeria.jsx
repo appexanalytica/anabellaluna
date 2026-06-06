@@ -110,7 +110,14 @@ const Mensajeria = () => {
   const handleSendMessage = async (payload) => {
     if (!selectedConversation) return;
     try {
-      const sent = await whatsappService.sendMessage(selectedConversation._id, payload);
+      const apiPayload = {
+        type: payload.type || 'text',
+        text: payload.content?.text,
+        mediaUrl: payload.content?.mediaUrl,
+        caption: payload.content?.caption,
+        filename: payload.content?.filename,
+      };
+      const sent = await whatsappService.sendMessage(selectedConversation._id, apiPayload);
       const optimistic = {
         _id: sent?._id || `tmp-${Date.now()}`,
         conversationId: selectedConversation._id,
