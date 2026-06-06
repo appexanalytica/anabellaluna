@@ -28,10 +28,13 @@ const whatsAppConversationSchema = new mongoose.Schema(
     windowExpiresAt: { type: Date }, // ventana 24h de Meta
     unreadCount: { type: Number, default: 0 },
     lastMessage: {
-      content: String,
-      type: String,
-      direction: String, // 'inbound' | 'outbound'
-      timestamp: Date,
+      type: new mongoose.Schema({
+        content: String,
+        type: String,
+        direction: String, // 'inbound' | 'outbound'
+        timestamp: Date,
+      }, { _id: false }),
+      default: null,
     },
     labels: [String],
     // Sesión de Evolution API por la que llegó/se envía esta conversación
