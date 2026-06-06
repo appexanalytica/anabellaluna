@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { FiBox, FiUploadCloud, FiPlus, FiPlay, FiEye, FiTrash2, FiMapPin } from 'react-icons/fi';
+import { useStateContext } from '../contexts/ContextProvider';
 import { crmService } from '../services/crmService';
 import tourService from '../services/tourService';
 
@@ -86,6 +87,8 @@ const getHotspotCoordinatesFromPointer = (event, view) => {
 };
 
 const ToursVirtuales = () => {
+  const { currentMode } = useStateContext();
+  const isDark = currentMode === 'Dark';
   const canvasRef = useRef(null);
   const dragRef = useRef({ active: false, x: 0, y: 0, yaw: 0, pitch: 0 });
   const pointersRef = useRef(new Map());
@@ -317,43 +320,51 @@ const ToursVirtuales = () => {
     setPlacingHotspot(false);
   };
 
+  const card = isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-900';
+  const border = isDark ? 'border-gray-700' : 'border-gray-200';
+  const sidebarBg = isDark ? 'bg-gray-800/40' : 'bg-gray-50';
+  const inputCls = `w-full rounded-xl border px-3 py-3 text-sm ${isDark ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'}`;
+  const selectCls = `w-full rounded-xl border px-3 py-3 text-sm ${isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`;
+  const ghostBtn = `rounded-xl border py-3 font-bold ${isDark ? 'border-gray-600 bg-gray-700 text-gray-100 hover:bg-gray-600' : 'border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200'}`;
+
   return (
     <div className="m-2 md:m-6 mt-24 p-2 md:p-6 min-h-screen bg-main-bg dark:bg-main-dark-bg">
-      <div className="rounded-3xl overflow-hidden bg-gray-950 text-white shadow-2xl">
-        <div className="p-6 md:p-8 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className={`rounded-3xl overflow-hidden shadow-lg border ${card} ${border}`}>
+        <div className={`p-6 md:p-8 border-b ${border} flex flex-col md:flex-row md:items-center justify-between gap-4`}>
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-400/10 text-yellow-300 text-xs font-bold uppercase tracking-widest mb-3"><FiBox /> Tour 360</div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-widest mb-3"><FiBox /> Tour 360</div>
             <h1 className="text-3xl font-black tracking-tight">Recorridos Virtuales</h1>
-            <p className="text-gray-400 mt-2">Editor premium para tours inmobiliarios.</p>
+            <p className="text-gray-500 dark:text-gray-400 mt-2">Editor de tours inmobiliarios.</p>
           </div>
           <div className="flex gap-2">
-            <button type="button" onClick={publish} disabled={!selectedTour} className="px-4 py-3 rounded-xl bg-yellow-400 text-gray-950 font-bold disabled:opacity-40"><FiPlay className="inline mr-2" />{selectedTour?.published ? 'Despublicar' : 'Publicar'}</button>
-            <button type="button" onClick={removeTour} disabled={!selectedTour} className="px-4 py-3 rounded-xl bg-red-500/20 text-red-200 font-bold disabled:opacity-40"><FiTrash2 className="inline mr-2" />Eliminar</button>
+            <button type="button" onClick={publish} disabled={!selectedTour} className="px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold disabled:opacity-40 transition-colors"><FiPlay className="inline mr-2" />{selectedTour?.published ? 'Despublicar' : 'Publicar'}</button>
+            <button type="button" onClick={removeTour} disabled={!selectedTour} className={`px-4 py-3 rounded-xl font-bold disabled:opacity-40 ${isDark ? 'bg-red-900/30 text-red-300 hover:bg-red-900/50' : 'bg-red-50 text-red-600 hover:bg-red-100'} transition-colors`}><FiTrash2 className="inline mr-2" />Eliminar</button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-12 min-h-[720px]">
-          <aside className="xl:col-span-3 border-r border-white/10 p-5 space-y-5 bg-black/20">
+          <aside className={`xl:col-span-3 border-r ${border} p-5 space-y-5 ${sidebarBg}`}>
             <form onSubmit={createTour} className="space-y-3">
-              <h2 className="font-black flex items-center gap-2"><FiPlus /> Nuevo tour</h2>
-              <select value={form.propertyId} onChange={(e) => setForm({ ...form, propertyId: e.target.value })} className="w-full rounded-xl bg-gray-900 text-white border border-white/10 px-3 py-3 text-sm">
-                <option value="" className="bg-gray-900 text-white">Seleccionar propiedad</option>
-                {properties.map((property) => <option key={property._id} value={property._id} className="bg-gray-900 text-white">{property.title || property.metadata?.titulo || property._id}</option>)}
+              <h2 className="font-black flex items-center gap-2 text-sm uppercase tracking-wide text-gray-500 dark:text-gray-400"><FiPlus /> Nuevo tour</h2>
+              <select value={form.propertyId} onChange={(e) => setForm({ ...form, propertyId: e.target.value })} className={selectCls}>
+                <option value="">Seleccionar propiedad</option>
+                {properties.map((property) => <option key={property._id} value={property._id}>{property.title || property.metadata?.titulo || property._id}</option>)}
               </select>
-              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Título del recorrido" className="w-full rounded-xl bg-white/10 border border-white/10 px-3 py-3 text-sm" />
-              <button disabled={creating} className="w-full rounded-xl bg-white text-gray-950 py-3 font-bold">{creating ? 'Creando...' : 'Crear tour'}</button>
+              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Título del recorrido" className={inputCls} />
+              <button disabled={creating} className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-3 font-bold transition-colors disabled:opacity-40">{creating ? 'Creando...' : 'Crear tour'}</button>
             </form>
 
             <div className="space-y-2">
-              <h2 className="font-black">Tours</h2>
+              <h2 className="font-black text-sm uppercase tracking-wide text-gray-500 dark:text-gray-400">Tours</h2>
               {loading && <div className="text-gray-400 text-sm">Cargando...</div>}
               {tours.map((tour, index) => {
                 const tourKey = getTourKey(tour) || `tour-${index}`;
                 const renderKey = `${tourKey}-${index}`;
+                const isActive = selectedTourId === tourKey;
                 return (
-                <button key={renderKey} type="button" onClick={() => { setSelectedTourId(tourKey); refreshTour(tourKey); }} className={`w-full text-left rounded-2xl p-4 border ${selectedTourId === tourKey ? 'border-yellow-300 bg-yellow-300/10' : 'border-white/10 bg-white/5'}`}>
-                  <strong className="block">{tour.title}</strong>
-                  <span className="text-xs text-gray-400">{tour.published ? 'Publicado' : 'Borrador'} · {tour.scenes?.length || 0} escenas</span>
+                <button key={renderKey} type="button" onClick={() => { setSelectedTourId(tourKey); refreshTour(tourKey); }} className={`w-full text-left rounded-2xl p-4 border transition-colors ${isActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : `${border} ${isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-white hover:bg-gray-50'}`}`}>
+                  <strong className="block text-sm">{tour.title}</strong>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{tour.published ? 'Publicado' : 'Borrador'} · {tour.scenes?.length || 0} escenas</span>
                 </button>
                 );
               })}
@@ -363,7 +374,7 @@ const ToursVirtuales = () => {
           <main className="xl:col-span-6 p-5">
             <div
               ref={canvasRef}
-              className={`relative h-[520px] rounded-3xl overflow-hidden bg-black border border-white/10 ${placingHotspot ? 'cursor-crosshair' : dragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              className={`relative h-[520px] rounded-2xl overflow-hidden bg-gray-950 border ${border} ${placingHotspot ? 'cursor-crosshair' : dragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               style={{ touchAction: 'none', userSelect: 'none' }}
               onPointerDown={startDrag}
               onPointerMove={moveDrag}
@@ -387,7 +398,7 @@ const ToursVirtuales = () => {
               )}
               <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/35 via-transparent to-black/45" />
               {placingHotspot && (
-                <div className="absolute left-4 top-4 z-30 inline-flex items-center gap-2 rounded-full bg-yellow-300 px-3 py-2 text-xs font-black text-gray-950 shadow-lg pointer-events-none">
+                <div className="absolute left-4 top-4 z-30 inline-flex items-center gap-2 rounded-full bg-blue-600 px-3 py-2 text-xs font-black text-white shadow-lg pointer-events-none">
                   <FiMapPin /> Colocar pin
                 </div>
               )}
@@ -421,25 +432,26 @@ const ToursVirtuales = () => {
                 </button>
               ))}
             </div>
-            {!selectedScene && <div className="mt-4 text-gray-400">Subí un panorama equirectangular JPG/WebP para iniciar el preview 360.</div>}
+            {!selectedScene && <div className="mt-4 text-gray-500 dark:text-gray-400 text-sm">Subí un panorama equirectangular JPG/WebP para iniciar el preview 360.</div>}
             {selectedTour && (
               <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
                 {scenes.map((scene, index) => {
                   const sceneKey = getSceneKey(scene) || `scene-${index}`;
                   const renderKey = `${sceneKey}-${index}`;
+                  const isActive = getSceneKey(selectedScene) === sceneKey;
                   return (
-                  <div key={renderKey} className={`flex flex-col min-w-[160px] rounded-2xl overflow-hidden border ${getSceneKey(selectedScene) === sceneKey ? 'border-yellow-300' : 'border-white/10'}`}>
+                  <div key={renderKey} className={`flex flex-col min-w-[160px] rounded-xl overflow-hidden border transition-colors ${isActive ? 'border-blue-500' : border}`}>
                     <button type="button" onClick={() => setSelectedSceneId(sceneKey)} className="block w-full text-left flex-1">
                       {scene.thumbnailUrl
                         ? <img src={resolveUrl(scene.thumbnailUrl)} alt="" className="w-full h-20 object-cover" />
-                        : <div className="w-full h-20 bg-white/5 grid place-items-center text-gray-500 text-xs">Sin preview</div>
+                        : <div className={`w-full h-20 grid place-items-center text-xs text-gray-400 ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>Sin preview</div>
                       }
-                      <span className="block p-2 text-sm">{scene.title}</span>
+                      <span className={`block p-2 text-sm ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{scene.title}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => removeScene(sceneKey)}
-                      className="flex items-center justify-center gap-1 w-full py-1.5 text-xs text-red-400 hover:bg-red-500/20 transition-colors border-t border-white/10"
+                      className={`flex items-center justify-center gap-1 w-full py-1.5 text-xs transition-colors border-t ${border} ${isDark ? 'text-red-400 hover:bg-red-900/30' : 'text-red-500 hover:bg-red-50'}`}
                     >
                       <FiTrash2 size={11} /> Eliminar
                     </button>
@@ -450,42 +462,42 @@ const ToursVirtuales = () => {
             )}
           </main>
 
-          <aside className="xl:col-span-3 border-l border-white/10 p-5 space-y-6 bg-black/20">
+          <aside className={`xl:col-span-3 border-l ${border} p-5 space-y-6 ${sidebarBg}`}>
             <form onSubmit={uploadScene} className="space-y-3">
-              <h2 className="font-black flex items-center gap-2"><FiUploadCloud /> Upload panorama</h2>
-              <input value={sceneForm.title} onChange={(e) => setSceneForm({ ...sceneForm, title: e.target.value })} placeholder="Nombre de ambiente" className="w-full rounded-xl bg-white/10 border border-white/10 px-3 py-3 text-sm" />
-              <input type="file" accept="image/jpeg,image/jpg,image/webp,image/png,.insp" onChange={(e) => setSceneForm({ ...sceneForm, file: e.target.files?.[0] || null })} className="w-full text-sm" />
-              <button disabled={uploading || !selectedTour} className="w-full rounded-xl bg-yellow-400 text-gray-950 py-3 font-bold disabled:opacity-40">{uploading ? 'Procesando...' : 'Subir escena'}</button>
+              <h2 className="font-black text-sm uppercase tracking-wide text-gray-500 dark:text-gray-400 flex items-center gap-2"><FiUploadCloud /> Upload panorama</h2>
+              <input value={sceneForm.title} onChange={(e) => setSceneForm({ ...sceneForm, title: e.target.value })} placeholder="Nombre de ambiente" className={inputCls} />
+              <input type="file" accept="image/jpeg,image/jpg,image/webp,image/png,.insp" onChange={(e) => setSceneForm({ ...sceneForm, file: e.target.files?.[0] || null })} className="w-full text-sm text-gray-600 dark:text-gray-300" />
+              <button disabled={uploading || !selectedTour} className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-3 font-bold disabled:opacity-40 transition-colors">{uploading ? 'Procesando...' : 'Subir escena'}</button>
             </form>
 
             <form onSubmit={addHotspot} className="space-y-3">
-              <h2 className="font-black">Hotspot navegación</h2>
-              <select value={hotspotForm.targetSceneId} onChange={(e) => setHotspotForm({ ...hotspotForm, targetSceneId: e.target.value })} className="w-full rounded-xl bg-gray-900 text-white border border-white/10 px-3 py-3 text-sm">
-                <option value="" className="bg-gray-900 text-white">Escena destino</option>
+              <h2 className="font-black text-sm uppercase tracking-wide text-gray-500 dark:text-gray-400">Hotspot navegación</h2>
+              <select value={hotspotForm.targetSceneId} onChange={(e) => setHotspotForm({ ...hotspotForm, targetSceneId: e.target.value })} className={selectCls}>
+                <option value="">Escena destino</option>
                 {scenes.filter((scene) => getSceneKey(scene) !== getSceneKey(selectedScene)).map((scene, index) => {
                   const sceneKey = getSceneKey(scene) || `target-scene-${index}`;
                   const renderKey = `${sceneKey}-${index}`;
-                  return <option key={renderKey} value={sceneKey} className="bg-gray-900 text-white">{scene.title}</option>;
+                  return <option key={renderKey} value={sceneKey}>{scene.title}</option>;
                 })}
               </select>
-              <input value={hotspotForm.label} onChange={(e) => setHotspotForm({ ...hotspotForm, label: e.target.value })} placeholder="Etiqueta" className="w-full rounded-xl bg-white/10 border border-white/10 px-3 py-3 text-sm" />
+              <input value={hotspotForm.label} onChange={(e) => setHotspotForm({ ...hotspotForm, label: e.target.value })} placeholder="Etiqueta" className={inputCls} />
               <button
                 type="button"
                 disabled={!selectedScene || !sceneImageUrl}
                 onClick={() => setPlacingHotspot((value) => !value)}
-                className={`w-full rounded-xl border py-3 font-bold disabled:opacity-40 ${placingHotspot ? 'border-yellow-300 bg-yellow-300 text-gray-950' : 'border-white/10 bg-white/10 text-white'}`}
+                className={`w-full rounded-xl border py-3 font-bold disabled:opacity-40 transition-colors ${placingHotspot ? 'border-blue-500 bg-blue-600 text-white' : ghostBtn}`}
               >
                 <FiMapPin className="inline mr-2" />{placingHotspot ? 'Colocando pin...' : 'Colocar pin con cursor'}
               </button>
               <div className="grid grid-cols-2 gap-2">
-                <input type="number" step="0.01" value={hotspotForm.yaw} onChange={(e) => { setHotspotForm({ ...hotspotForm, yaw: e.target.value }); setDraftPinVisible(true); }} placeholder="Yaw" className="rounded-xl bg-white/10 border border-white/10 px-3 py-3 text-sm" />
-                <input type="number" step="0.01" value={hotspotForm.pitch} onChange={(e) => { setHotspotForm({ ...hotspotForm, pitch: e.target.value }); setDraftPinVisible(true); }} placeholder="Pitch" className="rounded-xl bg-white/10 border border-white/10 px-3 py-3 text-sm" />
+                <input type="number" step="0.01" value={hotspotForm.yaw} onChange={(e) => { setHotspotForm({ ...hotspotForm, yaw: e.target.value }); setDraftPinVisible(true); }} placeholder="Yaw" className={inputCls.replace('w-full ', '')} />
+                <input type="number" step="0.01" value={hotspotForm.pitch} onChange={(e) => { setHotspotForm({ ...hotspotForm, pitch: e.target.value }); setDraftPinVisible(true); }} placeholder="Pitch" className={inputCls.replace('w-full ', '')} />
               </div>
-              <button disabled={!selectedScene} className="w-full rounded-xl bg-white/10 border border-white/10 py-3 font-bold disabled:opacity-40">Agregar hotspot</button>
+              <button disabled={!selectedScene} className={`w-full ${ghostBtn} disabled:opacity-40`}>Agregar hotspot</button>
             </form>
 
             {selectedTour?.propertyId && (
-              <a href={`https://anabellaluna.com.ar/propiedad/${selectedTour.propertyId}`} target="_blank" rel="noreferrer" className="block rounded-xl bg-white/10 border border-white/10 py-3 text-center font-bold text-white"><FiEye className="inline mr-2" />Ver propiedad</a>
+              <a href={`https://anabellaluna.com.ar/propiedad/${selectedTour.propertyId}`} target="_blank" rel="noreferrer" className={`flex items-center justify-center gap-2 rounded-xl border py-3 font-bold transition-colors ${isDark ? 'border-gray-600 bg-gray-700 text-gray-100 hover:bg-gray-600' : 'border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200'}`}><FiEye />Ver propiedad</a>
             )}
           </aside>
         </div>
