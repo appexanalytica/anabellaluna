@@ -63,6 +63,7 @@ const ClientesCRM = () => {
 
   // Estado para filtro de tipo de cliente
   const [filtroTipo, setFiltroTipo] = useState('todos');
+  const [filtroAgente, setFiltroAgente] = useState('');
 
   // Estado para el modal
   const [showModal, setShowModal] = useState(false);
@@ -451,12 +452,15 @@ const ClientesCRM = () => {
       const key = filtroTipo.charAt(0).toUpperCase() + filtroTipo.slice(1);
       list = list.filter(c => c.tipo === key);
     }
+    if (filtroAgente) {
+      list = list.filter(c => c.agenteId === filtroAgente);
+    }
     if (searchCliente.trim()) {
       const q = searchCliente.toLowerCase();
       list = list.filter(c => (c.nombre || '').toLowerCase().includes(q) || (c.email || '').toLowerCase().includes(q) || (c.telefono || '').includes(q));
     }
     return list;
-  }, [clientesEjemplo, filtroTipo, searchCliente]);
+  }, [clientesEjemplo, filtroTipo, filtroAgente, searchCliente]);
 
   useEffect(() => {
     if (showModal) {
@@ -1037,7 +1041,7 @@ const ClientesCRM = () => {
                   />
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 items-center">
                 {[
                   { key: 'todos', label: 'Todos', count: clientesEjemplo.length, cls: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' },
                   { key: 'comprador', label: 'Compradores', count: clientesEjemplo.filter(c => c.tipo === 'Comprador').length, cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
@@ -1050,6 +1054,16 @@ const ClientesCRM = () => {
                     {f.label} <span className="font-bold ml-1">{f.count}</span>
                   </button>
                 ))}
+                <select
+                  value={filtroAgente}
+                  onChange={(e) => setFiltroAgente(e.target.value)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${isDark ? 'bg-gray-800 border-gray-600 text-gray-100' : 'bg-white border-gray-200 text-gray-700'}`}
+                >
+                  <option value="">Todos los agentes</option>
+                  {Object.values(agentesMap).map((a) => (
+                    <option key={a._id || a.id} value={a._id || a.id}>{a.nombre}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
