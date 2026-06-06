@@ -225,6 +225,17 @@ const ToursVirtuales = () => {
     toast.success('Tour eliminado');
   };
 
+  const removeHotspot = async (hotspotId) => {
+    if (!selectedTourKey) return;
+    try {
+      const tour = await tourService.deleteHotspot(selectedTourKey, hotspotId);
+      setTours((prev) => [tour, ...prev.filter((item) => (item.id || item._id) !== tour.id)]);
+      toast.success('Hotspot eliminado');
+    } catch (err) {
+      toast.error(err.message || 'No se pudo eliminar el hotspot');
+    }
+  };
+
   const removeScene = async (sceneId) => {
     if (!selectedTourKey || !window.confirm('¿Eliminar este panorama?')) return;
     try {
@@ -495,6 +506,30 @@ const ToursVirtuales = () => {
               </div>
               <button disabled={!selectedScene} className={`w-full ${ghostBtn} disabled:opacity-40`}>Agregar hotspot</button>
             </form>
+
+            {selectedScene?.hotspots?.length > 0 && (
+              <div className="space-y-2">
+                <h2 className="font-black text-sm uppercase tracking-wide text-gray-500 dark:text-gray-400">Hotspots en esta escena</h2>
+                {selectedScene.hotspots.map((hotspot) => (
+                  <div key={hotspot.id} className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-sm ${isDark ? 'border-gray-600 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+                    <div className="min-w-0">
+                      <span className="font-medium truncate block">{hotspot.label || '(sin etiqueta)'}</span>
+                      <span className="text-xs text-gray-400 truncate block">
+                        → {scenes.find((s) => getSceneKey(s) === hotspot.targetSceneId)?.title || hotspot.targetSceneId || '—'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeHotspot(hotspot.id)}
+                      className={`shrink-0 rounded-lg p-1.5 transition-colors ${isDark ? 'text-red-400 hover:bg-red-900/30' : 'text-red-500 hover:bg-red-50'}`}
+                      title="Eliminar hotspot"
+                    >
+                      <FiTrash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {selectedTour?.propertyId && (
               <a href={`https://anabellaluna.com.ar/propiedad/${selectedTour.propertyId}`} target="_blank" rel="noreferrer" className={`flex items-center justify-center gap-2 rounded-xl border py-3 font-bold transition-colors ${isDark ? 'border-gray-600 bg-gray-700 text-gray-100 hover:bg-gray-600' : 'border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200'}`}><FiEye />Ver propiedad</a>
