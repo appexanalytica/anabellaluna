@@ -43,7 +43,8 @@ const Mensajeria = () => {
     try {
       // eslint-disable-next-line global-require
       const io = require('socket.io-client');
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+      const _isLocal = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+      const API_URL = _isLocal ? (process.env.REACT_APP_API_URL || 'http://localhost:4000') : 'https://api.anabellaluna.com.ar';
       const token = localStorage.getItem('authToken');
       socket = io(API_URL, { auth: { token }, transports: ['websocket'] });
       socketRef.current = socket;
