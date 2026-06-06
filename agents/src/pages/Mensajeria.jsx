@@ -49,17 +49,21 @@ const Mensajeria = () => {
       socket = io(API_URL, { auth: { token }, transports: ['websocket'] });
       socketRef.current = socket;
 
-      socket.on('whatsapp:message', (newMsg) => {
+      socket.on('whatsapp:message', ({ message: newMsg } = {}) => {
+        if (!newMsg) return;
         setSelectedConversation((prev) => {
-          if (prev && prev._id === newMsg.conversationId) {
-            setMessages((msgs) => [...msgs, newMsg]);
+          if (prev && String(prev._id) === String(newMsg.conversationId)) {
+            setMessages((msgs) => {
+              if (msgs.some((m) => m._id === newMsg._id || (m.waMessageId && m.waMessageId === newMsg.waMessageId))) return msgs;
+              return [...msgs, newMsg];
+            });
           }
           return prev;
         });
         setConversations((convs) =>
           convs.map((c) =>
-            c._id === newMsg.conversationId && newMsg.direction === 'inbound'
-              ? { ...c, unreadCount: (c.unreadCount || 0) + 1, lastMessage: { content: newMsg.content, type: newMsg.type, direction: newMsg.direction, timestamp: newMsg.createdAt } }
+            String(c._id) === String(newMsg.conversationId) && newMsg.direction === 'inbound'
+              ? { ...c, unreadCount: (c.unreadCount || 0) + 1, lastMessage: { content: newMsg.content?.text || newMsg.content?.caption || `[${newMsg.type}]`, type: newMsg.type, direction: newMsg.direction, timestamp: newMsg.createdAt } }
               : c
           )
         );

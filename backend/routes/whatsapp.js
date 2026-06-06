@@ -214,8 +214,10 @@ async function handleMessageUpsert(sessionName, data) {
       ? new Date(parseInt(data.messageTimestamp, 10) * 1000)
       : new Date();
 
-    // 5. Crear mensaje en BD
+    // 5. Crear mensaje en BD (deduplicar por waMessageId)
     const evolutionMsgId = data.key?.id || `ev_${Date.now()}`;
+    const existing = await WhatsAppMessage.findOne({ waMessageId: evolutionMsgId }).exec();
+    if (existing) return;
     const newMessage = new WhatsAppMessage({
       conversationId: conv._id,
       contactId: contact._id,
