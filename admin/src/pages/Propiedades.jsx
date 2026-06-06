@@ -74,6 +74,7 @@ const Propiedades = () => {
     m2Max: '',
     barrio: '',
     moneda: '',
+    agente: '',
   });
   const [ordenarPor, setOrdenarPor] = useState('recientes');
 
@@ -1315,6 +1316,7 @@ const Propiedades = () => {
       if (filtros.estado && p.estado !== filtros.estado) return false;
       if (filtros.moneda && p.moneda !== filtros.moneda) return false;
       if (filtros.barrio && p.barrio !== filtros.barrio) return false;
+      if (filtros.agente && p.agenteId !== filtros.agente) return false;
       if (filtros.precioMin && Number(p.precio) < Number(filtros.precioMin)) return false;
       if (filtros.precioMax && Number(p.precio) > Number(filtros.precioMax)) return false;
       if (filtros.dormitoriosMin && Number(p.dormitorios) < Number(filtros.dormitoriosMin)) return false;
@@ -1349,6 +1351,7 @@ const Propiedades = () => {
       m2Max: '',
       barrio: '',
       moneda: '',
+      agente: '',
     });
     setOrdenarPor('recientes');
     setFiltroOperacion('todas');
@@ -1775,6 +1778,20 @@ const Propiedades = () => {
                     <option value="">Todas</option>
                     <option value="USD">USD</option>
                     <option value="ARS">ARS</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium mb-1 dark:text-gray-300">Agente</label>
+                  <select
+                    value={filtros.agente}
+                    onChange={(e) => setFiltros((prev) => ({ ...prev, agente: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-gray-100 text-sm"
+                  >
+                    <option value="">Todos los agentes</option>
+                    {agentes.map((a) => (
+                      <option key={a._id} value={a._id}>{a.nombre}</option>
+                    ))}
                   </select>
                 </div>
 
