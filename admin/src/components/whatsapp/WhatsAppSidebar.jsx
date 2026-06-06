@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { FiSearch } from 'react-icons/fi';
+import { FiSearch, FiTrash2 } from 'react-icons/fi';
 
 const WhatsAppLogo = ({ size = 22 }) => (
   <img src="/whatsapp.svg" width={size} height={size} alt="WhatsApp" />
@@ -29,7 +29,7 @@ const formatRelativeTime = (dateStr) => {
   return date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' });
 };
 
-const ConversationItem = ({ conv, isSelected, onSelect }) => {
+const ConversationItem = ({ conv, isSelected, onSelect, onDelete }) => {
   // El backend devuelve contactId como objeto populate (puede venir como contact o contactId)
   const contact = conv.contactId || conv.contact || {};
   const displayName = contact.displayName || contact.phoneNumber || 'Desconocido';
@@ -41,7 +41,7 @@ const ConversationItem = ({ conv, isSelected, onSelect }) => {
   return (
     <div
       onClick={() => onSelect(conv)}
-      className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors border-b border-gray-100 hover:bg-gray-50"
+      className="group flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors border-b border-gray-100 hover:bg-gray-50"
       style={{ backgroundColor: isSelected ? '#f0f2f5' : undefined }}
     >
       {/* Avatar */}
@@ -78,20 +78,32 @@ const ConversationItem = ({ conv, isSelected, onSelect }) => {
         <p className="text-xs text-gray-500 truncate mt-0.5">{truncated}</p>
       </div>
 
-      {/* Unread badge */}
-      {conv.unreadCount > 0 && (
-        <span
-          className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold"
-          style={{ backgroundColor: '#25d366', minWidth: '20px' }}
-        >
-          {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
-        </span>
-      )}
+      {/* Unread badge + delete */}
+      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+        {conv.unreadCount > 0 && (
+          <span
+            className="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold"
+            style={{ backgroundColor: '#25d366', minWidth: '20px' }}
+          >
+            {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
+          </span>
+        )}
+        {onDelete && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onDelete(conv._id); }}
+            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-0.5"
+            title="Eliminar conversación"
+          >
+            <FiTrash2 size={14} />
+          </button>
+        )}
+      </div>
     </div>
   );
 };
 
-const WhatsAppSidebar = ({ conversations = [], selectedId, onSelect, onSearch }) => {
+const WhatsAppSidebar = ({ conversations = [], selectedId, onSelect, onSearch, onDelete }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
 
@@ -186,6 +198,7 @@ const WhatsAppSidebar = ({ conversations = [], selectedId, onSelect, onSearch })
               conv={conv}
               isSelected={selectedId === conv._id}
               onSelect={onSelect}
+              onDelete={onDelete}
             />
           ))
         )}

@@ -147,6 +147,21 @@ const Mensajeria = () => {
     }
   };
 
+  const handleDeleteConversation = async (convId) => {
+    if (!window.confirm('¿Eliminar esta conversación y todos sus mensajes? Esta acción no se puede deshacer.')) return;
+    try {
+      await whatsappService.deleteConversation(convId);
+      setConversations((prev) => prev.filter((c) => c._id !== convId));
+      if (selectedConversation && selectedConversation._id === convId) {
+        setSelectedConversation(null);
+        setMessages([]);
+      }
+      toast.success('Conversación eliminada');
+    } catch (err) {
+      toast.error(`Error al eliminar: ${err.message}`);
+    }
+  };
+
   const handleLinkCliente = () => {
     toast.info('Funcionalidad de vinculación CRM próximamente');
   };
@@ -157,6 +172,7 @@ const Mensajeria = () => {
         conversations={conversations}
         selectedId={selectedConversation?._id}
         onSelect={setSelectedConversation}
+        onDelete={handleDeleteConversation}
       />
       <WhatsAppChat
         conversation={selectedConversation}

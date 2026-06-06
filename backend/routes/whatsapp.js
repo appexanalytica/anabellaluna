@@ -13,6 +13,7 @@ const router = express.Router();
 
 const { authenticateToken } = require('../auth');
 const { getProvider } = require('../services/ProviderFactory');
+const { publishEventAsync, metaFromRequest } = require('../utils/redisStreams');
 const { emitToAdmin, emitToUser } = require('../socket');
 
 const WhatsAppContact = require('../models/WhatsAppContact');
@@ -241,7 +242,17 @@ async function handleMessageUpsert(sessionName, data) {
     };
     await conv.save();
 
-    // 7. Emitir evento Socket.IO
+    // 7. Publicar evento al bus de Redis
+    publishEventAsync('whatsapp.message_received', {
+      conversation_id: String(conv._id),
+      contact_id: String(contact._id),
+      contact_phone: phoneNumber,
+      message_type: type,
+      session_name: sessionName,
+      cliente_id: String(contact.clienteId || ''),
+    });
+
+    // 8. Emitir evento Socket.IO
     const payload = {
       message: newMessage.toObject(),
       conversation: conv.toObject(),
@@ -547,6 +558,14 @@ router.post('/conversations/:id/send', async (req, res) => {
     };
     await conv.save();
 
+    publishEventAsync('whatsapp.message_sent', {
+      conversation_id: String(conv._id),
+      contact_phone: phoneNumber,
+      message_type: type,
+      agent_id: agentId || '',
+      session_name: sessionName,
+    }, metaFromRequest(req));
+
     return res.status(201).json({ message: newMessage, providerResponse });
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -571,6 +590,12 @@ router.patch('/conversations/:id/assign', async (req, res) => {
       .exec();
 
     if (!conv) return res.status(404).json({ error: 'Conversación no encontrada' });
+
+    publishEventAsync('whatsapp.conversation_assigned', {
+      conversation_id: String(conv._id),
+      agent_id: agentId || '',
+    }, metaFromRequest(req));
+
     return res.json(conv);
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -631,7 +656,36 @@ router.patch('/conversations/:id/status', async (req, res) => {
     ).exec();
 
     if (!conv) return res.status(404).json({ error: 'Conversación no encontrada' });
+
+    publishEventAsync('whatsapp.conversation_status_changed', {
+      conversation_id: String(conv._id),
+      status,
+    }, metaFromRequest(req));
+
     return res.json(conv);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/conversations/:id', async (req, res) => {
+  if (!isAdmin(req)) {
+    return res.status(403).json({ error: 'Solo administradores pueden eliminar conversaciones' });
+  }
+  try {
+    const { id } = req.params;
+    const conv = await WhatsAppConversation.findById(id).exec();
+    if (!conv) return res.status(404).json({ error: 'Conversación no encontrada' });
+
+    // Eliminar todos los mensajes de la conversación
+    await WhatsAppMessage.deleteMany({ conversationId: id });
+    await WhatsAppConversation.findByIdAndDelete(id);
+
+    publishEventAsync('whatsapp.conversation_deleted', {
+      conversation_id: String(id),
+    }, metaFromRequest(req));
+
+    return res.json({ ok: true, deleted: id });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
@@ -691,6 +745,12 @@ router.post('/contacts/:id/link-cliente', async (req, res) => {
         { clienteId }
       );
     }
+
+    publishEventAsync('whatsapp.contact_linked', {
+      contact_id: String(contact._id),
+      phone_number: contact.phoneNumber || '',
+      cliente_id: clienteId || '',
+    }, metaFromRequest(req));
 
     return res.json(contact);
   } catch (err) {

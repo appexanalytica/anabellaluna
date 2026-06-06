@@ -22,6 +22,9 @@ const whatsappService = {
   updateStatus: (conversationId, status) =>
     api.patch(`/whatsapp/conversations/${conversationId}/status`, { status }),
 
+  deleteConversation: (conversationId) =>
+    api.delete(`/whatsapp/conversations/${conversationId}`),
+
   // Contactos
   getContacts: () => api.get('/whatsapp/contacts'),
 
