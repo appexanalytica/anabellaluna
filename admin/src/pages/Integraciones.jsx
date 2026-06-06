@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { confirmToast } from '../utils/confirmToast';
 import { FaGoogle, FaCheck, FaTimes, FaCopy, FaEye, FaEyeSlash, FaSave, FaTrash, FaExternalLinkAlt, FaStar, FaRegStar, FaSync, FaUnlink } from 'react-icons/fa';
 import { Header } from '../components';
 import { useStateContext } from '../contexts/ContextProvider';
+import whatsappService from '../services/whatsappService';
+import SessionCard from '../components/whatsapp/SessionCard';
+import QRModal from '../components/whatsapp/QRModal';
+import useSocket from '../hooks/useSocket';
 
 const API_URL = process.env.REACT_APP_API_URL
   || (typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname)
@@ -241,6 +245,82 @@ const Integraciones = () => {
     }
   };
 
+  // ── WhatsApp Sessions ───────────────────────────────────────
+  const [sessions, setSessions] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [waCreating, setWaCreating] = useState(false);
+  const [qrModal, setQrModal] = useState(null);
+
+  const loadSessions = useCallback(async () => {
+    setSessionsLoading(true);
+    try {
+      const data = await whatsappService.getSessions();
+      setSessions(Array.isArray(data) ? data : data?.sessions || []);
+    } catch {
+      toast.error('Error al cargar sesiones de WhatsApp');
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadSessions(); }, [loadSessions]);
+
+  useSocket({
+    'whatsapp:session_status': ({ sessionName, status: s } = {}) => {
+      if (!sessionName) return;
+      setSessions((prev) => prev.map((sess) => sess.sessionName === sessionName ? { ...sess, status: s, updatedAt: new Date().toISOString() } : sess));
+    },
+    'whatsapp:session_connected': ({ sessionName, phone, displayName } = {}) => {
+      if (!sessionName) return;
+      setSessions((prev) => prev.map((sess) => sess.sessionName === sessionName ? { ...sess, status: 'CONNECTED', phone: phone || sess.phone, displayName: displayName || sess.displayName, updatedAt: new Date().toISOString() } : sess));
+      if (qrModal === sessionName) { setQrModal(null); toast.success(`WhatsApp conectado: ${phone || sessionName}`); }
+    },
+    'whatsapp:session_disconnected': ({ sessionName } = {}) => {
+      if (!sessionName) return;
+      setSessions((prev) => prev.map((sess) => sess.sessionName === sessionName ? { ...sess, status: 'DISCONNECTED', updatedAt: new Date().toISOString() } : sess));
+    },
+  });
+
+  const handleCreateSession = async () => {
+    setWaCreating(true);
+    try {
+      const data = await whatsappService.createSession();
+      const newSession = data?.session || data;
+      if (newSession?.sessionName) {
+        setSessions((prev) => [newSession, ...prev]);
+        setQrModal(newSession.sessionName);
+        toast.success('Sesión creada. Escaneá el QR para conectar.');
+      } else { await loadSessions(); }
+    } catch (err) { toast.error(`Error al crear sesión: ${err.message}`); }
+    finally { setWaCreating(false); }
+  };
+
+  const handleWaDelete = async (sessionName) => {
+    if (!window.confirm(`¿Eliminar la sesión "${sessionName}"?`)) return;
+    try {
+      await whatsappService.deleteSession(sessionName);
+      setSessions((prev) => prev.filter((s) => s.sessionName !== sessionName));
+      toast.success('Sesión eliminada');
+    } catch (err) { toast.error(`Error al eliminar: ${err.message}`); }
+  };
+
+  const handleWaStop = async (sessionName) => {
+    try {
+      await whatsappService.stopSession(sessionName);
+      setSessions((prev) => prev.map((s) => s.sessionName === sessionName ? { ...s, status: 'DISCONNECTED', updatedAt: new Date().toISOString() } : s));
+      toast.success('Sesión desconectada');
+    } catch (err) { toast.error(`Error al desconectar: ${err.message}`); }
+  };
+
+  const handleWaStart = async (sessionName) => {
+    try {
+      await whatsappService.startSession(sessionName);
+      setSessions((prev) => prev.map((s) => s.sessionName === sessionName ? { ...s, status: 'WAITING_QR', updatedAt: new Date().toISOString() } : s));
+      setQrModal(sessionName);
+      toast.info('Reconectando... Escaneá el QR');
+    } catch (err) { toast.error(`Error al reconectar: ${err.message}`); }
+  };
+
   const copyToClipboard = (text, label) => {
     navigator.clipboard.writeText(text);
     setCopied(label);
@@ -397,6 +477,74 @@ const Integraciones = () => {
             Una vez configuradas las credenciales aquí, los <strong>agentes solo necesitan hacer clic en "Conectar Google Calendar"</strong> desde su panel de Integraciones.
             No necesitan configurar nada más. Sus calendarios personales de Google se sincronizarán automáticamente con las citas del CRM.
           </p>
+        </div>
+      </div>
+
+      {/* ── WhatsApp Sessions ─────────────────────────────────────────────── */}
+      <div className={`rounded-2xl p-6 border mb-6 ${isDark ? 'bg-secondary-dark-bg border-gray-700/50' : 'bg-white border-gray-100 shadow-md'}`}>
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#e9fbe9' }}>
+            <img src="/whatsapp.svg" width="28" height="28" alt="WhatsApp" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-xl font-bold dark:text-gray-200">WhatsApp</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Gestioná los números de WhatsApp conectados al sistema
+            </p>
+          </div>
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+            sessions.some((s) => s.status === 'CONNECTED')
+              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+              : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+          }`}>
+            {sessions.filter((s) => s.status === 'CONNECTED').length}/{sessions.length} conectadas
+          </span>
+        </div>
+
+        {sessionsLoading ? (
+          <div className="flex justify-center py-6">
+            <div className="w-7 h-7 rounded-full border-4 border-gray-200 animate-spin" style={{ borderTopColor: '#25d366' }} />
+          </div>
+        ) : sessions.length === 0 ? (
+          <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <p className="text-sm text-blue-800 dark:text-blue-300">
+              📱 No hay sesiones de WhatsApp. Creá una para conectar un número al sistema.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+            {sessions.map((session) => (
+              <SessionCard
+                key={session.sessionName || session._id}
+                session={session}
+                isOwner
+                onDelete={handleWaDelete}
+                onStop={handleWaStop}
+                onStart={handleWaStart}
+                onShowQr={(name) => setQrModal(name)}
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={handleCreateSession}
+            disabled={waCreating}
+            className="flex items-center gap-2 px-6 py-2 rounded-lg font-medium text-white transition-colors disabled:opacity-60"
+            style={{ backgroundColor: '#25d366' }}
+          >
+            {waCreating ? <><FaSync className="animate-spin" /> Creando...</> : <>+ Nueva sesión</>}
+          </button>
+          <button
+            type="button"
+            onClick={loadSessions}
+            disabled={sessionsLoading}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            <FaSync className={sessionsLoading ? 'animate-spin' : ''} /> Actualizar
+          </button>
         </div>
       </div>
 
@@ -576,13 +724,23 @@ const Integraciones = () => {
         )}
       </div>
 
+      {qrModal && (
+        <QRModal
+          sessionName={qrModal}
+          onClose={() => setQrModal(null)}
+          onConnected={() => {
+            setSessions((prev) => prev.map((s) => s.sessionName === qrModal ? { ...s, status: 'CONNECTED', updatedAt: new Date().toISOString() } : s));
+            toast.success('WhatsApp conectado exitosamente');
+          }}
+        />
+      )}
+
       {/* Other integrations (placeholder) */}
       <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Otras Integraciones</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[
           { nombre: 'ZonaProp', descripcion: 'Portal inmobiliario líder', conectado: false, logo: '🏢' },
           { nombre: 'ArgentinaProp', descripcion: 'Publicación de propiedades', conectado: false, logo: '🏘️' },
-          { nombre: 'WhatsApp Business', descripcion: 'Mensajería con clientes', conectado: false, logo: '💬' },
           { nombre: 'Mailchimp', descripcion: 'Email marketing', conectado: false, logo: '📧' },
         ].map((int, index) => (
           <div key={index} className={`rounded-2xl p-6 border opacity-60 ${isDark ? 'bg-secondary-dark-bg border-gray-700/50' : 'bg-white border-gray-100'}`}>
