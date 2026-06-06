@@ -19,6 +19,7 @@ const menuItems = [
   { name: 'Agenda', path: '/crm/citas', icon: <FaRegCalendarAlt /> },
   { name: 'Consultas', path: '/crm/consultas', icon: <FaEnvelope /> },
   { name: 'Mi WhatsApp', path: '/crm/mis-sesiones', icon: <WhatsAppIcon /> },
+  { name: 'Bandeja WA', path: '/crm/mensajeria', icon: <img src="/whatsapp.svg" width="18" height="18" alt="WhatsApp" /> },
   { name: 'Automatización', path: '/crm/automatizacion', icon: <FaRobot /> },
   { name: 'Recompensas', path: '/crm/recompensas', icon: <FaTrophy /> },
   { name: 'Integraciones', path: '/crm/integraciones', icon: <FaPlug /> },

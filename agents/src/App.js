@@ -15,6 +15,7 @@ import { Navbar, Footer, Sidebar, ThemeSettings, Celebration, OnboardingTutorial
 import { AgentDashboard, Propiedades, ClientesCRM, Citas, Ventas, Documentos, Plantillas, Reportes, Integraciones, Consultas, MiPerfil, Recompensas, Automatizacion, FechasImportantes, EditorImagenes, Tasaciones, ToursVirtuales } from './pages';
 import MarketingAI from './pages/MarketingAI';
 import MisSesiones from './pages/MisSesiones';
+import Mensajeria from './pages/Mensajeria';
 import LoginAgente from './pages/LoginAgente';
 import Seguridad from './pages/Seguridad';
 import AIFloatingOrb from './components/ai/AIFloatingOrb';
@@ -176,6 +177,7 @@ const App = () => {
           <Route path="tours-virtuales" element={<ToursVirtuales />} />
           <Route path="marketing-ai" element={<MarketingAI />} />
           <Route path="mis-sesiones" element={<MisSesiones />} />
+          <Route path="mensajeria" element={<Mensajeria />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
