@@ -18,6 +18,7 @@ const menuItems = [
   { name: 'Operaciones', path: '/operaciones', icon: <FaDollarSign /> },
   { name: 'Agenda', path: '/citas', icon: <FaRegCalendarAlt /> },
   { name: 'Sesiones WA', path: '/whatsapp-sesiones', icon: <WhatsAppSessionIcon /> },
+  { name: 'Bandeja WA', path: '/mensajeria', icon: <img src="/whatsapp.svg" width="18" height="18" alt="WhatsApp" /> },
   { name: 'Archivos', path: '/archivos', icon: <FaFileAlt /> },
   { name: 'Editor', path: '/editor-imagenes', icon: <FaImage /> },
   { name: 'Tours 360', path: '/tours-virtuales', icon: <FaVrCardboard /> },

@@ -9,6 +9,7 @@ import { Ecommerce, Orders, Calendar, Employees, Stacked, Pyramid, Customers, Ka
 import Seguridad from './pages/Seguridad';
 import MarketingAI from './pages/MarketingAI';
 import WhatsAppSesiones from './pages/WhatsAppSesiones';
+import Mensajeria from './pages/Mensajeria';
 import AIProviders from './pages/AIProviders';
 import AIFloatingOrb from './components/ai/AIFloatingOrb';
 import InstallPrompt from './components/pwa/InstallPrompt';
@@ -414,6 +415,7 @@ const App = () => {
                 <Route path="/seguridad" element={<Seguridad />} />
                 <Route path="/recompensas" element={<Recompensas />} />
                 <Route path="/whatsapp-sesiones" element={<WhatsAppSesiones />} />
+                <Route path="/mensajeria" element={<Mensajeria />} />
                 <Route path="/tasaciones" element={<Tasaciones />} />
                 <Route path="/tours-virtuales" element={<ToursVirtuales />} />
 
