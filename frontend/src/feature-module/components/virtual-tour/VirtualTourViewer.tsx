@@ -159,6 +159,7 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
   const [isDragging, setIsDragging] = useState(false);
   const [isWebglReady, setIsWebglReady] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fsBtnNear, setFsBtnNear] = useState(false);
   const [teleportTransition, setTeleportTransition] = useState({
     phase: "idle" as "idle" | "departing" | "arriving",
     left: 50,
@@ -528,6 +529,16 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
     return () => document.removeEventListener("fullscreenchange", onFsChange);
   }, []);
 
+  useEffect(() => {
+    if (!isFullscreen) { setFsBtnNear(false); return; }
+    const onMove = (e: MouseEvent) => {
+      const near = e.clientX > window.innerWidth - 140 && e.clientY > window.innerHeight - 100;
+      setFsBtnNear(near);
+    };
+    document.addEventListener("mousemove", onMove);
+    return () => document.removeEventListener("mousemove", onMove);
+  }, [isFullscreen]);
+
   const applyScene = (loadedScene: LoadedScene) => {
     const nextView = getCenteredView();
     setActiveSceneId(loadedScene.scene.id);
@@ -578,9 +589,13 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
     transitionTimeoutsRef.current.push(departTimer);
   };
 
-  const enterFullscreen = () => {
-    const el = containerRef.current?.parentElement;
-    if (el?.requestFullscreen) el.requestFullscreen().catch(() => {});
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      const el = containerRef.current?.parentElement;
+      if (el?.requestFullscreen) el.requestFullscreen().catch(() => {});
+    }
   };
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -728,9 +743,31 @@ const VirtualTourViewer = ({ tour: providedTour, propertyId, height = 560, embed
           <strong>{tour.title}</strong>
         </div>
       </div>
-      {tour.settings?.fullscreen !== false && !isFullscreen && (
-        <button type="button" className="al-vtour-start-btn" onClick={enterFullscreen} data-vtour-control="true">
-          Iniciar recorrido
+      {tour.settings?.fullscreen !== false && (
+        <button
+          type="button"
+          className={`al-vtour-fs-btn${isFullscreen ? " is-fs" : ""}${fsBtnNear ? " is-near" : ""}`}
+          onClick={toggleFullscreen}
+          data-vtour-control="true"
+          aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {isFullscreen ? (
+              <>
+                <polyline points="4 14 10 14 10 20" />
+                <polyline points="20 10 14 10 14 4" />
+                <line x1="14" y1="10" x2="21" y2="3" />
+                <line x1="3" y1="21" x2="10" y2="14" />
+              </>
+            ) : (
+              <>
+                <polyline points="15 3 21 3 21 9" />
+                <polyline points="9 21 3 21 3 15" />
+                <line x1="21" y1="3" x2="14" y2="10" />
+                <line x1="3" y1="21" x2="10" y2="14" />
+              </>
+            )}
+          </svg>
         </button>
       )}
       {isLoading && <div className="al-vtour-loading">Cargando recorrido 360°...</div>}

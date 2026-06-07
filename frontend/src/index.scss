@@ -1299,7 +1299,7 @@ header .main-menu-wrapper .main-nav > li a i {
 }
 
 .al-vtour-shell.is-teleporting .al-vtour-topbar,
-.al-vtour-shell.is-teleporting .al-vtour-start-btn {
+.al-vtour-shell.is-teleporting .al-vtour-fs-btn {
   pointer-events: none;
   opacity: 0.32;
   transition: opacity 0.18s ease;
@@ -1422,34 +1422,45 @@ header .main-menu-wrapper .main-nav > li a i {
   }
 }
 
-.al-vtour-start-btn {
+.al-vtour-fs-btn {
   position: absolute;
-  z-index: 5;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 18px 40px;
-  border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.85);
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  z-index: 6;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.6);
   color: #fff;
-  font-size: 1.05rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-  white-space: nowrap;
+  opacity: 0.7;
+  transition: opacity 0.3s ease, background 0.2s ease;
   pointer-events: auto;
 }
 
-.al-vtour-start-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 1);
-  transform: translate(-50%, -50%) scale(1.04);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+.al-vtour-fs-btn:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.al-vtour-fs-btn.is-fs {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.al-vtour-fs-btn.is-fs.is-near {
+  opacity: 0.85;
+  pointer-events: auto;
+}
+
+.al-vtour-fs-btn.is-fs.is-near:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.85);
 }
 
 .al-vtour-topbar {
@@ -1642,7 +1653,7 @@ header .main-menu-wrapper .main-nav > li a i {
   padding: 24px;
   color: #fff;
   text-align: center;
-  background: radial-gradient(circle at center, rgba(212, 175, 55, 0.18), rgba(3, 7, 18, 0.94));
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.06), rgba(3, 7, 18, 0.92));
 }
 
 .al-vtour-error {
