@@ -4,7 +4,7 @@
 
 export type FunnelBgType = 'gradient' | 'color' | 'image' | 'pattern' | 'svg' | 'svgOverlay' | 'none';
 export type FunnelTextColor = 'light' | 'dark';
-export type FunnelImageStyle = 'float-right' | 'float-left' | 'full-bleed' | 'overlay' | 'hidden' | 'classic-carousel';
+export type FunnelImageStyle = 'float-right' | 'float-left' | 'full-bleed' | 'overlay' | 'hidden';
 
 export type FunnelPatternType =
   | 'dots'

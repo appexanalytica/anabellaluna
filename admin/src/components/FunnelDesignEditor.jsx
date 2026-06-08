@@ -89,7 +89,6 @@ const IMAGE_STYLES = [
   { value: 'float-right',      icon: '▶',  label: 'Derecha' },
   { value: 'float-left',       icon: '◀',  label: 'Izquierda' },
   { value: 'hidden',           icon: '✕',  label: 'Oculta' },
-  { value: 'classic-carousel', icon: '🎠', label: 'Carrusel Clásico' },
 ];
 
 const GRADIENT_PRESETS = [
@@ -131,26 +130,7 @@ const HeroPreview = React.memo(({ settings, title, coverUrl }) => {
   const textLight = (settings?.heroTextColor ?? 'light') === 'light';
   const accent = settings?.accentColor || '#2563eb';
   const imgStyle = settings?.heroImageStyle || 'float-right';
-  const isClassicCarousel = imgStyle === 'classic-carousel';
-  const showImage = !isClassicCarousel && imgStyle !== 'hidden' && !!coverUrl;
-
-  if (isClassicCarousel) {
-    return (
-      <div style={{ width: '100%', height: 200, borderRadius: 12, overflow: 'hidden', position: 'relative', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
-        {coverUrl
-          ? <img src={coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-          : <div style={{ width: '100%', height: '100%', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>Carrusel de fotos</span>
-            </div>}
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.25)', display: 'flex', alignItems: 'flex-end', padding: '0 12px 10px' }}>
-          <div style={{ display: 'flex', gap: 4 }}>
-            {[1,2,3].map(i => <span key={i} style={{ width: i === 1 ? 16 : 6, height: 6, borderRadius: 3, background: i === 1 ? '#fff' : 'rgba(255,255,255,0.4)', transition: 'width 0.3s' }} />)}
-          </div>
-          <span style={{ marginLeft: 'auto', background: 'rgba(0,0,0,0.5)', color: '#fff', borderRadius: 4, padding: '2px 7px', fontSize: 9 }}>🎠 Carrusel Clásico</span>
-        </div>
-      </div>
-    );
-  }
+  const showImage = imgStyle !== 'hidden' && !!coverUrl;
 
   return (
     <div
