@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { FaDollarSign, FaFileContract, FaChartLine, FaPlus, FaPercentage, FaHandshake, FaArrowUp, FaCalendarAlt, FaTimes, FaSave, FaHome, FaClock, FaCheckCircle, FaSpinner } from 'react-icons/fa';
+import { FaDollarSign, FaFileContract, FaChartLine, FaPlus, FaPercentage, FaHandshake, FaTimes, FaSave, FaHome, FaSpinner, FaEdit, FaTrash } from 'react-icons/fa';
 import { useStateContext } from '../contexts/ContextProvider';
 import { crmService } from '../services/crmService';
 
@@ -72,8 +72,9 @@ const Ventas = () => {
   // Estados para los modales
   const [showModalVenta, setShowModalVenta] = useState(false);
   const [showModalAlquiler, setShowModalAlquiler] = useState(false);
-  const [showModalSeguimiento, setShowModalSeguimiento] = useState(false);
-  
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingOp, setEditingOp] = useState(null);
+
   // Estados para modales de estadísticas
   const [showModalVentasMes, setShowModalVentasMes] = useState(false);
   const [showModalOperacionesActivas, setShowModalOperacionesActivas] = useState(false);
@@ -91,16 +92,6 @@ const Ventas = () => {
   const [propiedadesList, setPropiedadesList] = useState([]);
   const [clientesList, setClientesList] = useState([]);
   const [agentesList, setAgentesList] = useState([]);
-
-  // Estado para seguimiento
-  const [nuevoSeguimiento, setNuevoSeguimiento] = useState({
-    operacion: '',
-    tipo: 'Llamada',
-    fecha: '',
-    hora: '',
-    descripcion: '',
-    prioridad: 'Media',
-  });
 
   const [statsData, setStatsData] = useState(null);
   const [operaciones, setOperaciones] = useState([]);
@@ -136,16 +127,15 @@ const Ventas = () => {
   }, []);
 
   useEffect(() => {
-    if (showModalVenta || showModalAlquiler || showModalSeguimiento) {
+    if (showModalVenta || showModalAlquiler || showEditModal) {
       loadModalData();
     }
-  }, [showModalVenta, showModalAlquiler, showModalSeguimiento, loadModalData]);
+  }, [showModalVenta, showModalAlquiler, showEditModal, loadModalData]);
 
   // Datos reales de backend
   const sk = statsData?.kpis || {};
   const tend = statsData?.tendencia || {};
   const est = statsData?.estados || {};
-  const seg = statsData?.seguimiento || {};
 
   const kpisVentas = [
     { title: 'Ventas del Mes', value: `$${((sk.ventasMes?.value || 0) / 1000).toFixed(0)}K`, desc: `${sk.ventasMes?.count ?? 0} operaciones`, icon: <FaDollarSign />, color: 'from-emerald-500 to-emerald-600', trend: sk.ventasMes?.trend || '0%' },
@@ -340,37 +330,63 @@ const Ventas = () => {
     }
   };
 
-  // Funciones de manejo para Seguimiento
-  const handleSeguimientoChange = (e) => {
-    const { name, value } = e.target;
-    setNuevoSeguimiento(prev => ({ ...prev, [name]: value }));
+  // Funciones de edición y eliminación
+  const handleEditOp = (op) => {
+    setEditingOp({
+      id: op.id,
+      tipo: op.tipo,
+      monto: op.monto,
+      moneda: op.moneda || 'USD',
+      estado: op.estado,
+      comisionPorcentaje: op.comisionPorcentaje || 0,
+      notas: op.notas || '',
+      formaPago: op.formaPago || '',
+      agenteId: op.agenteId || '',
+    });
+    setShowEditModal(true);
   };
 
-  const handleSeguimientoSubmit = async (e) => {
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditingOp(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditSubmit = async (e) => {
     e.preventDefault();
+    if (!editingOp) return;
     setSubmitting(true);
     try {
-      const op = operaciones.find(o => String(o.id) === nuevoSeguimiento.operacion);
-      const fechaHora = nuevoSeguimiento.fecha && nuevoSeguimiento.hora
-        ? new Date(`${nuevoSeguimiento.fecha}T${nuevoSeguimiento.hora}`)
-        : new Date();
-      await crmService.citas.create({
-        titulo: `Seguimiento: ${op ? `${op.propiedad} - ${op.cliente}` : 'Operación'}`,
-        tipo: nuevoSeguimiento.tipo,
-        fecha: fechaHora.toISOString(),
-        descripcion: nuevoSeguimiento.descripcion,
-        prioridad: nuevoSeguimiento.prioridad,
-        estado: 'Programada',
-        metadata: { operacionId: nuevoSeguimiento.operacion },
+      await crmService.operaciones.update(editingOp.id, {
+        tipo: editingOp.tipo,
+        monto: Number(editingOp.monto),
+        moneda: editingOp.moneda,
+        estado: editingOp.estado,
+        comisionPorcentaje: Number(editingOp.comisionPorcentaje),
+        notas: editingOp.notas,
+        formaPago: editingOp.formaPago,
+        agenteId: editingOp.agenteId || undefined,
       });
-      toast.success('¡Seguimiento programado exitosamente!');
-      setShowModalSeguimiento(false);
-      setNuevoSeguimiento({ operacion: '', tipo: 'Llamada', fecha: '', hora: '', descripcion: '', prioridad: 'Media' });
+      toast.success('Operación actualizada');
+      setShowEditModal(false);
+      setEditingOp(null);
+      loadStats();
     } catch (err) {
-      toast.error('Error al programar el seguimiento');
+      toast.error('Error al actualizar la operación');
       console.error(err);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDeleteOp = async (op) => {
+    if (!window.confirm(`¿Eliminar la operación "${op.propiedad} - ${op.cliente}"? Esta acción no se puede deshacer.`)) return;
+    try {
+      await crmService.operaciones.delete(op.id);
+      toast.success('Operación eliminada');
+      loadStats();
+    } catch (err) {
+      toast.error('Error al eliminar la operación');
+      console.error(err);
     }
   };
 
@@ -396,12 +412,6 @@ const Ventas = () => {
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-blue-500 hover:bg-blue-600 transition-all shadow-sm hover:shadow-md"
         >
           <FaHandshake /> Nuevo Alquiler
-        </button>
-        <button 
-          onClick={() => setShowModalSeguimiento(true)}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border transition-all ${isDark ? 'border-gray-600 text-gray-200 hover:bg-gray-700' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-        >
-          <FaCalendarAlt /> Programar Seguimiento
         </button>
       </div>
 
@@ -527,112 +537,58 @@ const Ventas = () => {
         </div>
       </div>
 
-      {/* Grid de Operaciones y Panel de Comisiones */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
-        <div className={`xl:col-span-2 ${cardBase}`}>
-          <h3 className="text-lg font-semibold mb-4 dark:text-gray-100">💼 Operaciones Activas</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className={`border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                  <th className="text-left py-3 px-3 font-semibold dark:text-gray-300">Tipo</th>
-                  <th className="text-left py-3 px-3 font-semibold dark:text-gray-300">Propiedad</th>
-                  <th className="text-left py-3 px-3 font-semibold dark:text-gray-300">Cliente</th>
-                  <th className="text-right py-3 px-3 font-semibold dark:text-gray-300">Monto</th>
-                  <th className="text-left py-3 px-3 font-semibold dark:text-gray-300">Estado</th>
-                  <th className="text-left py-3 px-3 font-semibold dark:text-gray-300">Agente</th>
-                  <th className="text-right py-3 px-3 font-semibold dark:text-gray-300">Comisión</th>
+      {/* Todas las Operaciones */}
+      <div className={`${cardBase} mb-6`}>
+        <h3 className="text-lg font-semibold mb-4 dark:text-gray-100">💼 Todas las Operaciones</h3>
+        <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 z-10">
+              <tr className={`border-b ${isDark ? 'border-gray-700 bg-secondary-dark-bg' : 'border-gray-200 bg-white'}`}>
+                <th className="text-left py-3 px-3 font-semibold dark:text-gray-300">Tipo</th>
+                <th className="text-left py-3 px-3 font-semibold dark:text-gray-300">Propiedad</th>
+                <th className="text-left py-3 px-3 font-semibold dark:text-gray-300">Cliente</th>
+                <th className="text-right py-3 px-3 font-semibold dark:text-gray-300">Monto</th>
+                <th className="text-left py-3 px-3 font-semibold dark:text-gray-300">Estado</th>
+                <th className="text-left py-3 px-3 font-semibold dark:text-gray-300">Agente</th>
+                <th className="text-right py-3 px-3 font-semibold dark:text-gray-300">Comisión</th>
+                <th className="text-left py-3 px-3 font-semibold dark:text-gray-300">Fecha</th>
+                <th className="text-center py-3 px-3 font-semibold dark:text-gray-300">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {operaciones.map((op, idx) => (
+                <tr key={idx} className={`border-b ${isDark ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-100 hover:bg-gray-50'}`}>
+                  <td className="py-2.5 px-3 dark:text-gray-200">{op.tipo}</td>
+                  <td className="py-2.5 px-3 dark:text-gray-200">{op.propiedad}</td>
+                  <td className="py-2.5 px-3 dark:text-gray-300">{op.cliente}</td>
+                  <td className="py-2.5 px-3 text-right dark:text-gray-300">${Number(op.monto || 0).toLocaleString()}</td>
+                  <td className="py-2.5 px-3">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      op.estado === 'Cerrada' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                      : op.estado === 'Reservada' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                      : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    }`}>{op.estado}</span>
+                  </td>
+                  <td className="py-2.5 px-3 dark:text-gray-300">{op.agente}</td>
+                  <td className="py-2.5 px-3 text-right dark:text-gray-300">${Number(op.comision || 0).toLocaleString()}</td>
+                  <td className="py-2.5 px-3 dark:text-gray-400 text-xs">{op.fecha ? new Date(op.fecha).toLocaleDateString() : '-'}</td>
+                  <td className="py-2.5 px-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <button onClick={() => handleEditOp(op)} className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors" title="Editar">
+                        <FaEdit />
+                      </button>
+                      <button onClick={() => handleDeleteOp(op)} className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors" title="Eliminar">
+                        <FaTrash />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {operaciones.slice(0, 10).map((op, idx) => (
-                  <tr key={idx} className={`border-b ${isDark ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-100 hover:bg-gray-50'}`}>
-                    <td className="py-2.5 px-3 dark:text-gray-200">{op.tipo}</td>
-                    <td className="py-2.5 px-3 dark:text-gray-200">{op.propiedad}</td>
-                    <td className="py-2.5 px-3 dark:text-gray-300">{op.cliente}</td>
-                    <td className="py-2.5 px-3 text-right dark:text-gray-300">${Number(op.monto || 0).toLocaleString()}</td>
-                    <td className="py-2.5 px-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        op.estado === 'Cerrada' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                        : op.estado === 'Reservada' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                      }`}>{op.estado}</span>
-                    </td>
-                    <td className="py-2.5 px-3 dark:text-gray-300">{op.agente}</td>
-                    <td className="py-2.5 px-3 text-right dark:text-gray-300">${Number(op.comision || 0).toLocaleString()}</td>
-                  </tr>
-                ))}
-                {!operaciones.length && (
-                  <tr><td colSpan={7} className="py-8 text-center text-gray-400">No hay operaciones registradas</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Panel de Comisiones */}
-        <div className={cardBase}>
-          <h3 className="text-lg font-semibold mb-4 dark:text-gray-100">💰 Comisiones por Agente</h3>
-          <div className="space-y-4">
-            {agCom.map((ag, i) => {
-              const maxCom = Math.max(...agCom.map(a => a.comision), 1);
-              return (
-                <div key={i} className="border dark:border-gray-700 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-bold dark:text-gray-200 text-sm">{ag.nombre}</h4>
-                    <span className="text-lg font-bold text-green-600 dark:text-green-400">
-                      ${ag.comision.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="h-2 rounded-full bg-green-500" 
-                      style={{ width: `${Math.min((ag.comision / maxCom) * 100, 100)}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    {ag.operaciones} operaciones
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Panel de Seguimiento y Próximas Acciones */}
-      <div className={cardBase}>
-        <h3 className="text-lg font-semibold mb-4 dark:text-gray-100">🎯 Seguimiento y Próximas Acciones</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <div className="p-6 border-2 border-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-gray-800 cursor-pointer transition-colors">
-              <FaArrowUp className="text-4xl text-red-500 mx-auto mb-3" />
-              <h4 className="font-bold dark:text-gray-200">Urgentes</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Requieren atención inmediata</p>
-              <p className="text-2xl font-bold text-red-600 mt-2">{seg.urgentes ?? 0}</p>
-              <p className="text-xs text-gray-500">Operaciones</p>
-            </div>
-          </div>
-          
-          <div className="text-center">
-            <div className="p-6 border-2 border-yellow-500 rounded-lg hover:bg-yellow-50 dark:hover:bg-gray-800 cursor-pointer transition-colors">
-              <FaCalendarAlt className="text-4xl text-yellow-500 mx-auto mb-3" />
-              <h4 className="font-bold dark:text-gray-200">Esta Semana</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Seguimientos programados</p>
-              <p className="text-2xl font-bold text-yellow-600 mt-2">{seg.estaSemana ?? 0}</p>
-              <p className="text-xs text-gray-500">Contactos</p>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <div className="p-6 border-2 border-green-500 rounded-lg hover:bg-green-50 dark:hover:bg-gray-800 cursor-pointer transition-colors">
-              <FaHandshake className="text-4xl text-green-500 mx-auto mb-3" />
-              <h4 className="font-bold dark:text-gray-200">Por Cerrar</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Próximas a finalizar</p>
-              <p className="text-2xl font-bold text-green-600 mt-2">{seg.porCerrar ?? 0}</p>
-              <p className="text-xs text-gray-500">Operaciones</p>
-            </div>
-          </div>
+              ))}
+              {!operaciones.length && (
+                <tr><td colSpan={9} className="py-8 text-center text-gray-400">No hay operaciones registradas</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -912,87 +868,6 @@ const Ventas = () => {
         </div>
       )}
 
-      {/* Modal de Seguimiento */}
-      {showModalSeguimiento && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className={`${currentMode === 'Dark' ? 'bg-gray-900' : 'bg-white'} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col`}>
-            <div className="sticky top-0 bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-t-2xl flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-bold flex items-center gap-3">
-                  <FaCalendarAlt /> Programar Seguimiento
-                </h2>
-                <p className="text-purple-100 text-sm mt-1">Agendar una acción de seguimiento</p>
-              </div>
-              <button onClick={() => setShowModalSeguimiento(false)} className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors">
-                <FaTimes className="text-2xl" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              <form onSubmit={handleSeguimientoSubmit} className="p-6 space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-4 dark:text-gray-100 flex items-center gap-2">
-                  <FaClock className="text-purple-500" /> Detalles del Seguimiento
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Operación *</label>
-                    <select name="operacion" value={nuevoSeguimiento.operacion} onChange={handleSeguimientoChange} required className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-gray-100">
-                      <option value="">Seleccionar operación</option>
-                      {operaciones.map(op => (
-                        <option key={op.id} value={op.id}>{op.propiedad} - {op.cliente}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Tipo de Seguimiento *</label>
-                    <select name="tipo" value={nuevoSeguimiento.tipo} onChange={handleSeguimientoChange} required className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-gray-100">
-                      <option value="Llamada">Llamada</option>
-                      <option value="Email">Email</option>
-                      <option value="WhatsApp">WhatsApp</option>
-                      <option value="Reunión">Reunión</option>
-                      <option value="Visita">Visita</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Prioridad *</label>
-                    <select name="prioridad" value={nuevoSeguimiento.prioridad} onChange={handleSeguimientoChange} required className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-gray-100">
-                      <option value="Baja">Baja</option>
-                      <option value="Media">Media</option>
-                      <option value="Alta">Alta</option>
-                      <option value="Urgente">Urgente</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Fecha *</label>
-                    <input type="date" name="fecha" value={nuevoSeguimiento.fecha} onChange={handleSeguimientoChange} required className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-gray-100" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Hora *</label>
-                    <input type="time" name="hora" value={nuevoSeguimiento.hora} onChange={handleSeguimientoChange} required className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-gray-100" />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2 dark:text-gray-200">Descripción *</label>
-                <textarea name="descripcion" value={nuevoSeguimiento.descripcion} onChange={handleSeguimientoChange} required rows="4" placeholder="Detalles del seguimiento a realizar..." className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-gray-100" />
-              </div>
-
-              <div className="flex gap-3 justify-end pt-4 border-t dark:border-gray-700">
-                <button type="button" onClick={() => setShowModalSeguimiento(false)} className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 transition-colors font-medium">
-                  Cancelar
-                </button>
-                <button type="submit" disabled={submitting} className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-60 transition-colors font-medium flex items-center gap-2">
-                  {submitting ? <FaSpinner className="animate-spin" /> : <FaCheckCircle />} Programar Seguimiento
-                </button>
-              </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Modal Ventas del Mes */}
       {showModalVentasMes && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -1087,17 +962,17 @@ const Ventas = () => {
         </div>
       )}
 
-      {/* Modal Operaciones Activas */}
+      {/* Modal Todas las Operaciones */}
       {showModalOperacionesActivas && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className={`${currentMode === 'Dark' ? 'bg-gray-900' : 'bg-white'} rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col`}>
             <div className="sticky top-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-t-2xl flex justify-between items-center">
               <div>
                 <h2 className="text-2xl font-bold flex items-center gap-3">
-                  <FaFileContract /> Operaciones Activas
+                  <FaFileContract /> Todas las Operaciones
                 </h2>
                 <p className="text-blue-100 text-sm mt-1">
-                  {operaciones.filter(o => o.estado !== 'Cerrada').length} operaciones en proceso
+                  {operaciones.length} operaciones en total
                 </p>
               </div>
               <button onClick={() => setShowModalOperacionesActivas(false)} className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors">
@@ -1108,33 +983,27 @@ const Ventas = () => {
             <div className="flex-1 overflow-y-auto p-6">
               <div className="space-y-3">
                 {operaciones
-                  .filter(o => o.estado !== 'Cerrada')
-                  .sort((a, b) => {
-                    const estadoOrder = { 'Reservada': 1, 'En Proceso': 2, 'Pendiente': 3 };
-                    return (estadoOrder[a.estado] || 4) - (estadoOrder[b.estado] || 4);
-                  })
+                  .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
                   .map((operacion) => (
-                    <div key={operacion.id} className={`${currentMode === 'Dark' ? 'bg-gray-800' : 'bg-gray-50'} rounded-lg p-4 border-2 ${currentMode === 'Dark' ? 'border-blue-700' : 'border-blue-200'} hover:shadow-md transition-shadow`}>
+                    <div key={operacion.id} className={`${currentMode === 'Dark' ? 'bg-gray-800' : 'bg-gray-50'} rounded-lg p-4 border ${currentMode === 'Dark' ? 'border-gray-700' : 'border-gray-200'} hover:shadow-md transition-shadow`}>
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="font-bold text-lg dark:text-gray-100">{operacion.propiedad}</h3>
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              operacion.estado === 'Cerrada' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                               operacion.estado === 'Reservada' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' :
-                              operacion.estado === 'En Proceso' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                              operacion.estado === 'En Proceso' || operacion.estado === 'En Curso' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
                               'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
                             }`}>
                               {operacion.estado}
                             </span>
+                            <span className={`px-2 py-0.5 rounded text-xs ${operacion.tipo === 'Venta' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'}`}>{operacion.tipo}</span>
                           </div>
-                          <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                             <div>
                               <p className="text-gray-600 dark:text-gray-400">Cliente:</p>
                               <p className="font-medium dark:text-gray-200">{operacion.cliente}</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-600 dark:text-gray-400">Tipo:</p>
-                              <p className="font-medium dark:text-gray-200">{operacion.tipo}</p>
                             </div>
                             <div>
                               <p className="text-gray-600 dark:text-gray-400">Agente:</p>
@@ -1142,26 +1011,30 @@ const Ventas = () => {
                             </div>
                             <div>
                               <p className="text-gray-600 dark:text-gray-400">Fecha:</p>
-                              <p className="font-medium dark:text-gray-200">{operacion.fecha}</p>
+                              <p className="font-medium dark:text-gray-200">{operacion.fecha ? new Date(operacion.fecha).toLocaleDateString() : '-'}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-600 dark:text-gray-400">Comisión %:</p>
+                              <p className="font-medium dark:text-gray-200">{operacion.comisionPorcentaje}%</p>
                             </div>
                           </div>
                         </div>
                         <div className="text-right ml-4">
-                          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">${operacion.monto.toLocaleString()}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Comisión potencial</p>
+                          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">${Number(operacion.monto || 0).toLocaleString()}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Comisión</p>
                           <p className="text-lg font-medium text-blue-600 dark:text-blue-400">
-                            ${operacion.comision.toLocaleString()}
+                            ${Number(operacion.comision || 0).toLocaleString()}
                           </p>
                         </div>
                       </div>
                     </div>
                   ))}
               </div>
-              
-              {operaciones.filter(o => o.estado !== 'Cerrada').length === 0 && (
+
+              {!operaciones.length && (
                 <div className="text-center py-12">
                   <FaFileContract className="text-6xl text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">No hay operaciones activas</p>
+                  <p className="text-gray-500 dark:text-gray-400">No hay operaciones registradas</p>
                 </div>
               )}
             </div>
@@ -1259,6 +1132,95 @@ const Ventas = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editar Operación */}
+      {showEditModal && editingOp && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className={`${currentMode === 'Dark' ? 'bg-gray-900' : 'bg-white'} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col`}>
+            <div className="sticky top-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-t-2xl flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold flex items-center gap-3">
+                  <FaEdit /> Editar Operación
+                </h2>
+                <p className="text-blue-100 text-sm mt-1">Modificar datos de la operación</p>
+              </div>
+              <button onClick={() => { setShowEditModal(false); setEditingOp(null); }} className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors">
+                <FaTimes className="text-2xl" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              <form onSubmit={handleEditSubmit} className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Tipo</label>
+                    <select name="tipo" value={editingOp.tipo} onChange={handleEditChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                      <option value="Venta">Venta</option>
+                      <option value="Alquiler">Alquiler</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Estado</label>
+                    <select name="estado" value={editingOp.estado} onChange={handleEditChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                      <option value="En Curso">En Curso</option>
+                      <option value="Pendiente">Pendiente</option>
+                      <option value="En Proceso">En Proceso</option>
+                      <option value="Reservada">Reservada</option>
+                      <option value="Cerrada">Cerrada</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Monto</label>
+                    <input type="number" name="monto" value={editingOp.monto} onChange={handleEditChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Moneda</label>
+                    <select name="moneda" value={editingOp.moneda} onChange={handleEditChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                      <option value="USD">USD</option>
+                      <option value="ARS">ARS</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Comisión (%)</label>
+                    <input type="number" name="comisionPorcentaje" value={editingOp.comisionPorcentaje} onChange={handleEditChange} step="0.1" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Forma de Pago</label>
+                    <select name="formaPago" value={editingOp.formaPago} onChange={handleEditChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                      <option value="">-</option>
+                      <option value="Contado">Contado</option>
+                      <option value="Financiado">Financiado</option>
+                      <option value="Hipoteca">Hipoteca</option>
+                      <option value="Mixto">Mixto</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Agente</label>
+                    <select name="agenteId" value={editingOp.agenteId} onChange={handleEditChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                      <option value="">Sin agente</option>
+                      {agentesList.map(a => (
+                        <option key={a._id} value={a._id}>{a.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Notas</label>
+                  <textarea name="notas" value={editingOp.notas} onChange={handleEditChange} rows="3" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                </div>
+                <div className="flex gap-3 justify-end pt-4 border-t dark:border-gray-700">
+                  <button type="button" onClick={() => { setShowEditModal(false); setEditingOp(null); }} className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 transition-colors font-medium">
+                    Cancelar
+                  </button>
+                  <button type="submit" disabled={submitting} className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-60 transition-colors font-medium flex items-center gap-2">
+                    {submitting ? <FaSpinner className="animate-spin" /> : <FaSave />} Guardar Cambios
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

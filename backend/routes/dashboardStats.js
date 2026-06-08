@@ -456,10 +456,15 @@ router.get('/operaciones', authenticateToken, requireCRMUser, async (req, res) =
         propiedad: propNombre,
         cliente: clienteNombre,
         monto: op.monto || 0,
+        moneda: op.moneda || 'USD',
         estado: op.estado || 'En Curso',
         fecha: op.createdAt,
         agente: agenteNombre,
+        agenteId: op.agenteId || '',
+        comisionPorcentaje: op.comisionPorcentaje || 0,
         comision: Math.round(comision),
+        notas: op.notas || '',
+        formaPago: op.formaPago || '',
       };
     }));
 
