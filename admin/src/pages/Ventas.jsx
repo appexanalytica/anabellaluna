@@ -32,6 +32,7 @@ const VENTA_EMPTY = {
   propiedadColegaPrecio: '',
   propiedadColegaDireccion: '',
   formaPago: 'Contado',
+  estado: 'En Curso',
   notas: '',
 };
 
@@ -45,6 +46,7 @@ const ALQUILER_EMPTY = {
   duracion: '12',
   deposito: '',
   comisionPorcentaje: '1',
+  estado: 'En Curso',
   notas: '',
 };
 
@@ -72,8 +74,7 @@ const Ventas = () => {
   // Estados para los modales
   const [showModalVenta, setShowModalVenta] = useState(false);
   const [showModalAlquiler, setShowModalAlquiler] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingOp, setEditingOp] = useState(null);
+  const [editingId, setEditingId] = useState(null);
 
   // Estados para modales de estadísticas
   const [showModalVentasMes, setShowModalVentasMes] = useState(false);
@@ -127,10 +128,10 @@ const Ventas = () => {
   }, []);
 
   useEffect(() => {
-    if (showModalVenta || showModalAlquiler || showEditModal) {
+    if (showModalVenta || showModalAlquiler) {
       loadModalData();
     }
-  }, [showModalVenta, showModalAlquiler, showEditModal, loadModalData]);
+  }, [showModalVenta, showModalAlquiler, loadModalData]);
 
   // Datos reales de backend
   const sk = statsData?.kpis || {};
@@ -237,6 +238,7 @@ const Ventas = () => {
   };
 
   const handleOpenVentaModal = () => {
+    setEditingId(null);
     setNuevaVenta(prev => ({
       ...ventaEmptyWithDefaults(),
       ...prev,
@@ -262,7 +264,7 @@ const Ventas = () => {
         comisionPorcentaje: isSinAgenteIntermediario(nuevaVenta.agenteId) ? 0 : Number(nuevaVenta.comisionPorcentaje),
         formaPago: nuevaVenta.formaPago,
         fechaCierre: nuevaVenta.fechaCierre || undefined,
-        estado: 'En Curso',
+        estado: editingId ? (nuevaVenta.estado || 'En Curso') : 'En Curso',
         notas: nuevaVenta.notas,
         metadata: {
           inmobiliariaId: nuevaVenta.inmobiliariaId,
@@ -280,13 +282,19 @@ const Ventas = () => {
           propiedadColegaDireccion: usaPropiedadExterna ? nuevaVenta.propiedadColegaDireccion : '',
         },
       };
-      await crmService.operaciones.create(payload);
-      toast.success('¡Venta registrada exitosamente!');
+      if (editingId) {
+        await crmService.operaciones.update(editingId, payload);
+        toast.success('Venta actualizada exitosamente');
+      } else {
+        await crmService.operaciones.create(payload);
+        toast.success('¡Venta registrada exitosamente!');
+      }
       setShowModalVenta(false);
+      setEditingId(null);
       setNuevaVenta(ventaEmptyWithDefaults());
       loadStats();
     } catch (err) {
-      toast.error('Error al registrar la venta');
+      toast.error(editingId ? 'Error al actualizar la venta' : 'Error al registrar la venta');
       console.error(err);
     } finally {
       setSubmitting(false);
@@ -314,16 +322,22 @@ const Ventas = () => {
         duracion: Number(nuevoAlquiler.duracion) || 12,
         deposito: Number(nuevoAlquiler.deposito) || 0,
         fechaCierre: nuevoAlquiler.fechaCierre || undefined,
-        estado: 'En Curso',
+        estado: editingId ? (nuevoAlquiler.estado || 'En Curso') : 'En Curso',
         notas: nuevoAlquiler.notas,
       };
-      await crmService.operaciones.create(payload);
-      toast.success('¡Alquiler registrado exitosamente!');
+      if (editingId) {
+        await crmService.operaciones.update(editingId, payload);
+        toast.success('Alquiler actualizado exitosamente');
+      } else {
+        await crmService.operaciones.create(payload);
+        toast.success('¡Alquiler registrado exitosamente!');
+      }
       setShowModalAlquiler(false);
+      setEditingId(null);
       setNuevoAlquiler(ALQUILER_EMPTY);
       loadStats();
     } catch (err) {
-      toast.error('Error al registrar el alquiler');
+      toast.error(editingId ? 'Error al actualizar el alquiler' : 'Error al registrar el alquiler');
       console.error(err);
     } finally {
       setSubmitting(false);
@@ -331,50 +345,57 @@ const Ventas = () => {
   };
 
   // Funciones de edición y eliminación
-  const handleEditOp = (op) => {
-    setEditingOp({
-      id: op.id,
-      tipo: op.tipo,
-      monto: op.monto,
-      moneda: op.moneda || 'USD',
-      estado: op.estado,
-      comisionPorcentaje: op.comisionPorcentaje || 0,
-      notas: op.notas || '',
-      formaPago: op.formaPago || '',
-      agenteId: op.agenteId || '',
-    });
-    setShowEditModal(true);
-  };
-
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditingOp(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    if (!editingOp) return;
-    setSubmitting(true);
+  const handleEditOp = async (op) => {
     try {
-      await crmService.operaciones.update(editingOp.id, {
-        tipo: editingOp.tipo,
-        monto: Number(editingOp.monto),
-        moneda: editingOp.moneda,
-        estado: editingOp.estado,
-        comisionPorcentaje: Number(editingOp.comisionPorcentaje),
-        notas: editingOp.notas,
-        formaPago: editingOp.formaPago,
-        agenteId: editingOp.agenteId || undefined,
-      });
-      toast.success('Operación actualizada');
-      setShowEditModal(false);
-      setEditingOp(null);
-      loadStats();
+      const fullOp = await crmService.operaciones.getById(op.id);
+      const id = fullOp._id || op.id;
+      setEditingId(id);
+
+      if (fullOp.tipo === 'Alquiler') {
+        setNuevoAlquiler({
+          propiedadId: fullOp.propiedadId || '',
+          clienteId: fullOp.clienteId || '',
+          monto: fullOp.monto || '',
+          moneda: fullOp.moneda || 'USD',
+          agenteId: fullOp.agenteId || SIN_AGENTE_INTERMEDIARIO,
+          fechaCierre: fullOp.fechaCierre ? new Date(fullOp.fechaCierre).toISOString().slice(0, 10) : '',
+          duracion: fullOp.duracion || '12',
+          deposito: fullOp.deposito || '',
+          comisionPorcentaje: fullOp.comisionPorcentaje ?? '1',
+          estado: fullOp.estado || 'En Curso',
+          notas: fullOp.notas || '',
+        });
+        setShowModalAlquiler(true);
+      } else {
+        const meta = fullOp.metadata || {};
+        setNuevaVenta({
+          propiedadId: fullOp.propiedadId || '',
+          clienteId: fullOp.clienteId || '',
+          monto: fullOp.monto || '',
+          moneda: fullOp.moneda || 'USD',
+          agenteId: fullOp.agenteId || SIN_AGENTE_INTERMEDIARIO,
+          fechaCierre: fullOp.fechaCierre ? new Date(fullOp.fechaCierre).toISOString().slice(0, 10) : '',
+          comisionPorcentaje: fullOp.comisionPorcentaje ?? '3.5',
+          inmobiliariaId: meta.inmobiliariaId || '',
+          inmobiliariaNombre: meta.inmobiliaria || '',
+          comisionInmobiliariaPorcentaje: meta.comisionInmobiliariaPorcentaje || '3.5',
+          comparteConInmobiliaria: meta.comparteConInmobiliaria || false,
+          aporteInmobiliariaColega: meta.aporteInmobiliariaColega || APORTE_COLEGA_COMPRADOR,
+          inmobiliariaColega: meta.inmobiliariaColega || '',
+          colega: meta.colega || '',
+          comisionColegaPorcentaje: meta.comisionColegaPorcentaje || '',
+          propiedadColegaNombre: meta.propiedadColegaNombre || '',
+          propiedadColegaPrecio: meta.propiedadColegaPrecio || '',
+          propiedadColegaDireccion: meta.propiedadColegaDireccion || '',
+          formaPago: fullOp.formaPago || 'Contado',
+          estado: fullOp.estado || 'En Curso',
+          notas: fullOp.notas || '',
+        });
+        setShowModalVenta(true);
+      }
     } catch (err) {
-      toast.error('Error al actualizar la operación');
+      toast.error('Error al cargar la operación');
       console.error(err);
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -408,7 +429,7 @@ const Ventas = () => {
           <FaPlus /> Nueva Venta
         </button>
         <button 
-          onClick={() => setShowModalAlquiler(true)}
+          onClick={() => { setEditingId(null); setNuevoAlquiler(ALQUILER_EMPTY); setShowModalAlquiler(true); }}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-blue-500 hover:bg-blue-600 transition-all shadow-sm hover:shadow-md"
         >
           <FaHandshake /> Nuevo Alquiler
@@ -599,11 +620,11 @@ const Ventas = () => {
             <div className="sticky top-0 bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-t-2xl flex justify-between items-center">
               <div>
                 <h2 className="text-2xl font-bold flex items-center gap-3">
-                  <FaPlus /> Nueva Venta
+                  {editingId ? <FaEdit /> : <FaPlus />} {editingId ? 'Editar Venta' : 'Nueva Venta'}
                 </h2>
-                <p className="text-green-100 text-sm mt-1">Registrar una nueva operación de venta</p>
+                <p className="text-green-100 text-sm mt-1">{editingId ? 'Modificar datos de la venta' : 'Registrar una nueva operación de venta'}</p>
               </div>
-              <button onClick={() => setShowModalVenta(false)} className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors">
+              <button onClick={() => { setShowModalVenta(false); setEditingId(null); setNuevaVenta(ventaEmptyWithDefaults()); }} className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors">
                 <FaTimes className="text-2xl" />
               </button>
             </div>
@@ -744,6 +765,18 @@ const Ventas = () => {
                       <option value="Mixto">Mixto</option>
                     </select>
                   </div>
+                  {editingId && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2 dark:text-gray-200">Estado</label>
+                      <select name="estado" value={nuevaVenta.estado} onChange={handleVentaChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:text-gray-100">
+                        <option value="En Curso">En Curso</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="En Proceso">En Proceso</option>
+                        <option value="Reservada">Reservada</option>
+                        <option value="Cerrada">Cerrada</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -753,11 +786,11 @@ const Ventas = () => {
               </div>
 
               <div className="flex gap-3 justify-end pt-4 border-t dark:border-gray-700">
-                <button type="button" onClick={() => setShowModalVenta(false)} className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 transition-colors font-medium">
+                <button type="button" onClick={() => { setShowModalVenta(false); setEditingId(null); setNuevaVenta(ventaEmptyWithDefaults()); }} className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 transition-colors font-medium">
                   Cancelar
                 </button>
                 <button type="submit" disabled={submitting} className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-60 transition-colors font-medium flex items-center gap-2">
-                  {submitting ? <FaSpinner className="animate-spin" /> : <FaSave />} Registrar Venta
+                  {submitting ? <FaSpinner className="animate-spin" /> : <FaSave />} {editingId ? 'Guardar Cambios' : 'Registrar Venta'}
                 </button>
               </div>
               </form>
@@ -773,11 +806,11 @@ const Ventas = () => {
             <div className="sticky top-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-t-2xl flex justify-between items-center">
               <div>
                 <h2 className="text-2xl font-bold flex items-center gap-3">
-                  <FaHandshake /> Nuevo Alquiler
+                  {editingId ? <FaEdit /> : <FaHandshake />} {editingId ? 'Editar Alquiler' : 'Nuevo Alquiler'}
                 </h2>
-                <p className="text-blue-100 text-sm mt-1">Registrar una nueva operación de alquiler</p>
+                <p className="text-blue-100 text-sm mt-1">{editingId ? 'Modificar datos del alquiler' : 'Registrar una nueva operación de alquiler'}</p>
               </div>
-              <button onClick={() => setShowModalAlquiler(false)} className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors">
+              <button onClick={() => { setShowModalAlquiler(false); setEditingId(null); setNuevoAlquiler(ALQUILER_EMPTY); }} className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors">
                 <FaTimes className="text-2xl" />
               </button>
             </div>
@@ -846,6 +879,18 @@ const Ventas = () => {
                       <input type="number" name="comisionPorcentaje" value={nuevoAlquiler.comisionPorcentaje} onChange={handleAlquilerChange} step="0.5" placeholder="1" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
                     </div>
                   )}
+                  {editingId && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2 dark:text-gray-200">Estado</label>
+                      <select name="estado" value={nuevoAlquiler.estado} onChange={handleAlquilerChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                        <option value="En Curso">En Curso</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="En Proceso">En Proceso</option>
+                        <option value="Reservada">Reservada</option>
+                        <option value="Cerrada">Cerrada</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -855,11 +900,11 @@ const Ventas = () => {
               </div>
 
               <div className="flex gap-3 justify-end pt-4 border-t dark:border-gray-700">
-                <button type="button" onClick={() => setShowModalAlquiler(false)} className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 transition-colors font-medium">
+                <button type="button" onClick={() => { setShowModalAlquiler(false); setEditingId(null); setNuevoAlquiler(ALQUILER_EMPTY); }} className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 transition-colors font-medium">
                   Cancelar
                 </button>
                 <button type="submit" disabled={submitting} className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-60 transition-colors font-medium flex items-center gap-2">
-                  {submitting ? <FaSpinner className="animate-spin" /> : <FaSave />} Registrar Alquiler
+                  {submitting ? <FaSpinner className="animate-spin" /> : <FaSave />} {editingId ? 'Guardar Cambios' : 'Registrar Alquiler'}
                 </button>
               </div>
               </form>
@@ -1132,95 +1177,6 @@ const Ventas = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Editar Operación */}
-      {showEditModal && editingOp && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className={`${currentMode === 'Dark' ? 'bg-gray-900' : 'bg-white'} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col`}>
-            <div className="sticky top-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-t-2xl flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-bold flex items-center gap-3">
-                  <FaEdit /> Editar Operación
-                </h2>
-                <p className="text-blue-100 text-sm mt-1">Modificar datos de la operación</p>
-              </div>
-              <button onClick={() => { setShowEditModal(false); setEditingOp(null); }} className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors">
-                <FaTimes className="text-2xl" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              <form onSubmit={handleEditSubmit} className="p-6 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Tipo</label>
-                    <select name="tipo" value={editingOp.tipo} onChange={handleEditChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
-                      <option value="Venta">Venta</option>
-                      <option value="Alquiler">Alquiler</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Estado</label>
-                    <select name="estado" value={editingOp.estado} onChange={handleEditChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
-                      <option value="En Curso">En Curso</option>
-                      <option value="Pendiente">Pendiente</option>
-                      <option value="En Proceso">En Proceso</option>
-                      <option value="Reservada">Reservada</option>
-                      <option value="Cerrada">Cerrada</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Monto</label>
-                    <input type="number" name="monto" value={editingOp.monto} onChange={handleEditChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Moneda</label>
-                    <select name="moneda" value={editingOp.moneda} onChange={handleEditChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
-                      <option value="USD">USD</option>
-                      <option value="ARS">ARS</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Comisión (%)</label>
-                    <input type="number" name="comisionPorcentaje" value={editingOp.comisionPorcentaje} onChange={handleEditChange} step="0.1" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Forma de Pago</label>
-                    <select name="formaPago" value={editingOp.formaPago} onChange={handleEditChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
-                      <option value="">-</option>
-                      <option value="Contado">Contado</option>
-                      <option value="Financiado">Financiado</option>
-                      <option value="Hipoteca">Hipoteca</option>
-                      <option value="Mixto">Mixto</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Agente</label>
-                    <select name="agenteId" value={editingOp.agenteId} onChange={handleEditChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
-                      <option value="">Sin agente</option>
-                      {agentesList.map(a => (
-                        <option key={a._id} value={a._id}>{a.nombre}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">Notas</label>
-                  <textarea name="notas" value={editingOp.notas} onChange={handleEditChange} rows="3" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
-                </div>
-                <div className="flex gap-3 justify-end pt-4 border-t dark:border-gray-700">
-                  <button type="button" onClick={() => { setShowEditModal(false); setEditingOp(null); }} className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 transition-colors font-medium">
-                    Cancelar
-                  </button>
-                  <button type="submit" disabled={submitting} className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-60 transition-colors font-medium flex items-center gap-2">
-                    {submitting ? <FaSpinner className="animate-spin" /> : <FaSave />} Guardar Cambios
-                  </button>
-                </div>
-              </form>
             </div>
           </div>
         </div>
