@@ -148,13 +148,13 @@ router.get('/dashboard', authenticateToken, requireCRMUser, async (req, res) => 
         return created >= mStart && created <= mEnd;
       });
       const totalComisiones = monthOps.reduce((sum, o) => {
-        const comision = (o.monto || 0) * 0.03; // 3% commission rate
-        return sum + comision;
+        const pct = Number(o.comisionPorcentaje || 0);
+        return sum + ((o.monto || 0) * pct / 100);
       }, 0);
       comisionesMensuales.push({
         mes: MONTH_LABELS[mStart.getMonth()],
         comisiones: Math.round(totalComisiones / 1000), // in K
-        objetivo: Math.round((metaOps * 150000 * 0.03) / 1000), // estimated target in K
+        objetivo: Math.round((metaOps * 150000 * 0.035) / 1000), // estimated target in K
       });
     }
 
@@ -428,6 +428,16 @@ router.get('/operaciones', authenticateToken, requireCRMUser, async (req, res) =
       if (!Number.isFinite(pct) || pct <= 0) return 0;
       return (Number(op.monto || 0) * pct) / 100;
     };
+    const getInmobiliariaCommission = (op) => {
+      if (!op) return 0;
+      const inmobPct = Number(op.metadata?.comisionInmobiliariaPorcentaje || 0);
+      // Use explicit inmobiliaria pct; fall back to agent pct for alquileres / old ops
+      const pct = inmobPct > 0 ? inmobPct : Number(op.comisionPorcentaje || 0);
+      if (!Number.isFinite(pct) || pct <= 0) return 0;
+      return (Number(op.monto || 0) * pct) / 100;
+    };
+    // Admin sees inmobiliaria commissions; agent sees their own
+    const getRelevantCommission = scopeId ? getAgentCommission : getInmobiliariaCommission;
 
     // ── Operations for grid (enriched) ──
     const gridOps = await Promise.all(allOps.slice(0, 200).map(async (op) => {
@@ -449,7 +459,8 @@ router.get('/operaciones', authenticateToken, requireCRMUser, async (req, res) =
         const a = allAgentes.find(ag => String(ag._id) === String(op.agenteId));
         if (a) agenteNombre = a.nombre || '';
       }
-      const comision = getAgentCommission(op);
+      const comision = getRelevantCommission(op);
+      const inmobPct = Number(op.metadata?.comisionInmobiliariaPorcentaje || 0);
       return {
         id: op._id,
         tipo: op.tipo || 'Venta',
@@ -461,7 +472,9 @@ router.get('/operaciones', authenticateToken, requireCRMUser, async (req, res) =
         fecha: op.createdAt,
         agente: agenteNombre,
         agenteId: op.agenteId || '',
-        comisionPorcentaje: op.comisionPorcentaje || 0,
+        comisionPorcentaje: scopeId
+          ? (op.comisionPorcentaje || 0)
+          : (inmobPct > 0 ? inmobPct : (op.comisionPorcentaje || 0)),
         comision: Math.round(comision),
         notas: op.notas || '',
         formaPago: op.formaPago || '',
@@ -480,7 +493,7 @@ router.get('/operaciones', authenticateToken, requireCRMUser, async (req, res) =
     const totalVentasMes = ventasCerradasMes.reduce((s, o) => s + (o.monto || 0), 0);
     const operacionesActivas = allOps.filter(o => !closedStatuses.includes(o.estado)).length;
     const enReserva = allOps.filter(o => o.estado === 'Reservada').length;
-    const totalComisionesMes = closedThisMonth.reduce((s, o) => s + getAgentCommission(o), 0);
+    const totalComisionesMes = closedThisMonth.reduce((s, o) => s + getRelevantCommission(o), 0);
     const totalClosed = allOps.filter(o => closedStatuses.includes(o.estado)).length;
     const tasaCierre = allOps.length > 0 ? Math.round((totalClosed / allOps.length) * 100) : 0;
 
@@ -492,7 +505,7 @@ router.get('/operaciones', authenticateToken, requireCRMUser, async (req, res) =
       return `${pct >= 0 ? '+' : ''}${pct}%`;
     }
     const ventasTrend = pctChange(totalVentasMes, ventasLastMonth);
-    const comisionesLastMonth = closedLastMonth.reduce((s, o) => s + getAgentCommission(o), 0);
+    const comisionesLastMonth = closedLastMonth.reduce((s, o) => s + getRelevantCommission(o), 0);
     const comisionesTrend = pctChange(totalComisionesMes, comisionesLastMonth);
     const closedLastMonthCount = closedLastMonth.length;
     const closedThisMonthCount = closedThisMonth.length;
@@ -521,7 +534,7 @@ router.get('/operaciones', authenticateToken, requireCRMUser, async (req, res) =
     const totalComisionesTrend = allOps.filter(o => {
       const d = new Date(o.createdAt);
       return d >= monthsAgo(5) && closedStatuses.includes(o.estado);
-    }).reduce((s, o) => s + getAgentCommission(o), 0);
+    }).reduce((s, o) => s + getRelevantCommission(o), 0);
 
     // ── Estados distribution ──
     const cerradas = allOps.filter(o => closedStatuses.includes(o.estado)).length;
