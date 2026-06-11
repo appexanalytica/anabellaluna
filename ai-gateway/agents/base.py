@@ -14,11 +14,13 @@ Todos los agentes operan en modo suggest-first por defecto.
 from __future__ import annotations
 
 import logging
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
 from events.consumer import BusinessEvent
+from memory.archival import archive_execution
 from observability.langfuse_client import trace_agent
 from providers.openrouter import chat_completion
 from tools.crm_client import crm_client
@@ -63,6 +65,7 @@ class BaseAgent(ABC):
 
         self.logger.info("Handling event %s (type=%s)", event.event_id[:8], event.event_type)
 
+        start = time.monotonic()
         async with trace_agent(self.name, user_id=event.user_id) as trace:
             trace.log_input(f"Event: {event.event_type} | Payload: {event.payload}")
             try:
@@ -73,15 +76,23 @@ class BaseAgent(ABC):
                 if result.notifications and self.mode == "suggest":
                     for notif in result.notifications:
                         await self._send_suggestion(notif)
-
-                return result
             except Exception as e:
                 trace.log_error(str(e))
-                return AgentResult(
+                result = AgentResult(
                     agent_name=self.name,
                     success=False,
                     error=str(e),
                 )
+
+            await self._archive_run(
+                result,
+                trigger_type="event",
+                trigger_event=event.event_type,
+                input_summary=f"Event: {event.event_type}",
+                latency_ms=int((time.monotonic() - start) * 1000),
+                user_id=event.user_id,
+            )
+            return result
 
     @abstractmethod
     async def analyze(self, event: BusinessEvent) -> AgentResult:
@@ -95,11 +106,39 @@ class BaseAgent(ABC):
         """
         return AgentResult(agent_name=self.name, output="No scheduled task defined")
 
+    async def execute_scheduled(self) -> AgentResult:
+        """
+        Punto de entrada para corridas scheduled/manuales: ejecuta run_scheduled()
+        y archiva el resultado en ai_execution_log, tanto exitoso como fallido.
+        Los callers (orchestrator, API, worker) deben usar esto en vez de
+        run_scheduled() directo.
+        """
+        start = time.monotonic()
+        try:
+            result = await self.run_scheduled()
+        except Exception as e:
+            await self._archive_run(
+                AgentResult(agent_name=self.name, success=False, error=str(e)),
+                trigger_type="scheduled",
+                input_summary="Scheduled execution",
+                latency_ms=int((time.monotonic() - start) * 1000),
+            )
+            raise
+
+        await self._archive_run(
+            result,
+            trigger_type="scheduled",
+            input_summary="Scheduled execution",
+            latency_ms=int((time.monotonic() - start) * 1000),
+        )
+        return result
+
     async def run_chat(self, message: str, *, user_id: str = "", agent_id: str = "") -> AgentResult:
         """
         Procesa un mensaje de chat del usuario.
         Los agentes pueden override esto para personalizar su respuesta.
         """
+        start = time.monotonic()
         async with trace_agent(self.name, user_id=user_id) as trace:
             trace.log_input(message)
 
@@ -108,7 +147,19 @@ class BaseAgent(ABC):
                 {"role": "user", "content": message},
             ]
 
-            response = await chat_completion(messages, temperature=0.3)
+            try:
+                response = await chat_completion(messages, temperature=0.3)
+            except Exception as e:
+                await self._archive_run(
+                    AgentResult(agent_name=self.name, success=False, error=str(e)),
+                    trigger_type="user_chat",
+                    input_summary=message,
+                    latency_ms=int((time.monotonic() - start) * 1000),
+                    user_id=user_id,
+                    agent_id=agent_id,
+                )
+                raise
+
             trace.log_llm_call(
                 model=response["model"],
                 input_messages=messages,
@@ -120,15 +171,67 @@ class BaseAgent(ABC):
 
             trace.log_output(response["content"])
 
-            return AgentResult(
+            result = AgentResult(
                 agent_name=self.name,
                 output=response["content"],
                 metrics={
                     "tokens_input": response["tokens_input"],
                     "tokens_output": response["tokens_output"],
+                    "cost_usd": response.get("cost_usd", 0.0),
                     "latency_ms": response["latency_ms"],
                 },
             )
+
+            await self._archive_run(
+                result,
+                trigger_type="user_chat",
+                input_summary=message,
+                latency_ms=int((time.monotonic() - start) * 1000),
+                user_id=user_id,
+                agent_id=agent_id,
+            )
+            return result
+
+    async def _archive_run(
+        self,
+        result: AgentResult,
+        *,
+        trigger_type: str,
+        trigger_event: str = "",
+        input_summary: str = "",
+        latency_ms: int | None = None,
+        user_id: str = "",
+        agent_id: str = "",
+    ) -> None:
+        """
+        Archiva la ejecución en ai_execution_log (memory.archival).
+        Nunca interrumpe la corrida: cualquier error se loguea y se descarta.
+        """
+        metrics = result.metrics or {}
+        tokens_input = int(metrics.get("tokens_input", 0) or 0)
+        tokens_output = int(metrics.get("tokens_output", 0) or 0)
+        if not tokens_input and not tokens_output:
+            # Algunos agentes solo reportan el total
+            tokens_input = int(metrics.get("tokens_used", 0) or 0)
+
+        try:
+            await archive_execution(
+                agent_name=self.name,
+                trigger_type=trigger_type,
+                trigger_event=trigger_event,
+                input_summary=input_summary,
+                output_summary=result.error or result.output,
+                tokens_input=tokens_input,
+                tokens_output=tokens_output,
+                cost_usd=float(metrics.get("cost_usd", 0.0) or 0.0),
+                latency_ms=latency_ms,
+                success=result.success,
+                error_message=result.error,
+                user_id=user_id,
+                agent_id=agent_id,
+            )
+        except Exception as e:
+            self.logger.warning("Failed to archive execution: %s", e)
 
     def _should_handle(self, event: BusinessEvent) -> bool:
         """Chequea si este agente debe procesar el evento."""

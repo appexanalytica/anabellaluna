@@ -300,7 +300,7 @@ async def run_agent(agent_name: str):
         raise HTTPException(status_code=404, detail=f"Agent '{agent_name}' not found")
 
     agent = orchestrator._agents[agent_name]
-    result = await agent.run_scheduled()
+    result = await agent.execute_scheduled()
 
     # Enviar sugerencias si las hay
     if result.notifications:

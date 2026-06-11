@@ -69,7 +69,7 @@ async def task_generate_report(ctx: dict, report_type: str = "daily") -> dict:
     from agents.executive import ExecutiveIntelligenceAgent
 
     agent = ExecutiveIntelligenceAgent()
-    result = await agent.run_scheduled()
+    result = await agent.execute_scheduled()
 
     logger.info("Report generated: type=%s success=%s", report_type, result.success)
     return {

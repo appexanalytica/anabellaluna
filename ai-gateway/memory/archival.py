@@ -69,6 +69,64 @@ async def archive_analysis(
     return record_id
 
 
+async def archive_execution(
+    agent_name: str,
+    trigger_type: str,
+    *,
+    trigger_event: str = "",
+    input_summary: str = "",
+    output_summary: str = "",
+    tokens_input: int = 0,
+    tokens_output: int = 0,
+    cost_usd: float = 0.0,
+    latency_ms: int | None = None,
+    success: bool = True,
+    error_message: str | None = None,
+    user_id: str = "",
+    agent_id: str = "",
+) -> str:
+    """
+    Archiva una ejecución completa de un agente (exitosa o fallida).
+
+    A diferencia de archive_analysis(), registra trigger_type real
+    ('scheduled', 'event', 'user_chat'), latencia y errores.
+    """
+    pool = _get_pool()
+
+    row = await pool.fetchrow(
+        """
+        INSERT INTO ai_execution_log
+            (trace_id, agent_name, trigger_type, trigger_event, user_id, agent_id,
+             input_summary, output_summary, tokens_input, tokens_output,
+             cost_usd, latency_ms, success, error_message)
+        VALUES
+            (gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, $7, $8, $9,
+             $10::float8, $11, $12, $13)
+        RETURNING id
+        """,
+        agent_name,
+        trigger_type,
+        trigger_event,
+        user_id,
+        agent_id,
+        input_summary[:2000],
+        output_summary[:2000],
+        tokens_input,
+        tokens_output,
+        float(cost_usd),
+        latency_ms,
+        success,
+        error_message,
+    )
+
+    record_id = str(row["id"])
+    logger.debug(
+        "Archived execution: agent=%s trigger=%s success=%s id=%s",
+        agent_name, trigger_type, success, record_id,
+    )
+    return record_id
+
+
 async def get_archived_analyses(
     agent_name: str | None = None,
     *,

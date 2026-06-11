@@ -94,7 +94,7 @@ class Orchestrator:
                 await asyncio.sleep(interval)
                 logger.info("Running scheduled analysis: %s", agent.name)
                 result = await asyncio.wait_for(
-                    agent.run_scheduled(),
+                    agent.execute_scheduled(),
                     timeout=120.0,
                 )
                 if result.notifications:
