@@ -279,6 +279,7 @@ function registerPropiedadTools(server) {
           const createdCliente = await Cliente().create({
             nombre: ownerNameCandidate,
             agenteId: agentId ? String(agentId) : '',
+            metadata: { tipoCliente: 'Propietario', estado: 'Lead', origen: 'Otro' },
           });
           cliente = createdCliente.toObject ? createdCliente.toObject() : createdCliente;
           ownerNote = `Cliente "${ownerNameCandidate}" no estaba agendado; se creó automáticamente y se vinculó como dueño.`;

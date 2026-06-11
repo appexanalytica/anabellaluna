@@ -104,7 +104,7 @@ const Propiedades = () => {
     email: '',
     telefono: '',
     telefonoAlternativo: '',
-    tipoCliente: 'Comprador',
+    tipoCliente: 'Propietario',
     estado: 'Lead',
     presupuesto: '',
     moneda: 'USD',
@@ -124,6 +124,41 @@ const Propiedades = () => {
     ocupacion: '',
     empresa: '',
   });
+
+  // El schema Cliente del backend es estricto: los campos CRM deben viajar dentro de metadata
+  const buildClientePayload = (form, agenteId, agenteNombre) => {
+    const fullName = [form?.nombre, form?.apellido].filter(Boolean).join(' ').trim();
+    return {
+      nombre: fullName || String(form?.nombre || '').trim(),
+      email: form?.email || '',
+      telefono: form?.telefono || '',
+      direccion: form?.direccion || '',
+      notas: form?.notas || '',
+      agenteId: agenteId || '',
+      metadata: {
+        apellido: form?.apellido || '',
+        telefonoAlternativo: form?.telefonoAlternativo || '',
+        tipoCliente: form?.tipoCliente || 'Propietario',
+        estado: form?.estado || 'Lead',
+        presupuesto: form?.presupuesto === '' ? 0 : Number(form?.presupuesto || 0),
+        moneda: form?.moneda || 'USD',
+        zonaInteres: form?.zonaInteres || '',
+        tipoPropiedad: form?.tipoPropiedad || 'Departamento',
+        ambientes: form?.ambientes || '',
+        dormitorios: form?.dormitorios || '',
+        'baños': form?.['baños'] || '',
+        caracteristicas: Array.isArray(form?.caracteristicas) ? form.caracteristicas : [],
+        origen: form?.origen || 'Web',
+        scoring: Number(form?.scoring || 50),
+        ciudad: form?.ciudad || 'Buenos Aires',
+        provincia: form?.provincia || 'Buenos Aires',
+        ocupacion: form?.ocupacion || '',
+        empresa: form?.empresa || '',
+        agente: agenteNombre || '',
+        agenteId: agenteId || '',
+      },
+    };
+  };
 
   const [nuevoCliente, setNuevoCliente] = useState(createEmptyClienteForm);
   const [incluirCliente, setIncluirCliente] = useState(false);
@@ -968,7 +1003,11 @@ const Propiedades = () => {
       let resolvedOwnerId = selectedCliente ? String(selectedCliente._id) : '';
       if (!resolvedOwnerId && incluirCliente && nuevoCliente.nombre) {
         try {
-          const clientePayload = { ...nuevoCliente, agenteId: rawAgentId || rawAdminId || '' };
+          const clientePayload = buildClientePayload(
+            nuevoCliente,
+            rawAgentId || rawAdminId || '',
+            agenteNombre || adminNombre || '',
+          );
           const createdCliente = await crmService.clientes.create(clientePayload);
           resolvedOwnerId = String(createdCliente._id);
           setSelectedCliente(createdCliente);
