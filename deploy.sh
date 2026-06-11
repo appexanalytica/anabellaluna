@@ -210,6 +210,78 @@ EOF
   fi
 fi
 
+# ── 2b. AI Infrastructure Docker (opcional) ──────────────────
+if should_run "backend"; then
+  AI_COMPOSE="$PROJECT_DIR/docker-compose.ai.yml"
+  AI_GATEWAY_DIR="$PROJECT_DIR/ai-gateway"
+
+  if [ -f "$AI_COMPOSE" ] && command -v docker &>/dev/null; then
+    log "🧠 AI Infrastructure — Levantando contenedores Docker..."
+    cd "$PROJECT_DIR"
+    docker compose -f "$AI_COMPOSE" up -d 2>/dev/null \
+      || docker-compose -f "$AI_COMPOSE" up -d 2>/dev/null \
+      || warn "Docker compose para AI infra falló"
+    ok "AI Infrastructure Docker (postgres+pgvector, redis, langfuse)"
+  fi
+fi
+
+# ── 2c. AI Gateway Python (independiente de Docker) ──────────
+if should_run "backend"; then
+  AI_GATEWAY_DIR="$PROJECT_DIR/ai-gateway"
+
+  if command -v python3 &>/dev/null && [ -f "$AI_GATEWAY_DIR/app/main.py" ]; then
+    log "🐍 AI Gateway — Instalando dependencias Python..."
+    if [ -f "$AI_GATEWAY_DIR/pyproject.toml" ]; then
+      cd "$AI_GATEWAY_DIR"
+      # venv obligatorio: Ubuntu 24.04 bloquea pip global (PEP 668)
+      [ -d venv ] || python3 -m venv venv
+      venv/bin/pip install --quiet --no-input -e . 2>/dev/null || warn "pip install ai-gateway falló"
+      cd "$PROJECT_DIR"
+    fi
+
+    # Crear .env desde example si no existe
+    if [ ! -f "$AI_GATEWAY_DIR/.env" ] && [ -f "$AI_GATEWAY_DIR/.env.example" ]; then
+      cp "$AI_GATEWAY_DIR/.env.example" "$AI_GATEWAY_DIR/.env"
+      warn "AI Gateway .env creado desde .env.example — configurar API keys"
+    fi
+
+    # Si ecosystem.config.js ya lo arrancó, restart para aplicar deps recién instaladas.
+    # Si no existe ecosystem.config.js, iniciar manualmente.
+    if pm2 describe ai-gateway > /dev/null 2>&1; then
+      pm2 restart ai-gateway --update-env
+      ok "PM2 'ai-gateway' reiniciado"
+    elif [ ! -f "$PROJECT_DIR/ecosystem.config.js" ]; then
+      pm2 start "uvicorn app.main:app --host 0.0.0.0 --port 8100" \
+        --name "ai-gateway" \
+        --cwd "$AI_GATEWAY_DIR" \
+        --interpreter python3 \
+        --max-memory-restart 1G \
+        --restart-delay 5000 \
+        --max-restarts 5
+      ok "PM2 'ai-gateway' iniciado (puerto 8100)"
+    fi
+
+    # ARQ worker (no está en ecosystem.config.js — siempre gestionar manualmente)
+    if pm2 describe ai-worker-arq > /dev/null 2>&1; then
+      pm2 restart ai-worker-arq --update-env
+      ok "PM2 'ai-worker-arq' reiniciado"
+    else
+      pm2 start "python3 -m queues.worker" \
+        --name "ai-worker-arq" \
+        --cwd "$AI_GATEWAY_DIR" \
+        --max-memory-restart 512M \
+        --restart-delay 10000 \
+        --max-restarts 3
+      ok "PM2 'ai-worker-arq' iniciado"
+    fi
+
+    pm2 save 2>/dev/null
+    ok "AI Gateway Python configurado"
+  else
+    warn "Python3 no disponible o ai-gateway/app/main.py no existe — AI Gateway omitido"
+  fi
+fi
+
 # ── 3. Admin (ERP) ──────────────────────────────────────────
 if should_run "admin"; then
   log "🏗️  Admin (ERP) — Instalando dependencias..."

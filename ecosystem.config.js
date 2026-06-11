@@ -97,6 +97,53 @@ module.exports = {
       max_restarts: 5,
     },
 
+    // ── AI Gateway (Python) ─────────────────────────────────────────────────
+    // Capa cognitiva: agentes especializados, event consumer, semantic memory
+    // Requiere: Python 3.12+, pip install (ver ai-gateway/pyproject.toml)
+    // Requiere: Redis, PostgreSQL+pgvector (ver setup-ai-infra.sh)
+    {
+      name: 'ai-gateway',
+      script: '/var/www/anabella/ai-gateway/venv/bin/uvicorn',
+      args: 'app.main:app --host 0.0.0.0 --port 8100',
+      cwd: '/var/www/anabella/ai-gateway',
+      interpreter: 'none',
+      instances: 1,
+      exec_mode: 'fork',
+      watch: false,
+      max_memory_restart: '512M',
+      env: {
+        PYTHONUNBUFFERED: '1',
+      },
+      error_file: '/var/log/anabella/ai-gateway-error.log',
+      out_file:   '/var/log/anabella/ai-gateway-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss',
+      restart_delay: 10000,
+      max_restarts: 5,
+    },
+
+    // ── AI Worker ARQ (Python) ──────────────────────────────────────────────
+    // Worker asíncrono: embeddings batch, análisis de leads, reportes, workflows
+    // Requiere: mismas dependencias que ai-gateway
+    {
+      name: 'ai-worker-arq',
+      script: '/var/www/anabella/ai-gateway/venv/bin/python3',
+      args: '-m queues.worker',
+      cwd: '/var/www/anabella/ai-gateway',
+      interpreter: 'none',
+      instances: 1,
+      exec_mode: 'fork',
+      watch: false,
+      max_memory_restart: '512M',
+      env: {
+        PYTHONUNBUFFERED: '1',
+      },
+      error_file: '/var/log/anabella/ai-worker-arq-error.log',
+      out_file:   '/var/log/anabella/ai-worker-arq-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss',
+      restart_delay: 10000,
+      max_restarts: 5,
+    },
+
     // evolution-api es gestionada directamente por deploy.sh (build + pm2 start)
   ],
 };

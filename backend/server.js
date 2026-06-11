@@ -117,8 +117,10 @@ const mercadoLibreRoutes = require('./routes/mercadolibre');
 const portalesRoutes = require('./routes/portales');
 const marketingAIRoutes = require('./routes/marketing-ai/index');
 const aiChatRoutes = require('./routes/ai-chat');
+const aiGatewayRoutes = require('./routes/ai-gateway');
 const adminAIConfigRoutes = require('./routes/admin/ai-config');
 const virtualToursRoutes = require('./modules/tours/routes');
+const bookingsRoutes = require('./routes/bookings');
 const whatsappRoutes = require('./routes/whatsapp');
 const whatsappSessionRoutes = require('./routes/whatsappSessions');
 
@@ -270,6 +272,8 @@ app.use('/crm/rewards-v2', rewardsV2Routes);
 
 app.use('/crm/messages', messagesRoutes);
 
+app.use('/crm/bookings', bookingsRoutes);
+
 app.use('/crm/reports', reportsRoutes);
 
 app.use('/crm/notifications', notificationsRoutes);
@@ -336,6 +340,7 @@ app.use('/api/push', pushRoutes);
 // Marketing AI routes
 app.use('/marketing-ai', marketingAIRoutes);
 app.use('/ai', aiChatRoutes);
+app.use('/ai-gateway', aiGatewayRoutes);
 
 // WhatsApp sessions route MUST be before /whatsapp to avoid prefix interception
 app.use('/whatsapp/sessions', whatsappSessionRoutes);

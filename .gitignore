@@ -34,3 +34,9 @@ Thumbs.db
 # Garantizar que los assets internos de src/ siempre se incluyan
 !src/assets/
 !src/assets/**
+
+# Python (ai-gateway)
+__pycache__/
+*.pyc
+ai-gateway/venv/
+ai.env

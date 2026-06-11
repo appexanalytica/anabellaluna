@@ -1,0 +1,130 @@
+# ============================================================================
+# AI Infrastructure — Anabella Luna Cognitive Platform
+# ============================================================================
+#
+# Levanta la infraestructura base para el AI Gateway:
+#   - PostgreSQL + pgvector   → Semantic memory (embeddings)
+#   - Langfuse                → LLM observability (prompts, traces, costs)
+#   - Redis                   → Event bus + AI Gateway cache
+#
+# Uso:
+#   docker-compose -f docker-compose.ai.yml up -d
+#
+# Variables requeridas (crear ai.env desde ai.env.example):
+#   cp ai.env.example ai.env && nano ai.env
+# ============================================================================
+
+version: '3.9'
+
+services:
+
+  # ── PostgreSQL + pgvector ─────────────────────────────────────────────────
+  # Base de datos vectorial para semantic memory, embeddings y series temporales.
+  ai-postgres:
+    image: pgvector/pgvector:pg16
+    container_name: anabella-ai-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-anabella_ai}
+      POSTGRES_USER: ${POSTGRES_USER:-ai_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_production}
+    ports:
+      - "5433:5432"   # 5433 para no conflictuar con Evolution API postgres
+    volumes:
+      - ai_postgres_data:/var/lib/postgresql/data
+      - ./ai-gateway/infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ai_user} -d ${POSTGRES_DB:-anabella_ai}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ai-network
+
+  # ── Redis (compartido con backend si no existe uno externo) ───────────────
+  # Event bus distribuido + cache del AI Gateway.
+  # Si ya tienes Redis corriendo en el servidor, configurar REDIS_URL
+  # y no levantar este servicio.
+  ai-redis:
+    image: redis:7-alpine
+    container_name: anabella-ai-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - ai_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - ai-network
+
+  # ── Langfuse — LLM Observability ─────────────────────────────────────────
+  # Dashboard para rastrear: prompts, contextos, tools ejecutadas,
+  # costos por token, latencias, reasoning, hallucinations.
+  # Acceso: http://localhost:3010
+  langfuse-server:
+    image: langfuse/langfuse:2
+    container_name: anabella-langfuse
+    restart: unless-stopped
+    depends_on:
+      langfuse-postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${LANGFUSE_DB_USER:-langfuse}:${LANGFUSE_DB_PASSWORD:-langfuse_pass}@langfuse-postgres:5432/${LANGFUSE_DB_NAME:-langfuse}
+      NEXTAUTH_URL: ${LANGFUSE_URL:-http://localhost:3010}
+      NEXTAUTH_SECRET: ${LANGFUSE_SECRET:-change_me_langfuse_secret_32chars}
+      SALT: ${LANGFUSE_SALT:-change_me_salt_value}
+      ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY:-0000000000000000000000000000000000000000000000000000000000000000}
+      TELEMETRY_ENABLED: "false"
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: "false"
+      # Headless init: crea org/proyecto/usuario/keys al primer arranque (sin UI)
+      LANGFUSE_INIT_ORG_ID: ${LANGFUSE_INIT_ORG_ID:-}
+      LANGFUSE_INIT_ORG_NAME: ${LANGFUSE_INIT_ORG_NAME:-}
+      LANGFUSE_INIT_PROJECT_ID: ${LANGFUSE_INIT_PROJECT_ID:-}
+      LANGFUSE_INIT_PROJECT_NAME: ${LANGFUSE_INIT_PROJECT_NAME:-}
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY:-}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY:-}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_USER_EMAIL:-}
+      LANGFUSE_INIT_USER_NAME: ${LANGFUSE_INIT_USER_NAME:-}
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD:-}
+    ports:
+      - "3010:3000"
+    networks:
+      - ai-network
+
+  langfuse-postgres:
+    image: postgres:16-alpine
+    container_name: anabella-langfuse-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${LANGFUSE_DB_NAME:-langfuse}
+      POSTGRES_USER: ${LANGFUSE_DB_USER:-langfuse}
+      POSTGRES_PASSWORD: ${LANGFUSE_DB_PASSWORD:-langfuse_pass}
+    volumes:
+      - langfuse_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${LANGFUSE_DB_USER:-langfuse}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ai-network
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  ai_postgres_data:
+    driver: local
+  ai_redis_data:
+    driver: local
+  langfuse_postgres_data:
+    driver: local
+
+# ── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  ai-network:
+    driver: bridge
+    name: anabella-ai-network
