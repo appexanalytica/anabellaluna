@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import FunnelDesignEditor from '../components/FunnelDesignEditor';
 import PropiedadesMapView from './PropiedadesMapView';
 import PropiedadInforme from '../components/PropiedadInforme';
+import MapboxMap from '../components/MapboxMap';
+import { searchAddress, featureToLocation, geocodeStreetNumber, splitDireccion } from '../utils/mapbox';
 import { toast } from 'react-toastify';
 import { confirmToast } from '../utils/confirmToast';
 import { FaPlus, FaUpload, FaSearch, FaFilter, FaHome, FaEye, FaDollarSign, FaUser, FaCamera, FaMapMarkerAlt, FaBuilding, FaTimes, FaSave, FaArrowLeft, FaList, FaThLarge, FaBed, FaBath, FaCar, FaRulerCombined, FaCalendar, FaEdit, FaTrash, FaChevronRight, FaChevronLeft, FaFileAlt, FaChartLine, FaDownload, FaLink, FaCopy, FaGlobe, FaLock, FaGripVertical, FaMagic, FaExternalLinkAlt } from 'react-icons/fa';
@@ -94,7 +96,6 @@ const Propiedades = () => {
     };
     fetchReservadasCount();
   }, []);
-  const [formStep, setFormStep] = useState(1);
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const [funnelEditorOpen, setFunnelEditorOpen] = useState(false);
 
@@ -192,15 +193,12 @@ const Propiedades = () => {
   // Drag-and-drop refs for adjuntos reordering (detail view)
   const adjDragItem = useRef(null);
   const adjDragOverItem = useRef(null);
-  // Address geocoder refs/state
+  // Address geocoder refs/state (Mapbox Geocoding)
   const addressInputRef = useRef(null);
-  const autocompleteRef = useRef(null);
-  const nominatimTimer = useRef(null);
-  const [nominatimSuggestions, setNominatimSuggestions] = useState([]);
-  const [showNominatim, setShowNominatim] = useState(false);
-  const mapViewRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-  const mapMarkersRef = useRef([]);
+  const geocoderTimer = useRef(null);
+  const alturaTimer = useRef(null);
+  const [geocoderSuggestions, setGeocoderSuggestions] = useState([]);
+  const [showGeocoder, setShowGeocoder] = useState(false);
 
   const reorderFiles = useCallback((setter) => {
     setter((prev) => {
@@ -283,6 +281,8 @@ const Propiedades = () => {
     moneda: 'USD',
     unidadPrecio: 'month',
     direccion: '',
+    calle: '',
+    altura: '',
     barrio: '',
     ciudad: 'Buenos Aires',
     provincia: 'Buenos Aires',
@@ -331,7 +331,6 @@ const Propiedades = () => {
     setFilesDocumentos([]);
     setFilesPlanos([]);
     setVideoUrlDraft('');
-    setFormStep(1);
     setIncluirCliente(false);
     setNuevoCliente(createEmptyClienteForm());
     setSelectedCliente(null);
@@ -350,6 +349,8 @@ const Propiedades = () => {
       moneda: 'USD',
       unidadPrecio: 'month',
       direccion: '',
+      calle: '',
+      altura: '',
       barrio: '',
       ciudad: 'Buenos Aires',
       provincia: 'Buenos Aires',
@@ -397,6 +398,7 @@ const Propiedades = () => {
   const handleEditPropiedad = (prop) => {
     if (!prop) return;
     setEditingPropiedadId(prop.id || null);
+    const dirParts = splitDireccion(prop.direccion);
     setFilesFotos([]);
     setFilesDocumentos([]);
     setFilesPlanos([]);
@@ -415,6 +417,8 @@ const Propiedades = () => {
       moneda: prop.moneda || 'USD',
       unidadPrecio: prop.unidadPrecio || 'month',
       direccion: prop.direccion || '',
+      calle: prop.calle || dirParts.calle,
+      altura: prop.altura || dirParts.altura,
       barrio: prop.barrio || '',
       ciudad: prop.ciudad || 'Buenos Aires',
       provincia: prop.provincia || 'Buenos Aires',
@@ -456,7 +460,6 @@ const Propiedades = () => {
       comision: String(prop.comision ?? '3'),
       funnelSettings: prop.funnelSettings || {},
     });
-    setFormStep(1);
     setIncluirCliente(false);
     setNuevoCliente(createEmptyClienteForm());
     setSelectedCliente(prop.ownerData || null);
@@ -589,42 +592,85 @@ const Propiedades = () => {
   useEffect(() => { setCarouselIdx(0); }, [propiedadSeleccionada?.id]);
 
 
-  // Nominatim geocoder: search as user types the address
-  const handleDireccionChange = (e) => {
-    handleInputChange(e);
-    const query = e.target.value;
-    setShowNominatim(false);
-    setNominatimSuggestions([]);
-    clearTimeout(nominatimTimer.current);
-    if (query.length < 4) return;
-    nominatimTimer.current = setTimeout(async () => {
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6`,
-          { headers: { 'Accept-Language': 'es' } },
-        );
-        const data = await res.json();
-        setNominatimSuggestions(data);
-        setShowNominatim(data.length > 0);
-      } catch { /* ignore network errors */ }
+  // La dirección guardada es siempre "Calle Altura" (ej: "Av. Santa Fe 1234")
+  const composeDireccion = (calle, altura) => [String(calle || '').trim(), String(altura || '').trim()].filter(Boolean).join(' ');
+
+  // Mapbox geocoder: autocomplete as user types the street name
+  const handleCalleChange = (e) => {
+    const calle = e.target.value;
+    setNuevaPropiedad((prev) => ({ ...prev, calle, direccion: composeDireccion(calle, prev.altura) }));
+    setShowGeocoder(false);
+    setGeocoderSuggestions([]);
+    clearTimeout(geocoderTimer.current);
+    if (calle.length < 3) return;
+    const altura = nuevaPropiedad.altura;
+    geocoderTimer.current = setTimeout(async () => {
+      const features = await searchAddress(altura ? `${calle} ${altura}` : calle);
+      setGeocoderSuggestions(features);
+      setShowGeocoder(features.length > 0);
+    }, 350);
+  };
+
+  // Cuando cambia la altura, re-geocodifica calle+altura para coordenadas exactas
+  const handleAlturaChange = (e) => {
+    const altura = e.target.value.replace(/\D/g, '');
+    setNuevaPropiedad((prev) => ({ ...prev, altura, direccion: composeDireccion(prev.calle, altura) }));
+    clearTimeout(alturaTimer.current);
+    const { calle, ciudad, provincia } = nuevaPropiedad;
+    if (!calle || !altura) return;
+    alturaTimer.current = setTimeout(async () => {
+      const feature = await geocodeStreetNumber({ street: calle, number: altura, place: ciudad, region: provincia });
+      if (!feature) return;
+      const loc = featureToLocation(feature);
+      setNuevaPropiedad((prev) => ({
+        ...prev,
+        lat: loc.lat || prev.lat,
+        lng: loc.lng || prev.lng,
+        codigoPostal: loc.codigoPostal || prev.codigoPostal,
+        barrio: prev.barrio || loc.barrio,
+        ciudad: prev.ciudad || loc.ciudad,
+        provincia: prev.provincia || loc.provincia,
+      }));
     }, 500);
   };
 
-  const handleNominatimSelect = (item) => {
-    const addr = item.address || {};
+  const handleGeocoderSelect = async (feature) => {
+    const loc = featureToLocation(feature);
+    const calle = loc.calle || nuevaPropiedad.calle;
+    const altura = loc.altura || nuevaPropiedad.altura;
     setNuevaPropiedad((prev) => ({
       ...prev,
-      direccion: item.display_name,
-      barrio: addr.neighbourhood || addr.suburb || addr.quarter || prev.barrio,
-      ciudad: addr.city || addr.town || addr.village || prev.ciudad,
-      provincia: addr.state || prev.provincia,
-      pais: addr.country || prev.pais,
-      codigoPostal: addr.postcode || prev.codigoPostal,
-      lat: String(item.lat),
-      lng: String(item.lon),
+      calle,
+      altura,
+      direccion: composeDireccion(calle, altura),
+      barrio: loc.barrio || prev.barrio,
+      ciudad: loc.ciudad || prev.ciudad,
+      provincia: loc.provincia || prev.provincia,
+      pais: loc.pais || prev.pais,
+      codigoPostal: loc.codigoPostal || prev.codigoPostal,
+      lat: loc.lat,
+      lng: loc.lng,
     }));
-    setNominatimSuggestions([]);
-    setShowNominatim(false);
+    setGeocoderSuggestions([]);
+    setShowGeocoder(false);
+    // Si eligió una calle (sin número) pero ya tenía altura cargada, afina las coordenadas
+    if (!loc.altura && altura && calle) {
+      const refined = await geocodeStreetNumber({
+        street: calle,
+        number: altura,
+        place: loc.ciudad || nuevaPropiedad.ciudad,
+        region: loc.provincia || nuevaPropiedad.provincia,
+      });
+      if (refined) {
+        const r = featureToLocation(refined);
+        setNuevaPropiedad((prev) => ({
+          ...prev,
+          lat: r.lat || prev.lat,
+          lng: r.lng || prev.lng,
+          codigoPostal: r.codigoPostal || prev.codigoPostal,
+        }));
+      }
+    }
   };
 
   useEffect(() => {
@@ -671,6 +717,8 @@ const Propiedades = () => {
             tipoEstructura: meta.tipoEstructura || '',
             idPropiedad: meta.idPropiedad || '',
             direccion: p.address || meta.direccion || '',
+            calle: meta.calle || '',
+            altura: meta.altura || '',
             barrio: meta.barrio || '',
             ciudad: meta.ciudad || '',
             provincia: meta.provincia || '',
@@ -1016,10 +1064,12 @@ const Propiedades = () => {
         }
       }
 
+      const direccionFinal = composeDireccion(nuevaPropiedad.calle, nuevaPropiedad.altura) || nuevaPropiedad.direccion;
+
       const payload = {
         title: nuevaPropiedad.titulo,
         description: nuevaPropiedad.descripcion,
-        address: nuevaPropiedad.direccion,
+        address: direccionFinal,
         price: Number(nuevaPropiedad.precio || 0),
         moneda: nuevaPropiedad.moneda,
         featured: !!nuevaPropiedad.featured,
@@ -1038,7 +1088,9 @@ const Propiedades = () => {
           precioPorM2: Number(nuevaPropiedad.precioPorM2 || 0),
           tipoEstructura: nuevaPropiedad.tipoEstructura,
           idPropiedad: nuevaPropiedad.idPropiedad,
-          direccion: nuevaPropiedad.direccion,
+          direccion: direccionFinal,
+          calle: nuevaPropiedad.calle,
+          altura: nuevaPropiedad.altura,
           barrio: nuevaPropiedad.barrio,
           ciudad: nuevaPropiedad.ciudad,
           provincia: nuevaPropiedad.provincia,
@@ -1104,6 +1156,8 @@ const Propiedades = () => {
         tipoEstructura: payload.metadata.tipoEstructura,
         idPropiedad: payload.metadata.idPropiedad,
         direccion: saved.address || payload.metadata.direccion,
+        calle: payload.metadata.calle,
+        altura: payload.metadata.altura,
         barrio: payload.metadata.barrio,
         ciudad: payload.metadata.ciudad,
         provincia: payload.metadata.provincia,
@@ -1215,6 +1269,8 @@ const Propiedades = () => {
         moneda: 'USD',
         unidadPrecio: 'month',
         direccion: '',
+        calle: '',
+        altura: '',
         barrio: '',
         ciudad: 'Buenos Aires',
         provincia: 'Buenos Aires',
@@ -1254,8 +1310,7 @@ const Propiedades = () => {
         agente: '',
         comision: '3',
       });
-      setFormStep(1);
-      setIncluirCliente(false);
+        setIncluirCliente(false);
       setNuevoCliente(createEmptyClienteForm());
     } catch (e) {
       setError(e?.message || 'Error al guardar propiedad');
@@ -1626,9 +1681,6 @@ const Propiedades = () => {
             isDark={currentMode === 'Dark'}
             verDetalle={verDetalle}
             cardBase={cardBase}
-            mapViewRef={mapViewRef}
-            mapInstanceRef={mapInstanceRef}
-            mapMarkersRef={mapMarkersRef}
           />
         </div>
       )}
@@ -2601,11 +2653,14 @@ const Propiedades = () => {
                   <FaMapMarkerAlt className="text-red-500" /> Ubicación
                 </h3>
                 {propiedadSeleccionada.lat && propiedadSeleccionada.lng && (
-                  <div className="mb-4 h-32 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden relative">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <FaMapMarkerAlt className="text-4xl text-red-500" />
-                    </div>
-                    <p className="absolute bottom-2 left-2 right-2 text-center text-xs bg-black bg-opacity-60 text-white px-2 py-1 rounded">Lat: {Number(propiedadSeleccionada.lat).toFixed(6)}, Lng: {Number(propiedadSeleccionada.lng).toFixed(6)}</p>
+                  <div className="mb-4 rounded-lg overflow-hidden relative">
+                    <MapboxMap
+                      lat={propiedadSeleccionada.lat}
+                      lng={propiedadSeleccionada.lng}
+                      height={192}
+                      isDark={currentMode === 'Dark'}
+                    />
+                    <p className="absolute bottom-2 left-2 right-2 text-center text-xs bg-black bg-opacity-60 text-white px-2 py-1 rounded pointer-events-none">Lat: {Number(propiedadSeleccionada.lat).toFixed(6)}, Lng: {Number(propiedadSeleccionada.lng).toFixed(6)}</p>
                   </div>
                 )}
                 <div className="space-y-3">
@@ -2841,14 +2896,10 @@ const Propiedades = () => {
                   <FaHome /> {editingPropiedadId ? 'Editar Propiedad' : 'Nueva Propiedad'}
                 </h2>
                 <p className="text-blue-100 text-sm mt-1">
-                  {formStep === 1 ? 'Paso 1: Datos de la propiedad' : 'Paso 2: Datos del cliente (opcional)'}
+                  Datos de la propiedad y cliente asignado
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex gap-2">
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${formStep === 1 ? 'bg-white text-blue-600' : 'bg-blue-400 text-white'}`}>1</span>
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${formStep === 2 ? 'bg-white text-blue-600' : 'bg-blue-400 text-white'}`}>2</span>
-                </div>
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
@@ -2862,8 +2913,6 @@ const Propiedades = () => {
             {/* Formulario con scroll */}
             <div className="flex-1 overflow-y-auto">
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                {formStep === 1 && (
-                  <>
                   {/* Información Básica */}
                   <div>
                     <h3 className="text-lg font-semibold mb-4 dark:text-gray-100 flex items-center gap-2">
@@ -3032,44 +3081,76 @@ const Propiedades = () => {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">
-                          Dirección *
-                        </label>
-                        <div className="relative">
-                          <input
-                            ref={addressInputRef}
-                            type="text"
-                            name="direccion"
-                            value={nuevaPropiedad.direccion}
-                            onChange={handleDireccionChange}
-                            onBlur={() => setTimeout(() => setShowNominatim(false), 150)}
-                            required
-                            placeholder="Av. Santa Fe 1234"
-                            autoComplete="off"
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
-                          />
-                          {showNominatim && nominatimSuggestions.length > 0 && (
-                            <ul className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                              {nominatimSuggestions.map((item) => (
-                                <li key={item.place_id}>
-                                  <button
-                                    type="button"
-                                    onMouseDown={() => handleNominatimSelect(item)}
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 flex items-start gap-2"
-                                  >
-                                    <FaMapMarkerAlt className="mt-0.5 shrink-0 text-blue-400" size={12} />
-                                    <span>{item.display_name}</span>
-                                  </button>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
+                        <div className="flex gap-3">
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium mb-2 dark:text-gray-200">
+                              Calle *
+                            </label>
+                            <div className="relative">
+                              <input
+                                ref={addressInputRef}
+                                type="text"
+                                name="calle"
+                                value={nuevaPropiedad.calle}
+                                onChange={handleCalleChange}
+                                onBlur={() => setTimeout(() => setShowGeocoder(false), 150)}
+                                required
+                                placeholder="Av. Santa Fe"
+                                autoComplete="off"
+                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
+                              />
+                              {showGeocoder && geocoderSuggestions.length > 0 && (
+                                <ul className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                  {geocoderSuggestions.map((item) => (
+                                    <li key={item.properties?.mapbox_id || item.id}>
+                                      <button
+                                        type="button"
+                                        onMouseDown={() => handleGeocoderSelect(item)}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 flex items-start gap-2"
+                                      >
+                                        <FaMapMarkerAlt className="mt-0.5 shrink-0 text-blue-400" size={12} />
+                                        <span>{item.properties?.full_address || item.properties?.name}</span>
+                                      </button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          </div>
+                          <div className="w-32">
+                            <label className="block text-sm font-medium mb-2 dark:text-gray-200">
+                              Altura / N°
+                            </label>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              name="altura"
+                              value={nuevaPropiedad.altura}
+                              onChange={handleAlturaChange}
+                              placeholder="1234"
+                              autoComplete="off"
+                              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
+                            />
+                          </div>
                         </div>
                         <p className="text-xs text-blue-400 mt-1 flex items-center gap-1">
-                          <FaMapMarkerAlt size={10} /> Escribí la dirección y seleccioná de la lista para autocompletar coordenadas
+                          <FaMapMarkerAlt size={10} /> Escribí la calle, seleccioná de la lista y completá la altura para ubicar el pin exacto
                         </p>
                         {nuevaPropiedad.lat && nuevaPropiedad.lng && (
-                          <p className="text-xs text-emerald-500 mt-1">✓ Coordenadas guardadas ({Number(nuevaPropiedad.lat).toFixed(5)}, {Number(nuevaPropiedad.lng).toFixed(5)})</p>
+                          <>
+                            <p className="text-xs text-emerald-500 mt-1">✓ Coordenadas guardadas ({Number(nuevaPropiedad.lat).toFixed(5)}, {Number(nuevaPropiedad.lng).toFixed(5)})</p>
+                            <div className="mt-2 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
+                              <MapboxMap
+                                lat={nuevaPropiedad.lat}
+                                lng={nuevaPropiedad.lng}
+                                height={220}
+                                isDark={currentMode === 'Dark'}
+                                draggable
+                                onMove={(la, ln) => setNuevaPropiedad((prev) => ({ ...prev, lat: String(la), lng: String(ln) }))}
+                              />
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">Arrastrá el pin para ajustar la ubicación exacta</p>
+                          </>
                         )}
                       </div>
 
@@ -3643,63 +3724,6 @@ const Propiedades = () => {
                     </div>
                   </div>
 
-                  {/* ── DISEÑO DEL FUNNEL ──────────────────────────────────── */}
-                  <div className="border dark:border-gray-700 rounded-xl overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => setFunnelEditorOpen((v) => !v)}
-                      className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span style={{ fontSize: 20 }}>🎨</span>
-                        <div>
-                          <div className="font-semibold dark:text-gray-100 text-sm">Diseño del Funnel</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">Personaliza el fondo, colores y la imagen del hero de la página de detalle</div>
-                        </div>
-                      </div>
-                      <span className="text-gray-400 text-lg" style={{ transform: funnelEditorOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>▼</span>
-                    </button>
-                    {funnelEditorOpen && (
-                      <div className="px-5 pb-5 border-t dark:border-gray-700 bg-white dark:bg-gray-900">
-                        <div className="pt-4">
-                          <FunnelDesignEditor
-                            value={nuevaPropiedad.funnelSettings || {}}
-                            onChange={(fs) => setNuevaPropiedad((prev) => ({ ...prev, funnelSettings: fs }))}
-                            previewTitle={nuevaPropiedad.titulo || 'Título de la propiedad'}
-                            previewCoverUrl={
-                              filesFotos.length > 0 && filesFotos[0].type?.startsWith('image/')
-                                ? URL.createObjectURL(filesFotos[0])
-                                : ''
-                            }
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Botones Paso 1 */}
-                  <div className="flex gap-3 justify-end pt-4 border-t dark:border-gray-700">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 transition-colors"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormStep(2)}
-                      style={{ backgroundColor: currentColor }}
-                      className="flex items-center gap-2 px-6 py-3 text-white rounded-lg hover:opacity-90 transition-opacity shadow-md"
-                    >
-                      Siguiente <FaChevronRight />
-                    </button>
-                  </div>
-                  </>
-                )}
-
-                {formStep === 2 && (
-                  <>
                     {/* Propietario / Cliente */}
                     <div className="space-y-3">
                       <h3 className="text-lg font-semibold dark:text-gray-100 flex items-center gap-2">
@@ -3901,35 +3925,58 @@ const Propiedades = () => {
                       </>
                     )}
 
-                    {/* Botones Paso 2 */}
-                    <div className="flex gap-3 justify-between pt-4 border-t dark:border-gray-700">
+                    {/* ── DISEÑO DEL FUNNEL ──────────────────────────────────── */}
+                    <div className="border dark:border-gray-700 rounded-xl overflow-hidden">
                       <button
                         type="button"
-                        onClick={() => setFormStep(1)}
-                        className="flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 transition-colors"
+                        onClick={() => setFunnelEditorOpen((v) => !v)}
+                        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                       >
-                        <FaChevronLeft /> Anterior
+                        <div className="flex items-center gap-3">
+                          <span style={{ fontSize: 20 }}>🎨</span>
+                          <div>
+                            <div className="font-semibold dark:text-gray-100 text-sm">Diseño del Funnel</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">Personaliza el fondo, colores y la imagen del hero de la página de detalle</div>
+                          </div>
+                        </div>
+                        <span className="text-gray-400 text-lg" style={{ transform: funnelEditorOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>▼</span>
                       </button>
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setShowModal(false)}
-                          className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 transition-colors"
-                        >
-                          Cancelar
-                        </button>
-                        <button
-                          type="submit"
-                          style={{ backgroundColor: currentColor }}
-                          className="flex items-center gap-2 px-6 py-3 text-white rounded-lg hover:opacity-90 transition-opacity shadow-md"
-                          disabled={loading}
-                        >
-                          <FaSave /> Guardar Propiedad
-                        </button>
-                      </div>
+                      {funnelEditorOpen && (
+                        <div className="px-5 pb-5 border-t dark:border-gray-700 bg-white dark:bg-gray-900">
+                          <div className="pt-4">
+                            <FunnelDesignEditor
+                              value={nuevaPropiedad.funnelSettings || {}}
+                              onChange={(fs) => setNuevaPropiedad((prev) => ({ ...prev, funnelSettings: fs }))}
+                              previewTitle={nuevaPropiedad.titulo || 'Título de la propiedad'}
+                              previewCoverUrl={
+                                filesFotos.length > 0 && filesFotos[0].type?.startsWith('image/')
+                                  ? URL.createObjectURL(filesFotos[0])
+                                  : ''
+                              }
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </>
-                )}
+
+                    {/* Botones */}
+                    <div className="flex gap-3 justify-end pt-4 border-t dark:border-gray-700">
+                      <button
+                        type="button"
+                        onClick={() => setShowModal(false)}
+                        className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        style={{ backgroundColor: currentColor }}
+                        className="flex items-center gap-2 px-6 py-3 text-white rounded-lg hover:opacity-90 transition-opacity shadow-md"
+                        disabled={loading}
+                      >
+                        <FaSave /> Guardar Propiedad
+                      </button>
+                    </div>
               </form>
             </div>
           </div>
