@@ -148,7 +148,7 @@ class AgentTrace:
         tokens_input: int = 0,
         tokens_output: int = 0,
         cost_usd: float = 0.0,
-        duration_ms: int = 0,
+        latency_ms: int = 0,
     ) -> None:
         logger.info(
             "[%s] LLM: model=%s tokens=%d+%d cost=$%.4f",
@@ -166,7 +166,7 @@ class AgentTrace:
                         "output": tokens_output,
                         "total": tokens_input + tokens_output,
                     },
-                    metadata={"cost_usd": cost_usd, "duration_ms": duration_ms},
+                    metadata={"cost_usd": cost_usd, "latency_ms": latency_ms},
                 )
                 gen.end()
             except Exception:
