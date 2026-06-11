@@ -5,12 +5,13 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import { Navbar, Footer, Sidebar, ThemeSettings, OnboardingTutorial } from './components';
-import { Ecommerce, Orders, Calendar, Employees, Stacked, Pyramid, Customers, Kanban, Line, Area, Bar, Pie, Financial, ColorPicker, ColorMapping, Editor, DashboardEjecutivo, Propiedades, ClientesCRM, Agentes, Citas, Ventas, Documentos, Plantillas, Reportes, Integraciones, Configuracion, Workflows, Automatizacion, RolesPermisos, Campanas, EmailMarketing, AnalyticsMarketing, MiPerfil, Recompensas, EditorImagenes, Tasaciones, ToursVirtuales } from './pages';
+import { Ecommerce, Orders, Calendar, Employees, Stacked, Pyramid, Customers, Kanban, Line, Area, Bar, Pie, Financial, ColorPicker, ColorMapping, Editor, DashboardEjecutivo, Propiedades, ClientesCRM, Agentes, Citas, Ventas, Documentos, Plantillas, Reportes, Integraciones, Consultas, Configuracion, Workflows, Automatizacion, RolesPermisos, Campanas, EmailMarketing, AnalyticsMarketing, MiPerfil, Recompensas, EditorImagenes, Tasaciones, ToursVirtuales } from './pages';
 import Seguridad from './pages/Seguridad';
 import MarketingAI from './pages/MarketingAI';
 import WhatsAppSesiones from './pages/WhatsAppSesiones';
 import Mensajeria from './pages/Mensajeria';
 import AIProviders from './pages/AIProviders';
+import AIObservability from './pages/AIObservability';
 import AIFloatingOrb from './components/ai/AIFloatingOrb';
 import InstallPrompt from './components/pwa/InstallPrompt';
 import NotificationPrompt from './components/pwa/NotificationPrompt';
@@ -409,6 +410,7 @@ const App = () => {
 
                 {/* Otras páginas */}
                 <Route path="/tareas" element={<Navigate to="/citas" replace />} />
+                <Route path="/consultas" element={<Consultas />} />
                 <Route path="/integraciones" element={<Integraciones />} />
                 <Route path="/configuracion" element={<Configuracion />} />
                 <Route path="/perfil" element={<MiPerfil />} />
@@ -457,6 +459,7 @@ const App = () => {
                 <Route path="/analytics-marketing" element={<AnalyticsMarketing />} />
                 <Route path="/marketing-ai" element={<MarketingAI />} />
                 <Route path="/ai-providers" element={<AIProviders />} />
+                <Route path="/ai-observability" element={<AIObservability />} />
 
                 {/* Módulos Avanzados - Atención al Cliente */}
                 <Route path="/tickets" element={<Workflows />} />

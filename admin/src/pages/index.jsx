@@ -27,6 +27,7 @@ export { default as Plantillas } from './Plantillas';
 export { default as Reportes } from './Reportes';
 export { default as Tareas } from './Tareas';
 export { default as Integraciones } from './Integraciones';
+export { default as Consultas } from './Consultas';
 export { default as Configuracion } from './Configuracion';
 
 // Módulos Avanzados
@@ -42,3 +43,4 @@ export { default as Mensajeria } from './Mensajeria';
 export { default as EditorImagenes } from './EditorImagenes';
 export { default as Tasaciones } from './Tasaciones';
 export { default as ToursVirtuales } from './ToursVirtuales';
+export { default as AIObservability } from './AIObservability';

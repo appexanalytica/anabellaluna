@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { MdSpaceDashboard, MdOutlineCancel, MdOutlineIntegrationInstructions } from 'react-icons/md';
-import { FaUsers, FaRegCalendarAlt, FaDollarSign, FaChartBar, FaTrophy, FaBuilding, FaUserTie, FaFileAlt, FaMagic, FaImage, FaBalanceScale, FaRobot, FaCog, FaVrCardboard } from 'react-icons/fa';
+import { FaUsers, FaRegCalendarAlt, FaDollarSign, FaChartBar, FaTrophy, FaBuilding, FaUserTie, FaFileAlt, FaMagic, FaImage, FaBalanceScale, FaRobot, FaCog, FaVrCardboard, FaEye, FaEnvelope } from 'react-icons/fa';
 
 const WhatsAppSessionIcon = () => (
   <img src="/whatsapp.svg" width="18" height="18" alt="WhatsApp" />
@@ -17,6 +17,7 @@ const menuItems = [
   { name: 'Agentes', path: '/agentes', icon: <FaUserTie /> },
   { name: 'Operaciones', path: '/operaciones', icon: <FaDollarSign /> },
   { name: 'Agenda', path: '/citas', icon: <FaRegCalendarAlt /> },
+  { name: 'Consultas', path: '/consultas', icon: <FaEnvelope /> },
   { name: 'Bandeja WA', path: '/mensajeria', icon: <img src="/whatsapp.svg" width="18" height="18" alt="WhatsApp" /> },
   { name: 'Archivos', path: '/archivos', icon: <FaFileAlt /> },
   { name: 'Editor', path: '/editor-imagenes', icon: <FaImage /> },
@@ -28,6 +29,7 @@ const menuItems = [
   { name: 'Integraciones', path: '/integraciones', icon: <MdOutlineIntegrationInstructions /> },
   { name: 'Marketing AI', path: '/marketing-ai', icon: <FaRobot /> },
   { name: 'AI Config', path: '/ai-providers', icon: <FaCog /> },
+  { name: 'Observabilidad IA', path: '/ai-observability', icon: <FaEye /> },
 ];
 
 const Sidebar = () => {
