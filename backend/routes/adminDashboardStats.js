@@ -1,4 +1,5 @@
 const express = require('express');
+const { authenticateTokenOrService } = require('../middlewares/serviceAuth');
 const Cliente = require('../models/Cliente');
 const Propiedad = require('../models/Propiedad');
 const Tarea = require('../models/Tarea');
@@ -49,7 +50,7 @@ function getAgentCommission(op) {
 }
 
 // ============ GET /admin/stats/dashboard ============
-router.get('/dashboard', authenticateToken, requireRole('admin'), async (req, res) => {
+router.get('/dashboard', authenticateTokenOrService, requireRole('admin'), async (req, res) => {
   try {
     const now = new Date();
     const thisMonthStart = startOfMonth(now);

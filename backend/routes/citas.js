@@ -33,7 +33,7 @@ function computeEndDate(start, end) {
   return new Date(s.getTime() + 60 * 60 * 1000);
 }
 
-router.get('/', authenticateToken, requireCRMUser, async (req, res) => {
+router.get('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const { q } = req.query;
     const scopeId = agentScopeId(req);

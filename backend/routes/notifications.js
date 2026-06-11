@@ -29,7 +29,7 @@ function applyVisibilityFilter(filter, now = new Date()) {
 }
 
 // Get all notifications for agent (with pagination and filters)
-router.get('/', authenticateToken, requireCRMUser, async (req, res) => {
+router.get('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const { leida, tipo, limite = 50, pagina = 1, prioridad } = req.query;

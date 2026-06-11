@@ -1,4 +1,5 @@
 const express = require('express');
+const { authenticateTokenOrService } = require('../middlewares/serviceAuth');
 const Cliente = require('../models/Cliente');
 const Propiedad = require('../models/Propiedad');
 const Tarea = require('../models/Tarea');
@@ -36,7 +37,7 @@ function monthsAgo(n) {
 const MONTH_LABELS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 // ============ GET /crm/stats/dashboard ============
-router.get('/dashboard', authenticateToken, requireCRMUser, async (req, res) => {
+router.get('/dashboard', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const clienteFilter = scopeId ? { agenteId: scopeId } : {};

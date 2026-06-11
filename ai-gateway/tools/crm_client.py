@@ -149,10 +149,10 @@ class CRMClient:
     # ── Dashboard / Métricas ────────────────────────────────────────────────
 
     async def get_dashboard_stats(self) -> dict:
-        return await self._request("GET", "/admin/stats")
+        return await self._request("GET", "/admin/stats/dashboard")
 
     async def get_agent_dashboard_stats(self, agente_id: str) -> dict:
-        return await self._request("GET", "/crm/stats", params={"agenteId": agente_id})
+        return await self._request("GET", "/crm/stats/dashboard", params={"agenteId": agente_id})
 
     # ── Notificaciones ──────────────────────────────────────────────────────
 

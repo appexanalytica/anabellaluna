@@ -79,7 +79,7 @@ async function enrichMetadata(body, req) {
   return meta;
 }
 
-router.get('/', authenticateToken, requireCRMUser, async (req, res) => {
+router.get('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const { q } = req.query;
     const scopeId = agentScopeId(req);

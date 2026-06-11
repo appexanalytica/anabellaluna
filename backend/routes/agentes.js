@@ -70,7 +70,7 @@ router.get('/for-assignment', authenticateToken, requireCRMUser, async (req, res
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.get('/', authenticateToken, requireCRMUser, async (req, res) => {
+router.get('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
 
   try {
 

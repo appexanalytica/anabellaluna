@@ -28,7 +28,7 @@ const isImageDoc = (doc) => {
 
 const router = express.Router();
 
-router.get('/', authenticateToken, requireCRMUser, async (req, res) => {
+router.get('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const { q } = req.query;
     const scopeId = agentScopeId(req);
@@ -118,7 +118,7 @@ router.get('/inmobiliaria', authenticateToken, requireCRMUser, async (req, res) 
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.get('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.get('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const item = await Propiedad.findById(req.params.id).lean();
     if (!item) return res.status(404).json({ error: 'Not found' });

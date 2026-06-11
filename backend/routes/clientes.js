@@ -111,7 +111,7 @@ async function notifyClientAssignment(agenteId, clienteName, clienteId, assigner
   }
 }
 
-router.get('/', authenticateToken, requireCRMUser, async (req, res) => {
+router.get('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const { q } = req.query;
     const scopeId = agentScopeId(req);
@@ -127,7 +127,7 @@ router.get('/', authenticateToken, requireCRMUser, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.get('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.get('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const item = await Cliente.findById(req.params.id).lean();

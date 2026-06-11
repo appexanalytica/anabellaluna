@@ -142,7 +142,7 @@ router.get('/kanban', authenticateToken, requireCRMUser, async (req, res) => {
 });
 
 // ── LIST (advanced filters) ──────────────────────────────────────────
-router.get('/', authenticateToken, requireCRMUser, async (req, res) => {
+router.get('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const { status, priority, q, assigneeId, teamId, clienteId, propiedadId, creatorId, overdue, inactive } = req.query;
     const vis = await visibilityFilter(req);
