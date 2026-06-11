@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { confirmToast } from '../utils/confirmToast';
-import { FaGoogle, FaCheck, FaTimes, FaCopy, FaEye, FaEyeSlash, FaSave, FaTrash, FaExternalLinkAlt, FaStar, FaRegStar, FaSync, FaUnlink } from 'react-icons/fa';
+import { FaGoogle, FaCheck, FaTimes, FaCopy, FaEye, FaEyeSlash, FaSave, FaTrash, FaExternalLinkAlt, FaStar, FaRegStar, FaSync, FaUnlink, FaRss, FaCog, FaCode, FaKey } from 'react-icons/fa';
 import { Header } from '../components';
 import { useStateContext } from '../contexts/ContextProvider';
 import whatsappService from '../services/whatsappService';
@@ -325,6 +325,180 @@ const Integraciones = () => {
     navigator.clipboard.writeText(text);
     setCopied(label);
     setTimeout(() => setCopied(''), 2000);
+  };
+
+  // ── Portales Inmobiliarios ──────────────────────────────────
+  const [portalesList, setPortalesList] = useState([]);
+  const [portalesLoading, setPortalesLoading] = useState(false);
+  const [portalModal, setPortalModal] = useState(null);
+  const [portalForm, setPortalForm] = useState({
+    enabled: false,
+    inmobiliariaNombre: '',
+    contactEmail: '',
+    contactPhone: '',
+    accountId: '',
+    accountEmail: '',
+  });
+  const [portalSaving, setPortalSaving] = useState(false);
+  const [portalPreview, setPortalPreview] = useState('');
+
+  const loadPortales = useCallback(async () => {
+    setPortalesLoading(true);
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_URL}/admin/portales`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPortalesList(Array.isArray(data.portales) ? data.portales : []);
+      }
+    } catch (err) {
+      console.error('Error loading portales:', err);
+    } finally {
+      setPortalesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadPortales(); }, [loadPortales]);
+
+  const buildFeedUrl = (portal) => (
+    portal && portal.feedToken
+      ? `${API_URL}/public/feeds/${portal.key}.xml?token=${portal.feedToken}`
+      : ''
+  );
+
+  const openPortalModal = async (portal) => {
+    setPortalPreview('');
+    setPortalModal(portal);
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_URL}/admin/portales/${portal.key}/config`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPortalForm({
+          enabled: !!data.enabled,
+          inmobiliariaNombre: data.inmobiliariaNombre || '',
+          contactEmail: data.contactEmail || '',
+          contactPhone: data.contactPhone || '',
+          accountId: data.accountId || '',
+          accountEmail: data.accountEmail || '',
+        });
+        setPortalModal({ ...portal, feedToken: data.feedToken || '', stats: data.stats || {} });
+      }
+    } catch (err) {
+      toast.error('Error al cargar la configuración del portal');
+    }
+  };
+
+  const savePortal = async () => {
+    if (!portalModal) return;
+    setPortalSaving(true);
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_URL}/admin/portales/${portalModal.key}/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(portalForm),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPortalModal((prev) => ({ ...prev, feedToken: data.config.feedToken || '' }));
+        toast.success(`Configuración de ${portalModal.nombre} guardada`);
+        await loadPortales();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Error al guardar');
+      }
+    } catch (err) {
+      toast.error('Error de conexión');
+    } finally {
+      setPortalSaving(false);
+    }
+  };
+
+  const togglePortal = async (portal) => {
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_URL}/admin/portales/${portal.key}/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ enabled: !portal.enabled }),
+      });
+      if (res.ok) {
+        toast.success(`${portal.nombre} ${portal.enabled ? 'desactivado' : 'activado'}`);
+        await loadPortales();
+      }
+    } catch (err) {
+      toast.error('Error al cambiar el estado del portal');
+    }
+  };
+
+  const regeneratePortalToken = async () => {
+    if (!portalModal) return;
+    if (!(await confirmToast('¿Regenerar el token del feed? La URL anterior dejará de funcionar y deberás informarla nuevamente al portal.'))) return;
+    setPortalSaving(true);
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_URL}/admin/portales/${portalModal.key}/regenerate-token`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPortalModal((prev) => ({ ...prev, feedToken: data.feedToken }));
+        toast.success('Token regenerado');
+        await loadPortales();
+      }
+    } catch (err) {
+      toast.error('Error al regenerar el token');
+    } finally {
+      setPortalSaving(false);
+    }
+  };
+
+  const deletePortal = async () => {
+    if (!portalModal) return;
+    if (!(await confirmToast(`¿Eliminar la configuración de ${portalModal.nombre}? El feed dejará de estar disponible.`))) return;
+    setPortalSaving(true);
+    try {
+      const token = getAuthToken();
+      await fetch(`${API_URL}/admin/portales/${portalModal.key}/config`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success('Configuración eliminada');
+      setPortalModal(null);
+      await loadPortales();
+    } catch (err) {
+      toast.error('Error al eliminar');
+    } finally {
+      setPortalSaving(false);
+    }
+  };
+
+  const previewPortalFeed = async () => {
+    if (!portalModal) return;
+    setPortalSaving(true);
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_URL}/admin/portales/${portalModal.key}/preview`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPortalPreview(data.xml || '');
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Error al generar la vista previa');
+      }
+    } catch (err) {
+      toast.error('Error de conexión');
+    } finally {
+      setPortalSaving(false);
+    }
   };
 
   if (loading) {
@@ -735,26 +909,300 @@ const Integraciones = () => {
         />
       )}
 
-      {/* Other integrations (placeholder) */}
-      <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Otras Integraciones</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[
-          { nombre: 'ZonaProp', descripcion: 'Portal inmobiliario líder', conectado: false, logo: '🏢' },
-          { nombre: 'ArgentinaProp', descripcion: 'Publicación de propiedades', conectado: false, logo: '🏘️' },
-          { nombre: 'Mailchimp', descripcion: 'Email marketing', conectado: false, logo: '📧' },
-        ].map((int, index) => (
-          <div key={index} className={`rounded-2xl p-6 border opacity-60 ${isDark ? 'bg-secondary-dark-bg border-gray-700/50' : 'bg-white border-gray-100'}`}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-4xl">{int.logo}</div>
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isDark ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>
-                Próximamente
-              </span>
-            </div>
-            <h3 className={`text-lg font-bold mb-2 ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>{int.nombre}</h3>
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{int.descripcion}</p>
-          </div>
-        ))}
+      {/* ── Portales Inmobiliarios ─────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-end justify-between gap-3 mb-4 mt-8">
+        <div>
+          <h3 className={`text-lg font-semibold flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            <FaRss style={{ color: currentColor }} /> Portales Inmobiliarios
+          </h3>
+          <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            Sindicación automática de propiedades publicadas mediante feeds XML que cada portal consume
+          </p>
+        </div>
+        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+          portalesList.some((p) => p.enabled)
+            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+        }`}>
+          {portalesList.filter((p) => p.enabled).length}/{portalesList.length} activos
+        </span>
       </div>
+
+      {portalesLoading ? (
+        <div className="flex justify-center py-10">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: currentColor }}></div>
+        </div>
+      ) : (
+        [1, 2].map((fase) => (
+          <div key={fase} className="mb-6">
+            <h4 className={`text-sm font-semibold uppercase tracking-wide mb-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              {fase === 1 ? 'Portales nacionales' : 'Portales regionales'}
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {portalesList.filter((p) => p.fase === fase).map((p) => (
+                <div
+                  key={p.key}
+                  className={`rounded-2xl p-5 border transition-shadow ${
+                    isDark
+                      ? 'bg-secondary-dark-bg border-gray-700/50 hover:border-indigo-500/30'
+                      : 'bg-white border-gray-100 shadow-md hover:shadow-lg'
+                  }`}
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0"
+                      style={{ backgroundColor: p.color }}
+                    >
+                      {p.nombre.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className={`font-bold truncate ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>{p.nombre}</h3>
+                        <a href={p.sitio} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                          <FaExternalLinkAlt className="text-xs" />
+                        </a>
+                      </div>
+                      <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{p.descripcion}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                      p.enabled
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${p.enabled ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                      {p.enabled ? 'Activo' : 'Inactivo'}
+                    </span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-mono ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>
+                      {p.formato === 'trovit' ? 'Feed Trovit' : 'Feed XML'}
+                    </span>
+                  </div>
+                  {p.stats && p.stats.lastPulledAt && (
+                    <p className={`text-xs mb-3 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                      Último acceso del portal: {new Date(p.stats.lastPulledAt).toLocaleString('es-AR')} ({p.stats.pullCount} lecturas)
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openPortalModal(p)}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-white transition-all shadow-sm hover:shadow-md"
+                      style={{ backgroundColor: currentColor }}
+                    >
+                      <FaCog /> Configurar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => togglePortal(p)}
+                      className={`px-3 py-2 rounded-xl text-sm font-medium border transition-colors ${
+                        p.enabled
+                          ? 'border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20'
+                          : 'border-green-300 text-green-600 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-900/20'
+                      }`}
+                    >
+                      {p.enabled ? 'Desactivar' : 'Activar'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      )}
+
+      {/* ── Modal de configuración de portal ───────────────────────────────── */}
+      {portalModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setPortalModal(null)}
+        >
+          <div
+            className={`w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl p-6 ${isDark ? 'bg-secondary-dark-bg' : 'bg-white'}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 mb-5">
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shrink-0"
+                style={{ backgroundColor: portalModal.color }}
+              >
+                {portalModal.nombre.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
+              </div>
+              <div className="flex-1">
+                <h3 className={`text-xl font-bold ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>{portalModal.nombre}</h3>
+                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{portalModal.descripcion}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPortalModal(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className={`rounded-lg p-4 mb-5 ${isDark ? 'bg-blue-900/20' : 'bg-blue-50'}`}>
+              <h4 className={`font-semibold text-sm mb-2 ${isDark ? 'text-blue-300' : 'text-blue-800'}`}>
+                📋 Cómo habilitar la integración
+                {' '}
+                <a href={portalModal.docsUrl} target="_blank" rel="noopener noreferrer" className="underline font-normal">
+                  (documentación oficial <FaExternalLinkAlt className="inline text-xs" />)
+                </a>
+              </h4>
+              <ol className={`text-sm space-y-1 list-decimal list-inside ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>
+                {(portalModal.pasos || []).map((paso, i) => (
+                  <li key={i}>{paso}</li>
+                ))}
+              </ol>
+            </div>
+
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <p className={`font-medium text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Estado del feed</p>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Al activarlo se genera la URL que el portal consultará periódicamente
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPortalForm((prev) => ({ ...prev, enabled: !prev.enabled }))}
+                className={`relative w-12 h-6 rounded-full transition-colors ${portalForm.enabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+              >
+                <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${portalForm.enabled ? 'left-6' : 'left-0.5'}`}></span>
+              </button>
+            </div>
+
+            {portalModal.feedToken ? (
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  URL del feed (entregar al portal)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={buildFeedUrl(portalModal)}
+                    readOnly
+                    className="flex-1 px-4 py-2 border rounded-lg bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 text-xs font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(buildFeedUrl(portalModal), `feed-${portalModal.key}`)}
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    title="Copiar URL"
+                  >
+                    {copied === `feed-${portalModal.key}` ? <FaCheck className="text-green-600" /> : <FaCopy className="dark:text-gray-300" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={regeneratePortalToken}
+                    disabled={portalSaving}
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                    title="Regenerar token"
+                  >
+                    <FaKey className="dark:text-gray-300" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className={`mb-5 p-3 rounded-lg text-sm ${isDark ? 'bg-yellow-900/20 text-yellow-400' : 'bg-yellow-50 text-yellow-700'}`}>
+                Guardá la configuración con el feed activado para generar la URL del feed.
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre de la inmobiliaria</label>
+                <input
+                  type="text"
+                  value={portalForm.inmobiliariaNombre}
+                  onChange={(e) => setPortalForm((prev) => ({ ...prev, inmobiliariaNombre: e.target.value }))}
+                  placeholder="Anabella Luna Propiedades"
+                  className="w-full px-4 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ID / usuario en el portal</label>
+                <input
+                  type="text"
+                  value={portalForm.accountId}
+                  onChange={(e) => setPortalForm((prev) => ({ ...prev, accountId: e.target.value }))}
+                  placeholder="Identificador de la cuenta (opcional)"
+                  className="w-full px-4 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email de la cuenta en el portal</label>
+                <input
+                  type="email"
+                  value={portalForm.accountEmail}
+                  onChange={(e) => setPortalForm((prev) => ({ ...prev, accountEmail: e.target.value }))}
+                  placeholder="cuenta@inmobiliaria.com (opcional)"
+                  className="w-full px-4 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email de contacto (en el feed)</label>
+                <input
+                  type="email"
+                  value={portalForm.contactEmail}
+                  onChange={(e) => setPortalForm((prev) => ({ ...prev, contactEmail: e.target.value }))}
+                  placeholder="consultas@inmobiliaria.com"
+                  className="w-full px-4 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Teléfono de contacto (en el feed)</label>
+                <input
+                  type="text"
+                  value={portalForm.contactPhone}
+                  onChange={(e) => setPortalForm((prev) => ({ ...prev, contactPhone: e.target.value }))}
+                  placeholder="+54 9 11 ..."
+                  className="w-full px-4 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+                />
+              </div>
+            </div>
+
+            {portalPreview && (
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Vista previa del feed (primeras 3 propiedades)
+                </label>
+                <pre className="text-xs p-3 rounded-lg overflow-x-auto max-h-64 bg-gray-900 text-green-300">
+                  {portalPreview}
+                </pre>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={savePortal}
+                disabled={portalSaving}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium transition-all shadow-sm hover:shadow-md disabled:opacity-50"
+                style={{ backgroundColor: currentColor }}
+              >
+                <FaSave /> {portalSaving ? 'Guardando...' : 'Guardar'}
+              </button>
+              <button
+                type="button"
+                onClick={previewPortalFeed}
+                disabled={portalSaving}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+              >
+                <FaCode /> Vista previa del feed
+              </button>
+              <button
+                type="button"
+                onClick={deletePortal}
+                disabled={portalSaving}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-red-500 hover:bg-red-600 text-white transition-colors disabled:opacity-50 ml-auto"
+              >
+                <FaTrash /> Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -114,6 +114,7 @@ const pushRoutes = require('./routes/push');
 
 const clientInteractionsRoutes = require('./routes/clientInteractions');
 const mercadoLibreRoutes = require('./routes/mercadolibre');
+const portalesRoutes = require('./routes/portales');
 const marketingAIRoutes = require('./routes/marketing-ai/index');
 const aiChatRoutes = require('./routes/ai-chat');
 const adminAIConfigRoutes = require('./routes/admin/ai-config');
@@ -235,6 +236,8 @@ app.use('/auth/2fa', twoFactorRouter);
 
 app.use('/public/tours', virtualToursRoutes.publicRouter);
 
+app.use('/public/feeds', portalesRoutes.feedRouter);
+
 app.use('/public', publicRoutes);
 
 app.use('/audit', auditRoutes);
@@ -288,6 +291,8 @@ app.use('/admin/notifications', adminNotificationsRoutes);
 app.use('/admin/config', globalConfigRoutes);
 
 app.use('/admin/ml', mercadoLibreRoutes);
+
+app.use('/admin/portales', portalesRoutes.adminRouter);
 app.use('/admin/config/ai', adminAIConfigRoutes);
 
 // Admin KPI: reservadas count (operaciones tipo Reserva + contratos de reserva generados)
