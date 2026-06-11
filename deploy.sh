@@ -266,7 +266,7 @@ if should_run "backend"; then
       pm2 restart ai-worker-arq --update-env
       ok "PM2 'ai-worker-arq' reiniciado"
     else
-      pm2 start "python3 -m queues.worker" \
+      pm2 start "$AI_GATEWAY_DIR/venv/bin/arq queues.worker.WorkerSettings" \
         --name "ai-worker-arq" \
         --cwd "$AI_GATEWAY_DIR" \
         --max-memory-restart 512M \

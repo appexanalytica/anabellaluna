@@ -126,8 +126,8 @@ module.exports = {
     // Requiere: mismas dependencias que ai-gateway
     {
       name: 'ai-worker-arq',
-      script: '/var/www/anabella/ai-gateway/venv/bin/python3',
-      args: '-m queues.worker',
+      script: '/var/www/anabella/ai-gateway/venv/bin/arq',
+      args: 'queues.worker.WorkerSettings',
       cwd: '/var/www/anabella/ai-gateway',
       interpreter: 'none',
       instances: 1,
