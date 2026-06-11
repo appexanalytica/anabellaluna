@@ -5,7 +5,9 @@ const Message = require('../models/Message');
 const Agente = require('../models/Agente');
 const User = require('../models/User');
 const { authenticateToken, requireCRMUser } = require('../auth');
+const { authenticateTokenOrService } = require('../middlewares/serviceAuth');
 const { sendNotification } = require('../services/pushService');
+const { publishEventAsync, metaFromRequest } = require('../utils/redisStreams');
 
 // Helper to validate ObjectId
 function isValidObjectId(id) {
@@ -23,8 +25,17 @@ function isValidObjectId(id) {
 // - For agents: agenteId is set (or we lookup by email), sub is User._id
 // - For admins: agenteId is null, sub is User._id (use sub as the ID)
 async function getUserFromToken(req) {
+  // Service-to-service calls: trust senderId from body
+  if (req.serviceAuth && req.body && req.body.senderId) {
+    return {
+      id: String(req.body.senderId),
+      type: req.body.senderType || 'agent',
+      role: 'service',
+    };
+  }
+
   const user = req.user || {};
-  
+
   // If agenteId is set in token, use it
   if (user.agenteId) {
     return {
@@ -282,7 +293,7 @@ router.get('/history/:partnerId', authenticateToken, requireCRMUser, async (req,
 // ==================== SEND MESSAGE ====================
 
 // Send a new message
-router.post('/send', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/send', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const currentUser = await getUserFromToken(req);
     const { receiverId, content, contentType = 'text', attachment, receiverType = 'agent' } = req.body;
@@ -325,7 +336,14 @@ router.post('/send', authenticateToken, requireCRMUser, async (req, res) => {
     // Populate sender info for response
     await message.populate('senderId', 'nombre avatar');
     await message.populate('receiverId', 'nombre avatar');
-    
+
+    publishEventAsync('message.sent', {
+      message_id: String(message._id),
+      sender_id: String(message.senderId?._id || message.senderId),
+      receiver_id: String(message.receiverId?._id || message.receiverId),
+      content_type: message.contentType || 'text',
+    }, metaFromRequest(req));
+
     res.status(201).json(message);
   } catch (error) {
     console.error('Error sending message:', error);
@@ -336,7 +354,7 @@ router.post('/send', authenticateToken, requireCRMUser, async (req, res) => {
 // ==================== READ STATUS ====================
 
 // Mark all messages from a partner as read
-router.put('/read/:partnerId', authenticateToken, requireCRMUser, async (req, res) => {
+router.put('/read/:partnerId', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const currentUser = await getUserFromToken(req);
     const { partnerId } = req.params;
@@ -358,6 +376,22 @@ router.put('/read/:partnerId', authenticateToken, requireCRMUser, async (req, re
   } catch (error) {
     console.error('Error marking messages as read:', error);
     res.status(500).json({ error: 'Error al marcar como leído' });
+  }
+});
+
+// Mark a single message as read by ID
+router.patch('/:messageId/read', authenticateTokenOrService, requireCRMUser, async (req, res) => {
+  try {
+    const updated = await Message.findByIdAndUpdate(
+      req.params.messageId,
+      { $set: { read: true, readAt: new Date() } },
+      { new: true },
+    ).lean();
+    if (!updated) return res.status(404).json({ error: 'Message not found' });
+    res.json(updated);
+  } catch (error) {
+    console.error('Error marking message as read:', error);
+    res.status(500).json({ error: 'Error al marcar mensaje como leído' });
   }
 });
 
@@ -412,7 +446,7 @@ router.get('/unread', authenticateToken, requireCRMUser, async (req, res) => {
 // ==================== CLEAR ALL MESSAGES (Admin only) ====================
 
 // Delete all messages in the system (admin only)
-router.delete('/clear-all', authenticateToken, requireCRMUser, async (req, res) => {
+router.delete('/clear-all', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const currentUser = await getUserFromToken(req);
 
@@ -421,6 +455,11 @@ router.delete('/clear-all', authenticateToken, requireCRMUser, async (req, res) 
     }
 
     const result = await Message.deleteMany({});
+
+    publishEventAsync('message.clear_all', {
+      deleted_count: result.deletedCount,
+      cleared_by: currentUser.id,
+    }, metaFromRequest(req));
 
     res.json({
       success: true,
@@ -436,7 +475,7 @@ router.delete('/clear-all', authenticateToken, requireCRMUser, async (req, res) 
 // ==================== DELETE MESSAGE ====================
 
 // Delete a message (only sender can delete)
-router.delete('/:messageId', authenticateToken, requireCRMUser, async (req, res) => {
+router.delete('/:messageId', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const currentUser = await getUserFromToken(req);
     const { messageId } = req.params;
@@ -457,7 +496,12 @@ router.delete('/:messageId', authenticateToken, requireCRMUser, async (req, res)
     }
     
     await Message.findByIdAndDelete(messageId);
-    
+
+    publishEventAsync('message.deleted', {
+      message_id: String(messageId),
+      deleted_by: currentUser.id,
+    }, metaFromRequest(req));
+
     res.json({ success: true });
   } catch (error) {
     console.error('Error deleting message:', error);
@@ -468,7 +512,7 @@ router.delete('/:messageId', authenticateToken, requireCRMUser, async (req, res)
 // ==================== BROADCAST (ERP to all agents) ====================
 
 // Send broadcast message from ERP to all agents
-router.post('/broadcast', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/broadcast', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const currentUser = await getUserFromToken(req);
     
@@ -513,8 +557,14 @@ router.post('/broadcast', authenticateToken, requireCRMUser, async (req, res) =>
       })
     );
     
-    res.status(201).json({ 
-      success: true, 
+    publishEventAsync('message.broadcast', {
+      sender_id: currentUser.id,
+      recipients_count: messages.length,
+      content_type: contentType,
+    }, metaFromRequest(req));
+
+    res.status(201).json({
+      success: true,
       sentTo: messages.length,
       message: 'Broadcast enviado a todos los agentes'
     });
@@ -527,7 +577,7 @@ router.post('/broadcast', authenticateToken, requireCRMUser, async (req, res) =>
 // ==================== ONLINE STATUS ====================
 
 // Update online status for current user
-router.put('/status/online', authenticateToken, requireCRMUser, async (req, res) => {
+router.put('/status/online', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const currentUser = await getUserFromToken(req);
     const { online } = req.body;
@@ -553,7 +603,7 @@ router.put('/status/online', authenticateToken, requireCRMUser, async (req, res)
 // ==================== GROUP CHAT ====================
 
 // Create or get a group conversation
-router.post('/group/create', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/group/create', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const currentUser = await getUserFromToken(req);
     const { name, participantIds } = req.body;
@@ -599,7 +649,7 @@ router.post('/group/create', authenticateToken, requireCRMUser, async (req, res)
 });
 
 // Send message to a group
-router.post('/group/:groupId/send', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/group/:groupId/send', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const currentUser = await getUserFromToken(req);
     const { groupId } = req.params;
@@ -660,7 +710,7 @@ router.get('/group/:groupId/history', authenticateToken, requireCRMUser, async (
 // ==================== TYPING INDICATOR (optional) ====================
 
 // This would typically be handled via WebSockets, but here's a polling endpoint
-router.post('/typing', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/typing', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const currentUser = await getUserFromToken(req);
     const { partnerId, isTyping } = req.body;

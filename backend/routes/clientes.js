@@ -4,8 +4,10 @@ const Notification = require('../models/Notification');
 const User = require('../models/User');
 const Agente = require('../models/Agente');
 const { authenticateToken, agentScopeId, requireCRMUser } = require('../auth');
+const { authenticateTokenOrService } = require('../middlewares/serviceAuth');
 const { triggerWelcomeAutomation } = require('../services/automationScheduler');
 const { sendNotification, sendToRole } = require('../services/pushService');
+const { publishEventAsync, metaFromRequest } = require('../utils/redisStreams');
 const {
   attachRequestId,
   confirmMissing,
@@ -135,7 +137,7 @@ router.get('/:id', authenticateToken, requireCRMUser, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.post('/', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   attachRequestId(req, res);
   try {
     const scopeId = agentScopeId(req);
@@ -204,6 +206,13 @@ router.post('/', authenticateToken, requireCRMUser, async (req, res) => {
       }
     }
 
+    publishEventAsync('client.created', {
+      client_id: String(persisted._id),
+      agent_id: String(persisted.agenteId || ''),
+      source: persisted.metadata?.fuenteOrigen || '',
+      stage: persisted.metadata?.estado || '',
+    }, metaFromRequest(req));
+
     res.status(201).json(persisted);
   } catch (err) {
     traceMutationError(req, 'cliente.create.failed', err);
@@ -211,7 +220,7 @@ router.post('/', authenticateToken, requireCRMUser, async (req, res) => {
   }
 });
 
-router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.put('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   attachRequestId(req, res);
   try {
     const scopeId = agentScopeId(req);
@@ -285,6 +294,12 @@ router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
       }
     }
 
+    publishEventAsync('client.updated', {
+      client_id: String(persisted._id),
+      agent_id: String(persisted.agenteId || ''),
+      fields: Object.keys(req.body || {}),
+    }, metaFromRequest(req));
+
     res.json(persisted);
   } catch (err) {
     traceMutationError(req, 'cliente.update.failed', err, { clienteId: req.params.id });
@@ -292,7 +307,7 @@ router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
   }
 });
 
-router.patch('/:id/stage', authenticateToken, requireCRMUser, async (req, res) => {
+router.patch('/:id/stage', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const { stage } = req.body;
     const VALID_STAGES = ['Lead', 'Contactado', 'Calificado', 'En Negociación', 'Propuesta', 'Convertido', 'Perdido'];
@@ -308,13 +323,20 @@ router.patch('/:id/stage', authenticateToken, requireCRMUser, async (req, res) =
       { new: true }
     ).lean();
     if (!updated) return res.status(404).json({ error: 'Not found' });
+
+    publishEventAsync('client.stage_changed', {
+      client_id: String(updated._id),
+      agent_id: String(updated.agenteId || ''),
+      stage,
+    }, metaFromRequest(req));
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.delete('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.delete('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   attachRequestId(req, res);
   try {
     const scopeId = agentScopeId(req);
@@ -325,6 +347,12 @@ router.delete('/:id', authenticateToken, requireCRMUser, async (req, res) => {
     if (!deleted) return res.status(404).json({ error: 'Not found' });
     await confirmMissing(Cliente, deleted._id, 'cliente');
     traceMutation(req, 'cliente.delete.persisted', { clienteId: deleted._id });
+
+    publishEventAsync('client.deleted', {
+      client_id: String(deleted._id),
+      agent_id: String(deleted.agenteId || ''),
+    }, metaFromRequest(req));
+
     res.json({ ok: true });
   } catch (err) {
     traceMutationError(req, 'cliente.delete.failed', err, { clienteId: req.params.id });

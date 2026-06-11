@@ -7,6 +7,7 @@ const Operacion = require('../models/Operacion');
 const Cliente = require('../models/Cliente');
 const Propiedad = require('../models/Propiedad');
 const { authenticateToken, agentScopeId, requireCRMUser } = require('../auth');
+const { authenticateTokenOrService } = require('../middlewares/serviceAuth');
 
 const router = express.Router();
 
@@ -92,7 +93,7 @@ router.get('/:id', authenticateToken, requireCRMUser, async (req, res) => {
 });
 
 // Mark notification as read
-router.put('/:id/read', authenticateToken, requireCRMUser, async (req, res) => {
+router.put('/:id/read', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const filter = { _id: req.params.id };
@@ -111,7 +112,7 @@ router.put('/:id/read', authenticateToken, requireCRMUser, async (req, res) => {
 });
 
 // Mark all notifications as read
-router.put('/mark-all-read', authenticateToken, requireCRMUser, async (req, res) => {
+router.put('/mark-all-read', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const filter = { leida: false };
@@ -130,7 +131,7 @@ router.put('/mark-all-read', authenticateToken, requireCRMUser, async (req, res)
 });
 
 // Create notification (internal/system use)
-router.post('/', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const body = { ...(req.body || {}) };
@@ -143,8 +144,35 @@ router.post('/', authenticateToken, requireCRMUser, async (req, res) => {
   }
 });
 
+// Update notification metadata (used for AI suggestion feedback: approve/reject/dismiss)
+router.patch('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+  try {
+    const scopeId = agentScopeId(req);
+    const filter = { _id: req.params.id };
+    if (scopeId) filter.agenteId = scopeId;
+
+    const { feedback, status } = req.body || {};
+    const update = {};
+
+    // Merge feedback into metadata
+    if (feedback) {
+      update['metadata.feedback'] = feedback;
+      update['metadata.feedbackAt'] = new Date();
+    }
+    if (status) {
+      update['metadata.status'] = status;
+    }
+
+    const updated = await Notification.findOneAndUpdate(filter, { $set: update }, { new: true });
+    if (!updated) return res.status(404).json({ error: 'Not found' });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Delete all read notifications
-router.delete('/clear-read', authenticateToken, requireCRMUser, async (req, res) => {
+router.delete('/clear-read', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const filter = { leida: true };
@@ -158,7 +186,7 @@ router.delete('/clear-read', authenticateToken, requireCRMUser, async (req, res)
 });
 
 // Delete notification
-router.delete('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.delete('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const filter = { _id: req.params.id };
@@ -263,7 +291,7 @@ router.get('/calendario', authenticateToken, requireCRMUser, async (req, res) =>
 
 // ============ POST /crm/notifications/generate ============
 // Generates agent-specific notifications from real business events
-router.post('/generate', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/generate', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     if (!scopeId) return res.json({ ok: true, created: 0 });

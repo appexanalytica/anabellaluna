@@ -2,6 +2,7 @@ const express = require('express');
 const Activity = require('../models/Activity');
 const Cliente = require('../models/Cliente');
 const { authenticateToken, agentScopeId, requireCRMUser } = require('../auth');
+const { authenticateTokenOrService } = require('../middlewares/serviceAuth');
 const { triggerFollowUpAutomation } = require('../services/automationScheduler');
 
 const router = express.Router();
@@ -38,7 +39,7 @@ router.get('/:id', authenticateToken, requireCRMUser, async (req, res) => {
   }
 });
 
-router.post('/', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const body = { ...(req.body || {}) };
@@ -75,7 +76,7 @@ router.post('/', authenticateToken, requireCRMUser, async (req, res) => {
   }
 });
 
-router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.put('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const filter = { _id: req.params.id };
@@ -92,7 +93,7 @@ router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
   }
 });
 
-router.delete('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.delete('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const filter = { _id: req.params.id };

@@ -6,6 +6,8 @@ const Agente = require('../models/Agente');
 const Cita = require('../models/Cita');
 const Notification = require('../models/Notification');
 const { authenticateToken, agentScopeId, requireCRMUser } = require('../auth');
+const { authenticateTokenOrService } = require('../middlewares/serviceAuth');
+const { publishEventAsync, metaFromRequest } = require('../utils/redisStreams');
 
 const router = express.Router();
 
@@ -100,7 +102,7 @@ router.get('/kanban/columns', authenticateToken, requireCRMUser, async (_req, re
   res.json(DEFAULT_KANBAN_COLUMNS);
 });
 
-router.put('/kanban/move/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.put('/kanban/move/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const { kanbanColumn, position } = req.body;
     const tarea = await Tarea.findById(req.params.id);
@@ -186,7 +188,7 @@ router.get('/:id', authenticateToken, requireCRMUser, async (req, res) => {
 });
 
 // ── CREATE ───────────────────────────────────────────────────────────
-router.post('/', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const body = { ...(req.body || {}) };
     const scopeId = agentScopeId(req);
@@ -201,12 +203,21 @@ router.post('/', authenticateToken, requireCRMUser, async (req, res) => {
     if (!body.kanbanColumn) body.kanbanColumn = body.status || 'pendiente';
     const tarea = await Tarea.create(body);
     logActivity(tarea._id, req, 'created', { details: `Tarea "${tarea.title}" creada` });
+
+    publishEventAsync('task.created', {
+      task_id: String(tarea._id),
+      agent_id: String(tarea.agenteId || tarea.assigneeId || ''),
+      title: tarea.title || '',
+      priority: tarea.priority || '',
+      due_date: tarea.dueDate || '',
+    }, metaFromRequest(req));
+
     res.status(201).json(tarea);
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
 // ── UPDATE ───────────────────────────────────────────────────────────
-router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.put('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const prev = await Tarea.findById(req.params.id);
     if (!prev) return res.status(404).json({ error: 'Not found' });
@@ -231,12 +242,22 @@ router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
     if (body.dueDate && String(body.dueDate) !== String(prev.dueDate)) {
       logActivity(updated._id, req, 'due_date_changed', { newValue: body.dueDate });
     }
+    if (body.status && body.status !== prev.status) {
+      publishEventAsync('task.status_changed', {
+        task_id: String(updated._id),
+        agent_id: String(updated.assigneeId || updated.agenteId || ''),
+        previous_status: prev.status,
+        new_status: body.status,
+        completed: !!body.completed,
+      }, metaFromRequest(req));
+    }
+
     res.json(updated);
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
 // ── DELETE ────────────────────────────────────────────────────────────
-router.delete('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.delete('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const deleted = await Tarea.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ error: 'Not found' });
@@ -246,7 +267,7 @@ router.delete('/:id', authenticateToken, requireCRMUser, async (req, res) => {
 });
 
 // ── DELEGATE ─────────────────────────────────────────────────────────
-router.post('/:id/delegate', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/:id/delegate', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const { toUserId, toUserName, reason } = req.body || {};
     if (!toUserId) return res.status(400).json({ error: 'toUserId required' });
@@ -277,7 +298,7 @@ router.get('/:id/activity', authenticateToken, requireCRMUser, async (req, res) 
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.post('/:id/comment', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/:id/comment', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const { text } = req.body || {};
     if (!text) return res.status(400).json({ error: 'text required' });
@@ -298,7 +319,7 @@ router.post('/:id/comment', authenticateToken, requireCRMUser, async (req, res) 
 });
 
 // ── CHECKLIST toggle ─────────────────────────────────────────────────
-router.patch('/:id/checklist/:itemId', authenticateToken, requireCRMUser, async (req, res) => {
+router.patch('/:id/checklist/:itemId', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const tarea = await Tarea.findById(req.params.id);
     if (!tarea) return res.status(404).json({ error: 'Not found' });
@@ -314,7 +335,7 @@ router.patch('/:id/checklist/:itemId', authenticateToken, requireCRMUser, async 
 });
 
 // ── RECONTACTO (desde detalle de cliente) ───────────────────────────────
-router.post('/recontacto', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/recontacto', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const { clienteId, clienteNombre, canal, mensaje, periodoDias, crearCita, citaFecha, citaHora, propiedadId, propiedadTitulo } = req.body || {};
     if (!clienteId || !canal || !periodoDias) {

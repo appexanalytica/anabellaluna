@@ -4,8 +4,10 @@ const Propiedad = require('../models/Propiedad');
 const DocumentLink = require('../models/DocumentLink');
 const Cliente = require('../models/Cliente');
 const { authenticateToken, agentScopeId, requireCRMUser } = require('../auth');
+const { authenticateTokenOrService } = require('../middlewares/serviceAuth');
 const { sendNotification, sendToRole } = require('../services/pushService');
 const { syncPropertyToML } = require('../services/mercadoLibre');
+const { publishEventAsync, metaFromRequest } = require('../utils/redisStreams');
 const {
   attachRequestId,
   confirmMissing,
@@ -132,7 +134,7 @@ router.get('/:id', authenticateToken, requireCRMUser, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.post('/', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   attachRequestId(req, res);
   try {
     const scopeId = agentScopeId(req);
@@ -153,6 +155,16 @@ router.post('/', authenticateToken, requireCRMUser, async (req, res) => {
       agentId: persisted.agentId || '',
       slug: persisted.slug || '',
     });
+
+    publishEventAsync('property.created', {
+      property_id: String(persisted._id),
+      agent_id: String(persisted.agentId || ''),
+      title: persisted.title || '',
+      operation_type: persisted.operationType || persisted.metadata?.tipoOperacion || '',
+      price: persisted.price || persisted.metadata?.precio || null,
+      published: !!persisted.published,
+    }, metaFromRequest(req));
+
     res.status(201).json(persisted);
   } catch (err) {
     traceMutationError(req, 'propiedad.create.failed', err);
@@ -160,7 +172,7 @@ router.post('/', authenticateToken, requireCRMUser, async (req, res) => {
   }
 });
 
-router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.put('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   attachRequestId(req, res);
   try {
     const scopeId = agentScopeId(req);
@@ -187,6 +199,13 @@ router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
       propiedadId: persisted._id,
       agentId: persisted.agentId || '',
     });
+
+    publishEventAsync('property.updated', {
+      property_id: String(persisted._id),
+      agent_id: String(persisted.agentId || ''),
+      fields: Object.keys(req.body || {}),
+    }, metaFromRequest(req));
+
     res.json(persisted);
   } catch (err) {
     traceMutationError(req, 'propiedad.update.failed', err, { propiedadId: req.params.id });
@@ -195,7 +214,7 @@ router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
 });
 
 // Toggle published status
-router.patch('/:id/publish', authenticateToken, requireCRMUser, async (req, res) => {
+router.patch('/:id/publish', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const filter = { _id: req.params.id };
@@ -237,11 +256,17 @@ router.patch('/:id/publish', authenticateToken, requireCRMUser, async (req, res)
       }
     });
 
+    publishEventAsync(published ? 'property.published' : 'property.unpublished', {
+      property_id: String(prop._id),
+      agent_id: String(prop.agentId || ''),
+      title: prop.title || '',
+    }, metaFromRequest(req));
+
     res.json({ published: prop.published });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.patch('/:id/visita', authenticateToken, requireCRMUser, async (req, res) => {
+router.patch('/:id/visita', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   attachRequestId(req, res);
   try {
     const scopeId = agentScopeId(req);
@@ -289,7 +314,7 @@ router.patch('/:id/visita', authenticateToken, requireCRMUser, async (req, res) 
 });
 
 // Generate a private share token
-router.post('/:id/private-link', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/:id/private-link', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const filter = { _id: req.params.id };
@@ -303,7 +328,7 @@ router.post('/:id/private-link', authenticateToken, requireCRMUser, async (req, 
 });
 
 // Revoke private share token
-router.delete('/:id/private-link', authenticateToken, requireCRMUser, async (req, res) => {
+router.delete('/:id/private-link', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const filter = { _id: req.params.id };
@@ -316,7 +341,7 @@ router.delete('/:id/private-link', authenticateToken, requireCRMUser, async (req
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.delete('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.delete('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   attachRequestId(req, res);
   try {
     const scopeId = agentScopeId(req);
@@ -327,6 +352,12 @@ router.delete('/:id', authenticateToken, requireCRMUser, async (req, res) => {
     if (!deleted) return res.status(404).json({ error: 'Not found' });
     await confirmMissing(Propiedad, deleted._id, 'propiedad');
     traceMutation(req, 'propiedad.delete.persisted', { propiedadId: deleted._id });
+
+    publishEventAsync('property.deleted', {
+      property_id: String(deleted._id),
+      agent_id: String(deleted.agentId || ''),
+    }, metaFromRequest(req));
+
     res.json({ ok: true });
   } catch (err) {
     traceMutationError(req, 'propiedad.delete.failed', err, { propiedadId: req.params.id });

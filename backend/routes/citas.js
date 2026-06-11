@@ -2,7 +2,9 @@ const express = require('express');
 const Cita = require('../models/Cita');
 const Agente = require('../models/Agente');
 const { authenticateToken, agentScopeId, requireCRMUser } = require('../auth');
+const { authenticateTokenOrService } = require('../middlewares/serviceAuth');
 const googleCalendar = require('../services/googleCalendar');
+const { publishEventAsync, metaFromRequest } = require('../utils/redisStreams');
 const {
   attachRequestId,
   confirmMissing,
@@ -52,7 +54,7 @@ router.get('/:id', authenticateToken, requireCRMUser, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.post('/', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   attachRequestId(req, res);
   try {
     const scopeId = agentScopeId(req);
@@ -111,6 +113,14 @@ router.post('/', authenticateToken, requireCRMUser, async (req, res) => {
       }
     }
 
+    publishEventAsync('visit.scheduled', {
+      visit_id: String(cita._id),
+      agent_id: String(cita.agenteId || ''),
+      client_id: String(cita.clienteId || ''),
+      property_id: String(cita.propiedadId || ''),
+      fecha: cita.fecha || '',
+    }, metaFromRequest(req));
+
     res.status(201).json(cita);
   } catch (err) {
     traceMutationError(req, 'cita.create.failed', err);
@@ -118,7 +128,7 @@ router.post('/', authenticateToken, requireCRMUser, async (req, res) => {
   }
 });
 
-router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.put('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   attachRequestId(req, res);
   try {
     const scopeId = agentScopeId(req);
@@ -203,6 +213,12 @@ router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
       }
     }
 
+    publishEventAsync('visit.updated', {
+      visit_id: String(cita._id),
+      agent_id: String(cita.agenteId || ''),
+      fields: Object.keys(req.body || {}),
+    }, metaFromRequest(req));
+
     res.json(cita);
   } catch (err) {
     traceMutationError(req, 'cita.update.failed', err, { citaId: req.params.id });
@@ -210,7 +226,7 @@ router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
   }
 });
 
-router.delete('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.delete('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   attachRequestId(req, res);
   try {
     const scopeId = agentScopeId(req);
@@ -246,6 +262,11 @@ router.delete('/:id', authenticateToken, requireCRMUser, async (req, res) => {
         }
       }
     }
+
+    publishEventAsync('visit.cancelled', {
+      visit_id: String(deleted._id),
+      agent_id: String(deleted.agenteId || ''),
+    }, metaFromRequest(req));
 
     res.json({ ok: true });
   } catch (err) {

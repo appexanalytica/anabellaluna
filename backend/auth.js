@@ -572,6 +572,12 @@ function requireRole(role) {
 
   return (req, res, next) => {
 
+    // Service-to-service calls bypass role checks
+    if (req.service && req.service.isService) {
+      req.serviceAuth = true;
+      return next();
+    }
+
     if (!req.user) return res.status(401).json({ error: 'missing token' });
 
     const userRole = req.user.role || 'agent';
@@ -609,6 +615,12 @@ function agentScopeId(req) {
 
 
 function requireCRMUser(req, res, next) {
+
+  // Service-to-service calls bypass user checks
+  if (req.service && req.service.isService) {
+    req.serviceAuth = true;
+    return next();
+  }
 
   if (!req.user) return res.status(401).json({ error: 'missing token' });
 

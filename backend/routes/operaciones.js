@@ -5,6 +5,8 @@ const Cliente = require('../models/Cliente');
 const Agente = require('../models/Agente');
 const User = require('../models/User');
 const { authenticateToken, agentScopeId, requireCRMUser } = require('../auth');
+const { authenticateTokenOrService } = require('../middlewares/serviceAuth');
+const { publishEventAsync, metaFromRequest } = require('../utils/redisStreams');
 
 const router = express.Router();
 
@@ -98,18 +100,27 @@ router.get('/:id', authenticateToken, requireCRMUser, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.post('/', authenticateToken, requireCRMUser, async (req, res) => {
+router.post('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const body = { ...(req.body || {}) };
     if (scopeId) body.agenteId = scopeId;
     body.metadata = await enrichMetadata(body, req);
     const created = await Operacion.create(body);
+
+    publishEventAsync('deal.created', {
+      deal_id: String(created._id),
+      agent_id: String(created.agenteId || ''),
+      type: created.tipo || '',
+      client_id: String(created.clienteId || ''),
+      property_id: String(created.propiedadId || ''),
+    }, metaFromRequest(req));
+
     res.status(201).json(created);
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
-router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.put('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const filter = { _id: req.params.id };
@@ -119,11 +130,19 @@ router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
     body.metadata = await enrichMetadata(body, req);
     const updated = await Operacion.findOneAndUpdate(filter, body, { new: true, runValidators: true });
     if (!updated) return res.status(404).json({ error: 'Not found' });
+
+    publishEventAsync('deal.updated', {
+      deal_id: String(updated._id),
+      agent_id: String(updated.agenteId || ''),
+      status: updated.estado || updated.metadata?.estado || '',
+      fields: Object.keys(req.body || {}),
+    }, metaFromRequest(req));
+
     res.json(updated);
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
-router.delete('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.delete('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
     const filter = { _id: req.params.id };

@@ -13,6 +13,7 @@ const AgentMetrics = require('../models/AgentMetrics');
 const Operacion = require('../models/Operacion');
 
 const { authenticateToken, requireRole, agentScopeId, requireCRMUser } = require('../auth');
+const { authenticateTokenOrService } = require('../middlewares/serviceAuth');
 
 
 
@@ -111,7 +112,7 @@ router.get('/:id', authenticateToken, requireCRMUser, async (req, res) => {
 
 
 
-router.post('/', authenticateToken, requireRole('admin'), async (req, res) => {
+router.post('/', authenticateTokenOrService, requireRole('admin'), async (req, res) => {
 
   try {
 
@@ -125,7 +126,7 @@ router.post('/', authenticateToken, requireRole('admin'), async (req, res) => {
 
 
 
-router.post('/create-with-user', authenticateToken, requireRole('admin'), async (req, res) => {
+router.post('/create-with-user', authenticateTokenOrService, requireRole('admin'), async (req, res) => {
 
   try {
 
@@ -199,7 +200,7 @@ router.post('/create-with-user', authenticateToken, requireRole('admin'), async 
 
 
 
-router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
+router.put('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
 
   try {
 
@@ -220,7 +221,7 @@ router.put('/:id', authenticateToken, requireCRMUser, async (req, res) => {
 
 
 // Reset agent password (admin only)
-router.post('/:id/reset-password', authenticateToken, requireRole('admin'), async (req, res) => {
+router.post('/:id/reset-password', authenticateTokenOrService, requireRole('admin'), async (req, res) => {
   try {
     const agente = await Agente.findById(req.params.id).lean();
     if (!agente) return res.status(404).json({ error: 'Agente no encontrado' });
@@ -247,7 +248,7 @@ router.post('/:id/reset-password', authenticateToken, requireRole('admin'), asyn
   }
 });
 
-router.delete('/:id', authenticateToken, requireRole('admin'), async (req, res) => {
+router.delete('/:id', authenticateTokenOrService, requireRole('admin'), async (req, res) => {
 
   try {
 

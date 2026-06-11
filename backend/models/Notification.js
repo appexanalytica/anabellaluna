@@ -29,6 +29,7 @@ const NotificationSchema = new mongoose.Schema({
       'meta_cumplida',        // Goal achieved
       'reporte_diario',       // Daily summary report
       'asignacion_cliente',   // Client assigned to agent by admin
+      'ai_suggestion',        // AI agent suggestion (from AI Gateway)
     ],
     required: true 
   },
