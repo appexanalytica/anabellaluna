@@ -13,6 +13,7 @@ En desarrollo, puede exportar a consola.
 from __future__ import annotations
 
 import logging
+import os
 from contextlib import contextmanager
 from typing import Any, Generator
 
@@ -52,14 +53,19 @@ def init_telemetry() -> None:
         # En desarrollo: exportar a consola
         # En producción: exportar a OTLP (Jaeger, Tempo, etc.)
         if settings.environment == "production":
-            try:
-                from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-                otlp_exporter = OTLPSpanExporter()
-                provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
-                logger.info("OpenTelemetry: OTLP exporter configured")
-            except Exception as e:
-                logger.warning("OTLP exporter not available, falling back to console: %s", e)
-                provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+            # Solo exportar si hay un collector OTLP configurado explícitamente —
+            # el default (localhost:4317) spamea errores si no hay collector.
+            if os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT"):
+                try:
+                    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+                    otlp_exporter = OTLPSpanExporter()
+                    provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
+                    logger.info("OpenTelemetry: OTLP exporter configured")
+                except Exception as e:
+                    logger.warning("OTLP exporter not available, falling back to console: %s", e)
+                    provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+            else:
+                logger.info("OpenTelemetry: sin OTEL_EXPORTER_OTLP_ENDPOINT — traces solo en Langfuse")
         else:
             # En desarrollo, solo loguear si el log level es debug
             if settings.log_level.lower() == "debug":
