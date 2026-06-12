@@ -287,6 +287,12 @@ function ensureVisitorId(req) {
   return crypto.createHash('sha1').update(raw).digest('hex');
 }
 
+// Mapbox public token shared by all frontends (set MAPBOX_TOKEN in backend/.env)
+router.get('/maps-config', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=300');
+  res.json({ mapboxToken: process.env.MAPBOX_TOKEN || '' });
+});
+
 // Public media: returns a redirect to a presigned MinIO URL (or original URL)
 router.get('/media/:id', async (req, res) => {
   try {

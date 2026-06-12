@@ -1,15 +1,19 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { FaMapMarkerAlt, FaSearch, FaTimes, FaFilter, FaHome } from 'react-icons/fa';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import { getMapboxToken } from '../utils/mapbox';
 
-const DEFAULT_CENTER = [-34.6037, -58.3816]; // Buenos Aires
+const DEFAULT_CENTER = [-58.3816, -34.6037]; // Buenos Aires [lng, lat]
+const LIGHT_STYLE = 'mapbox://styles/mapbox/streets-v12';
+const DARK_STYLE = 'mapbox://styles/mapbox/dark-v11';
 
 const PropiedadesMapView = ({ propiedades = [], isDark = false, verDetalle, cardBase }) => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
-  const tileLayerRef = useRef(null);
+  const [mapReady, setMapReady] = useState(false);
+  const [tokenMissing, setTokenMissing] = useState(false);
   const [filtros, setFiltros] = useState({
     texto: '',
     operacion: '',
@@ -43,40 +47,50 @@ const PropiedadesMapView = ({ propiedades = [], isDark = false, verDetalle, card
 
   // Init map
   useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
-    const map = L.map(mapRef.current).setView(DEFAULT_CENTER, 12);
-    mapInstanceRef.current = map;
-
-    const tileUrl = isDark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    const attribution = isDark
-      ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-      : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-
-    tileLayerRef.current = L.tileLayer(tileUrl, { attribution, maxZoom: 19 }).addTo(map);
+    let cancelled = false;
+    (async () => {
+      const token = await getMapboxToken();
+      if (cancelled || !mapRef.current || mapInstanceRef.current) return;
+      if (!token) {
+        setTokenMissing(true);
+        return;
+      }
+      mapboxgl.accessToken = token;
+      const map = new mapboxgl.Map({
+        container: mapRef.current,
+        style: isDark ? DARK_STYLE : LIGHT_STYLE,
+        center: DEFAULT_CENTER,
+        zoom: 11,
+      });
+      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+      mapInstanceRef.current = map;
+      setMapReady(true);
+    })();
 
     return () => {
-      map.remove();
-      mapInstanceRef.current = null;
+      cancelled = true;
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Sync light/dark style
+  useEffect(() => {
+    if (mapInstanceRef.current) mapInstanceRef.current.setStyle(isDark ? DARK_STYLE : LIGHT_STYLE);
+  }, [isDark]);
+
   // Update markers
   useEffect(() => {
-    if (!mapInstanceRef.current) return;
+    if (!mapReady || !mapInstanceRef.current) return;
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
     propConCoordenadas.forEach((prop) => {
       const color = prop.operacion === 'Venta' ? '#10b981' : '#6366f1';
-      const marker = L.circleMarker([Number(prop.lat), Number(prop.lng)], {
-        radius: 10,
-        fillColor: color,
-        fillOpacity: 1,
-        color: '#fff',
-        weight: 2,
-      }).addTo(mapInstanceRef.current);
+      const el = document.createElement('div');
+      el.style.cssText = `width:20px;height:20px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.35);cursor:pointer`;
 
       const popupContent = `
         <div style="max-width:240px;font-family:sans-serif;padding:4px">
@@ -87,15 +101,19 @@ const PropiedadesMapView = ({ propiedades = [], isDark = false, verDetalle, card
           <button onclick="window.__mapVerDetalle__('${prop.id}')" style="background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px">Ver detalle →</button>
         </div>`;
 
-      marker.bindPopup(popupContent);
+      const marker = new mapboxgl.Marker({ element: el })
+        .setLngLat([Number(prop.lng), Number(prop.lat)])
+        .setPopup(new mapboxgl.Popup({ offset: 14, maxWidth: '260px' }).setHTML(popupContent))
+        .addTo(mapInstanceRef.current);
       markersRef.current.push(marker);
     });
 
     if (propConCoordenadas.length > 0) {
-      const bounds = L.latLngBounds(propConCoordenadas.map((p) => [Number(p.lat), Number(p.lng)]));
-      mapInstanceRef.current.fitBounds(bounds, { maxZoom: 15 });
+      const bounds = new mapboxgl.LngLatBounds();
+      propConCoordenadas.forEach((p) => bounds.extend([Number(p.lng), Number(p.lat)]));
+      mapInstanceRef.current.fitBounds(bounds, { padding: 60, maxZoom: 15 });
     }
-  }, [propConCoordenadas]);
+  }, [propConCoordenadas, mapReady]);
 
   // Bridge verDetalle to popup button
   useEffect(() => {
@@ -190,7 +208,14 @@ const PropiedadesMapView = ({ propiedades = [], isDark = false, verDetalle, card
 
       {/* Map */}
       <div className="relative rounded-xl overflow-hidden shadow-lg border dark:border-gray-700" style={{ height: 600 }}>
-        <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+        {tokenMissing ? (
+          <div className={`w-full h-full flex flex-col items-center justify-center gap-2 ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>
+            <FaMapMarkerAlt className="text-3xl" />
+            <p className="text-sm">Mapa no disponible — configurá MAPBOX_TOKEN en backend/.env</p>
+          </div>
+        ) : (
+          <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+        )}
       </div>
 
       {/* Properties without coordinates */}
