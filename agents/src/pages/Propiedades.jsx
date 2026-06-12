@@ -1081,8 +1081,15 @@ const Propiedades = () => {
 
       const direccionFinal = composeDireccion(nuevaPropiedad.calle, nuevaPropiedad.altura) || nuevaPropiedad.direccion;
 
+      // El backend exige title (de ahí sale el slug); si no se cargó, se arma uno
+      const tituloFinal = String(nuevaPropiedad.titulo || '').trim() || [
+        nuevaPropiedad.tipo || 'Propiedad',
+        nuevaPropiedad.operacion ? `en ${nuevaPropiedad.operacion}` : '',
+        (nuevaPropiedad.barrio || nuevaPropiedad.ciudad) ? `· ${nuevaPropiedad.barrio || nuevaPropiedad.ciudad}` : '',
+      ].filter(Boolean).join(' ');
+
       const payload = {
-        title: nuevaPropiedad.titulo,
+        title: tituloFinal,
         description: nuevaPropiedad.descripcion,
         address: direccionFinal,
         price: Number(nuevaPropiedad.precio || 0),
@@ -1093,7 +1100,7 @@ const Propiedades = () => {
         agentId: rawAgentId || rawAdminId || undefined,
         ownerId: resolvedOwnerId || undefined,
         metadata: {
-          titulo: nuevaPropiedad.titulo,
+          titulo: tituloFinal,
           tipo: nuevaPropiedad.tipo,
           categoria: nuevaPropiedad.categoria,
           operacion: nuevaPropiedad.operacion,
@@ -3106,7 +3113,7 @@ const Propiedades = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="md:col-span-2">
                           <label htmlFor="field-93" className="block text-sm font-medium mb-2 dark:text-gray-200">
-                            Título de la Propiedad *
+                            Título de la Propiedad
                           </label>
                           <input
                             id="field-93"
@@ -3114,7 +3121,6 @@ const Propiedades = () => {
                             name="titulo"
                             value={nuevaPropiedad.titulo}
                             onChange={handleInputChange}
-                            required
                             placeholder="Ej: Depto 2amb Palermo con balcón"
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                           />
@@ -3122,14 +3128,13 @@ const Propiedades = () => {
 
                         <div>
                           <label htmlFor="field-94" className="block text-sm font-medium mb-2 dark:text-gray-200">
-                            Tipo de Propiedad *
+                            Tipo de Propiedad
                           </label>
                           <select
                             id="field-94"
                             name="tipo"
                             value={nuevaPropiedad.tipo}
                             onChange={handleInputChange}
-                            required
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                           >
                             <option value="Departamento">Departamento</option>
@@ -3161,14 +3166,13 @@ const Propiedades = () => {
 
                         <div>
                           <label htmlFor="field-96" className="block text-sm font-medium mb-2 dark:text-gray-200">
-                            Operación *
+                            Operación
                           </label>
                           <select
                             id="field-96"
                             name="operacion"
                             value={nuevaPropiedad.operacion}
                             onChange={handleInputChange}
-                            required
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                           >
                             <option value="Venta">Venta</option>
@@ -3179,7 +3183,7 @@ const Propiedades = () => {
 
                         <div>
                           <label htmlFor="field-97" className="block text-sm font-medium mb-2 dark:text-gray-200">
-                            Precio *
+                            Precio
                           </label>
                           <div className="flex gap-2">
                             <select
@@ -3210,7 +3214,6 @@ const Propiedades = () => {
                               name="precio"
                               value={nuevaPropiedad.precio}
                               onChange={handleInputChange}
-                              required
                               placeholder="150000"
                               className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                             />
@@ -3234,14 +3237,13 @@ const Propiedades = () => {
 
                         <div>
                           <label htmlFor="field-99" className="block text-sm font-medium mb-2 dark:text-gray-200">
-                            Estado *
+                            Estado
                           </label>
                           <select
                             id="field-99"
                             name="estado"
                             value={nuevaPropiedad.estado}
                             onChange={handleInputChange}
-                            required
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                           >
                             <option value="Disponible">Disponible</option>
@@ -3290,7 +3292,7 @@ const Propiedades = () => {
                           <div className="flex gap-3">
                             <div className="flex-1">
                               <label htmlFor="field-101" className="block text-sm font-medium mb-2 dark:text-gray-200">
-                                Calle *
+                                Calle
                               </label>
                               <div className="relative">
                                 <input
@@ -3301,7 +3303,6 @@ const Propiedades = () => {
                                   value={nuevaPropiedad.calle}
                                   onChange={handleCalleChange}
                                   onBlur={() => setTimeout(() => setShowGeocoder(false), 150)}
-                                  required
                                   placeholder="Av. Santa Fe"
                                   autoComplete="off"
                                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
@@ -3364,7 +3365,7 @@ const Propiedades = () => {
 
                         <div>
                           <label htmlFor="field-102" className="block text-sm font-medium mb-2 dark:text-gray-200">
-                            Barrio *
+                            Barrio
                           </label>
                           <input
                             id="field-102"
@@ -3372,7 +3373,6 @@ const Propiedades = () => {
                             name="barrio"
                             value={nuevaPropiedad.barrio}
                             onChange={handleInputChange}
-                            required
                             placeholder="Palermo"
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                           />
@@ -3380,7 +3380,7 @@ const Propiedades = () => {
 
                         <div>
                           <label htmlFor="field-103" className="block text-sm font-medium mb-2 dark:text-gray-200">
-                            Ciudad *
+                            Ciudad
                           </label>
                           <input
                             id="field-103"
@@ -3388,14 +3388,13 @@ const Propiedades = () => {
                             name="ciudad"
                             value={nuevaPropiedad.ciudad}
                             onChange={handleInputChange}
-                            required
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                           />
                         </div>
 
                         <div>
                           <label htmlFor="field-104" className="block text-sm font-medium mb-2 dark:text-gray-200">
-                            Provincia *
+                            Provincia
                           </label>
                           <input
                             id="field-104"
@@ -3403,7 +3402,6 @@ const Propiedades = () => {
                             name="provincia"
                             value={nuevaPropiedad.provincia}
                             onChange={handleInputChange}
-                            required
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                           />
                         </div>
@@ -3492,7 +3490,7 @@ const Propiedades = () => {
                         </div>
                         <div>
                           <label htmlFor="field-110" className="block text-sm font-medium mb-2 dark:text-gray-200">
-                            M² Totales *
+                            M² Totales
                           </label>
                           <input
                             id="field-110"
@@ -3500,7 +3498,6 @@ const Propiedades = () => {
                             name="m2Totales"
                             value={nuevaPropiedad.m2Totales}
                             onChange={handleInputChange}
-                            required
                             placeholder="45"
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                           />
@@ -3523,7 +3520,7 @@ const Propiedades = () => {
 
                         <div>
                           <label htmlFor="field-112" className="block text-sm font-medium mb-2 dark:text-gray-200">
-                            Ambientes *
+                            Ambientes
                           </label>
                           <input
                             id="field-112"
@@ -3531,7 +3528,6 @@ const Propiedades = () => {
                             name="ambientes"
                             value={nuevaPropiedad.ambientes}
                             onChange={handleInputChange}
-                            required
                             placeholder="2"
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                           />
@@ -3899,14 +3895,13 @@ const Propiedades = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label htmlFor="field-123" className="block text-sm font-medium mb-2 dark:text-gray-200">
-                            Responsable *
+                            Responsable
                           </label>
                           <select
                             id="field-123"
                             name="agente"
                             value={nuevaPropiedad.agente}
                             onChange={handleInputChange}
-                            required
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                           >
                             <option value="">Seleccionar responsable</option>
