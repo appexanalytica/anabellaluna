@@ -29,7 +29,10 @@ const { getOGImageBuffer } = require('./services/ogImage');
 
 const SITE_NAME = 'Anabella Luna';
 const FALLBACK_OG_IMAGE = 'https://anabellaluna.com.ar/og-default.jpg';
-const DESCRIPTION_MAX_LEN = 200;
+// WhatsApp muestra ~3-4 líneas; los crawlers aceptan hasta ~1000 chars.
+// 500 permite leer precio + dirección + amenities + descripción casi completa.
+const DESCRIPTION_MAX_LEN = 500;
+const MAX_AMENITIES_IN_DESC = 5;
 
 // Cached build HTML (invalidated on first request, then cached until restart)
 let _indexHtmlCache = null;
@@ -129,6 +132,7 @@ function formatPrice(prop) {
 
 /**
  * Builds a description up to DESCRIPTION_MAX_LEN characters.
+ * Order: price · features · address · amenities — full description text.
  * The price is ALWAYS included first so it appears in every WhatsApp/social preview.
  */
 function buildDescription(prop) {
@@ -153,8 +157,18 @@ function buildDescription(prop) {
   const m2 = safeNumber(meta.m2Totales || meta.m2);
   if (m2 > 0) parts.push(`${m2} m²`);
 
-  const place = meta.barrio || meta.ciudad || meta.provincia;
-  if (place) parts.push(String(place).trim());
+  // Dirección completa (calle + altura) con el barrio/ciudad como contexto
+  const direccion = String(prop.address || meta.direccion || '').trim();
+  const place = String(meta.barrio || meta.ciudad || meta.provincia || '').trim();
+  if (direccion) parts.push(place ? `${direccion}, ${place}` : direccion);
+  else if (place) parts.push(place);
+
+  // Amenities destacados
+  const amenities = (Array.isArray(meta.amenities) ? meta.amenities : [])
+    .map((a) => String(a || '').trim())
+    .filter(Boolean)
+    .slice(0, MAX_AMENITIES_IN_DESC);
+  if (amenities.length) parts.push(amenities.join(', '));
 
   const featureLine = parts.join(' · ');
 

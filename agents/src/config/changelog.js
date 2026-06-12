@@ -7,7 +7,7 @@ export const CHANGELOG_ENTRIES = [
     "items": [
       {
         "type": "arreglo",
-        "text": "Los links de propiedades que se copian desde el panel ahora muestran la vista previa completa al compartirlos por WhatsApp, también desde iPhone: foto de portada grande, precio, ambientes y descripción."
+        "text": "Los links de propiedades que se copian desde el panel ahora muestran la vista previa completa al compartirlos por WhatsApp, también desde iPhone: foto de portada grande arriba y, debajo, el precio, la dirección, los ambientes, los amenities y la descripción."
       }
     ]
   },

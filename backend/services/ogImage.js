@@ -46,7 +46,9 @@ const OG_QUALITY = 82;
 const OG_MAX_BYTES = 290 * 1024;
 const OG_FALLBACK_QUALITIES = [70, 60, 50];
 const CACHE_BUCKET_KEY = () => minio.buckets && (minio.buckets.web || minio.buckets.erp || minio.bucket);
-const cacheKey = (propertyId) => `og-images/${propertyId}.jpg`;
+// v2: invalida las imágenes cacheadas antes del límite de peso para iOS —
+// las viejas podían superar los 300KB y WhatsApp degradaba la preview a thumbnail.
+const cacheKey = (propertyId) => `og-images/v2/${propertyId}.jpg`;
 
 // ─── Utility: stream → Buffer ─────────────────────────────────────────────────
 
