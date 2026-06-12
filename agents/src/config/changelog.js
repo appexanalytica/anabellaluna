@@ -3,6 +3,20 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-06-11",
+    "title": "Carga de propiedades más simple y ubicación exacta",
+    "items": [
+      {
+        "type": "mejora",
+        "text": "El alta y la edición de propiedades ahora son una sola pantalla: los datos de la propiedad y la asignación del cliente quedaron juntos, sin tener que pasar por un \"paso 2\" aparte."
+      },
+      {
+        "type": "nuevo",
+        "text": "La dirección se carga en dos campos separados, calle y altura (número). Al completar la altura, el mapa ubica el pin en la posición exacta de la propiedad."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-11",
     "title": "Consultas del sitio web y portales inmobiliarios",
     "items": [
       {

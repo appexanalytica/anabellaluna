@@ -71,7 +71,7 @@ const ChangelogPanel = ({ onClose }) => {
         {/* Lista de cambios */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
           {CHANGELOG_ENTRIES.map((entry) => (
-            <div key={entry.date} className="relative pl-4 border-l border-gray-800">
+            <div key={`${entry.date}-${entry.title}`} className="relative pl-4 border-l border-gray-800">
               <span
                 className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full"
                 style={{ backgroundColor: currentColor }}
