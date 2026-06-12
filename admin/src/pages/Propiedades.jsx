@@ -325,6 +325,16 @@ const Propiedades = () => {
     funnelSettings: {},
   });
 
+  // Link de compartir canónico (/buy|/rent): esa ruta la sirve el backend con
+  // los meta Open Graph inyectados, así WhatsApp/iMessage muestran la preview
+  // (imagen de portada + precio + descripción). /propiedad/:id no los tiene
+  // hasta que nginx también la proxee al backend.
+  const shareUrl = (prop, token) => {
+    const op = String(prop?.operacion || '').toLowerCase().includes('alquil') ? 'rent' : 'buy';
+    const base = `https://anabellaluna.com.ar/${op}/${prop?.slug || prop?.id}`;
+    return token ? `${base}?token=${encodeURIComponent(token)}` : base;
+  };
+
   const openCreateModal = () => {
     setEditingPropiedadId(null);
     setFilesFotos([]);
@@ -708,6 +718,7 @@ const Propiedades = () => {
             featured: !!(p.featured != null ? p.featured : meta.featured),
             published: p.published !== false,
             privateToken: p.privateToken || '',
+            slug: p.slug || '',
             operacion: meta.operacion || 'Venta',
             unidadPrecio: meta.unit || 'month',
             precio: typeof p.price === 'number' ? p.price : Number(meta.precio || 0),
@@ -1143,6 +1154,7 @@ const Propiedades = () => {
 
       const mapped = {
         id: saved._id,
+        ...(saved.slug ? { slug: saved.slug } : {}),
         titulo: saved.title || payload.metadata.titulo || '',
         tipo: payload.metadata.tipo,
         categoria: payload.metadata.categoria,
@@ -2745,19 +2757,19 @@ const Propiedades = () => {
                     <input
                       type="text"
                       readOnly
-                      value={`https://anabellaluna.com.ar/propiedad/${propiedadSeleccionada.id}`}
+                      value={shareUrl(propiedadSeleccionada)}
                       className="flex-1 px-3 py-2 text-xs border dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-200 truncate"
                     />
                     <button
                       type="button"
                       title="Copiar link público"
-                      onClick={() => navigator.clipboard.writeText(`https://anabellaluna.com.ar/propiedad/${propiedadSeleccionada.id}`)}
+                      onClick={() => navigator.clipboard.writeText(shareUrl(propiedadSeleccionada))}
                       className="p-2 rounded-lg border dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                       <FaCopy className="text-sm dark:text-gray-300" />
                     </button>
                     <a
-                      href={`https://anabellaluna.com.ar/propiedad/${propiedadSeleccionada.id}`}
+                      href={shareUrl(propiedadSeleccionada)}
                       target="_blank"
                       rel="noopener noreferrer"
                       title="Ver en sitio web"
@@ -2781,14 +2793,14 @@ const Propiedades = () => {
                           <input
                             type="text"
                             readOnly
-                            value={`https://anabellaluna.com.ar/propiedad/${propiedadSeleccionada.id}?token=${propiedadSeleccionada.privateToken}`}
+                            value={shareUrl(propiedadSeleccionada, propiedadSeleccionada.privateToken)}
                             className="flex-1 px-3 py-2 text-xs border dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-200 truncate"
                           />
                           <button
                             type="button"
                             title="Copiar link"
                             onClick={() => {
-                              navigator.clipboard.writeText(`https://anabellaluna.com.ar/propiedad/${propiedadSeleccionada.id}?token=${propiedadSeleccionada.privateToken}`);
+                              navigator.clipboard.writeText(shareUrl(propiedadSeleccionada, propiedadSeleccionada.privateToken));
                             }}
                             className="p-2 rounded-lg border dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                           >

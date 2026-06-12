@@ -202,6 +202,7 @@ function buildMetaTagsHtml({ ogTitle, ogDescription, ogImage, ogUrl }) {
   return `
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="${siteName}" />
+    <meta property="og:locale" content="es_AR" />
     <meta property="og:title" content="${t}" />
     <meta property="og:description" content="${d}" />
     <meta property="og:image" content="${img}" />
@@ -209,6 +210,7 @@ function buildMetaTagsHtml({ ogTitle, ogDescription, ogImage, ogUrl }) {
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:alt" content="${t}" />
     <meta property="og:url" content="${u}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${t}" />
@@ -242,7 +244,8 @@ function injectMetaTags(html, metaTagsHtml, ogTitle) {
  *
  * @param {express.Request} req
  * @param {express.Response} res
- * @param {'buy'|'rent'} operation  – Used to build the canonical URL.
+ * @param {'buy'|'rent'|null} operation  – Used to build the canonical URL.
+ *   When null (route /propiedad/:slug), it is derived from metadata.operacion.
  */
 async function renderPropertyHTML(req, res, operation) {
   const slug = String(req.params.slug || '').trim();
@@ -286,13 +289,14 @@ async function renderPropertyHTML(req, res, operation) {
     const ogTitle = buildTitle(prop);
     const ogDescription = buildDescription(prop);
     const canonicalSlug = prop.slug || slug;
-    const ogUrl = `${siteOrigin}/${operation}/${canonicalSlug}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+    const op = operation || mapOperation(prop.metadata && prop.metadata.operacion);
+    const ogUrl = `${siteOrigin}/${op}/${canonicalSlug}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
 
     // ── Inject ───────────────────────────────────────────────────────────────
     const metaTagsHtml = buildMetaTagsHtml({ ogTitle, ogDescription, ogImage, ogUrl });
     const finalHtml = injectMetaTags(indexHtml, metaTagsHtml, ogTitle);
 
-    console.log(`[OG] Served ${operation}/${slug} → "${ogTitle}" img=${ogImage}`);
+    console.log(`[OG] Served ${op}/${slug} → "${ogTitle}" img=${ogImage}`);
 
     res.set('Content-Type', 'text/html; charset=utf-8');
     // Short cache: lets crawlers re-fetch after property updates
@@ -310,8 +314,12 @@ async function renderPropertyHTML(req, res, operation) {
 // ─── Router factory ───────────────────────────────────────────────────────────
 
 /**
- * Returns an Express router with GET /buy/:slug and GET /rent/:slug
- * that serve property-specific Open Graph HTML.
+ * Returns an Express router with GET /buy/:slug, GET /rent/:slug and
+ * GET /propiedad/:slug that serve property-specific Open Graph HTML.
+ *
+ * /propiedad/:slug is the URL that admin/agents copy in "Compartir propiedad";
+ * WhatsApp/iMessage crawlers don't run JS, so the SPA redirect never executes
+ * for them — this route must serve the OG tags directly (nginx must proxy it).
  *
  * Mount BEFORE static-file serving in server.js:
  *   app.use(buildPropertyOGRouter());
@@ -321,6 +329,7 @@ function buildPropertyOGRouter() {
 
   router.get('/buy/:slug', (req, res) => renderPropertyHTML(req, res, 'buy'));
   router.get('/rent/:slug', (req, res) => renderPropertyHTML(req, res, 'rent'));
+  router.get('/propiedad/:slug', (req, res) => renderPropertyHTML(req, res, null));
 
   return router;
 }

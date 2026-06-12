@@ -2,6 +2,16 @@
 // Do not edit by hand: edit changelog.json instead.
 export const CHANGELOG_ENTRIES = [
   {
+    "date": "2026-06-12",
+    "title": "Compartir propiedades por WhatsApp",
+    "items": [
+      {
+        "type": "arreglo",
+        "text": "Los links de propiedades que se copian desde el panel ahora muestran la vista previa completa al compartirlos por WhatsApp, también desde iPhone: foto de portada grande, precio, ambientes y descripción."
+      }
+    ]
+  },
+  {
     "date": "2026-06-11",
     "title": "Carga de propiedades más simple y ubicación exacta",
     "items": [

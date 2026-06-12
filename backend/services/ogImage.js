@@ -41,6 +41,10 @@ const Document = require('../models/Document');
 const OG_WIDTH = 1200;
 const OG_HEIGHT = 630;
 const OG_QUALITY = 82;
+// WhatsApp en iOS descarta la preview cuando og:image pesa demasiado
+// (límite duro ~600KB; recomendado <300KB).
+const OG_MAX_BYTES = 290 * 1024;
+const OG_FALLBACK_QUALITIES = [70, 60, 50];
 const CACHE_BUCKET_KEY = () => minio.buckets && (minio.buckets.web || minio.buckets.erp || minio.bucket);
 const cacheKey = (propertyId) => `og-images/${propertyId}.jpg`;
 
@@ -206,6 +210,18 @@ async function processToOGSize(rawBuffer) {
     .toBuffer();
 }
 
+/** Re-encodes the JPEG with decreasing quality until it fits under OG_MAX_BYTES. */
+async function ensureUnderSizeLimit(buffer) {
+  if (buffer.length <= OG_MAX_BYTES) return buffer;
+
+  let best = buffer;
+  for (const quality of OG_FALLBACK_QUALITIES) {
+    best = await sharp(buffer).jpeg({ quality, progressive: true }).toBuffer();
+    if (best.length <= OG_MAX_BYTES) return best;
+  }
+  return best;
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
@@ -233,8 +249,8 @@ async function getOGImageBuffer(propertyId) {
   // 3. Fetch raw bytes
   const rawBuffer = await fetchDocumentBuffer(coverDoc);
 
-  // 4. Process with Sharp
-  const ogBuffer = await processToOGSize(rawBuffer);
+  // 4. Process with Sharp (keeping it under the WhatsApp-iOS size limit)
+  const ogBuffer = await ensureUnderSizeLimit(await processToOGSize(rawBuffer));
 
   // 5. Store in cache (fire-and-forget, never blocks response)
   writeCacheBuffer(id, ogBuffer).catch(() => {});
