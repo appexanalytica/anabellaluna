@@ -3,6 +3,20 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-06-12",
+    "title": "Mapas nuevos en propiedades",
+    "items": [
+      {
+        "type": "mejora",
+        "text": "La vista de Mapa de propiedades estrena mapas nuevos, más rápidos y detallados, con un marcador por cada propiedad publicada."
+      },
+      {
+        "type": "mejora",
+        "text": "Al cargar o editar una propiedad podés arrastrar el pin sobre el mapa para ajustar la ubicación exacta antes de guardar."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-12",
     "title": "Carga de propiedades sin campos obligatorios",
     "items": [
       {
