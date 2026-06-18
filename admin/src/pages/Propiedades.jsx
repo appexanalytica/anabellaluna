@@ -1091,6 +1091,7 @@ const Propiedades = () => {
         price: Number(nuevaPropiedad.precio || 0),
         moneda: nuevaPropiedad.moneda,
         featured: !!nuevaPropiedad.featured,
+        published: nuevaPropiedad.estado === 'No disponible' ? false : nuevaPropiedad.published !== false,
         status: nuevaPropiedad.estado,
         agentId: rawAgentId || rawAdminId || undefined,
         ownerId: resolvedOwnerId || undefined,
@@ -1861,6 +1862,7 @@ const Propiedades = () => {
                     <option value="Reservada">Reservada</option>
                     <option value="Vendida">Vendida</option>
                     <option value="Alquilada">Alquilada</option>
+                    <option value="No disponible">No disponible</option>
                   </select>
                 </div>
 
@@ -3070,6 +3072,7 @@ const Propiedades = () => {
                           <option value="Reservada">Reservada</option>
                           <option value="Vendida">Vendida</option>
                           <option value="Alquilada">Alquilada</option>
+                          <option value="No disponible">No disponible</option>
                         </select>
                       </div>
 

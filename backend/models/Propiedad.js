@@ -21,7 +21,7 @@ const PropiedadSchema = new mongoose.Schema({
   featured: { type: Boolean, default: false, index: true },
   ownerId: { type: String }, // cliente id
   agentId: { type: String },
-  status: { type: String, enum: ['Disponible', 'Reservada', 'Vendida', 'Alquilada'], default: 'Disponible' },
+  status: { type: String, enum: ['Disponible', 'Reservada', 'Vendida', 'Alquilada', 'No disponible'], default: 'Disponible' },
   published: { type: Boolean, default: true, index: true },
   privateToken: { type: String, default: '', index: true },
   metadata: { type: Object, default: {} },

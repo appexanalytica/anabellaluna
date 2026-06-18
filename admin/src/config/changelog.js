@@ -3,6 +3,20 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-06-18",
+    "title": "Estado no disponible en propiedades",
+    "items": [
+      {
+        "type": "nuevo",
+        "text": "Al crear o editar una propiedad ahora podés marcar el estado como \"No disponible\"."
+      },
+      {
+        "type": "mejora",
+        "text": "Las propiedades marcadas como \"No disponible\" quedan automáticamente fuera del sitio web público."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-18",
     "title": "Sitio web y WhatsApp más prolijos",
     "items": [
       {

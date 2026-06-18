@@ -3,6 +3,14 @@
   "entries": [
     {
       "date": "2026-06-18",
+      "title": "Estado no disponible en propiedades",
+      "items": [
+        { "type": "nuevo", "text": "Al crear o editar una propiedad ahora podés marcar el estado como \"No disponible\"." },
+        { "type": "mejora", "text": "Las propiedades marcadas como \"No disponible\" quedan automáticamente fuera del sitio web público." }
+      ]
+    },
+    {
+      "date": "2026-06-18",
       "title": "Sitio web y WhatsApp más prolijos",
       "items": [
         { "type": "arreglo", "text": "En el sitio web, las fotos de portada de las propiedades ya no muestran una franja gris oscura en la base de la imagen." },

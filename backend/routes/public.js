@@ -482,6 +482,7 @@ router.get('/properties', async (req, res) => {
     }
 
     filter.published = { $ne: false };
+    filter.status = { $ne: 'No disponible' };
     if (featured === 'true' || featured === '1') {
       filter['metadata.destacado'] = true;
     }
@@ -523,7 +524,7 @@ router.get('/properties/:slug', async (req, res) => {
     if (!prop) return res.status(404).json({ error: 'Not found' });
 
     // Enforce published gate: allow if published, or if valid private token provided
-    if (prop.published === false) {
+    if (prop.published === false || prop.status === 'No disponible') {
       const token = String(req.query.token || '').trim();
       if (!token || !prop.privateToken || token !== prop.privateToken) {
         return res.status(404).json({ error: 'Not found' });

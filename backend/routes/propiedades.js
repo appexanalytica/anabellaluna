@@ -134,6 +134,15 @@ router.get('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) 
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+const normalizePublicationByStatus = (body) => {
+  const status = body.status || body.metadata?.estado;
+  if (status === 'No disponible') {
+    body.status = 'No disponible';
+    body.published = false;
+    body.metadata = { ...(body.metadata || {}), estado: 'No disponible' };
+  }
+};
+
 router.post('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   attachRequestId(req, res);
   try {
@@ -147,6 +156,7 @@ router.post('/', authenticateTokenOrService, requireCRMUser, async (req, res) =>
     if (body.featured === undefined && body.metadata && body.metadata.featured !== undefined) {
       body.featured = !!body.metadata.featured;
     }
+    normalizePublicationByStatus(body);
     if (scopeId) body.agentId = scopeId;
     const created = await Propiedad.create(body);
     const persisted = await confirmPersisted(Propiedad, created._id, 'propiedad');
@@ -186,6 +196,7 @@ router.put('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) 
     if (body.featured === undefined && body.metadata && body.metadata.featured !== undefined) {
       body.featured = !!body.metadata.featured;
     }
+    normalizePublicationByStatus(body);
     if (scopeId) body.agentId = scopeId;
     const updated = await Propiedad.findOneAndUpdate(filter, body, { new: true, runValidators: true }).lean();
     if (!updated) return res.status(404).json({ error: 'Not found' });
@@ -222,7 +233,7 @@ router.patch('/:id/publish', authenticateTokenOrService, requireCRMUser, async (
     const prop = await Propiedad.findOne(filter);
     if (!prop) return res.status(404).json({ error: 'Not found' });
     const published = req.body.published != null ? !!req.body.published : !prop.published;
-    prop.published = published;
+    prop.published = prop.status === 'No disponible' ? false : published;
     await prop.save();
 
     // Push notification on status change
