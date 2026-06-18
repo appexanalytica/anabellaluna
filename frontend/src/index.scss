@@ -305,6 +305,17 @@ header .main-menu-wrapper .main-nav > li a i {
     border-radius: 0 !important;
     box-shadow: none !important;
     outline: 0 !important;
+
+    a {
+      display: block;
+      height: 100%;
+      overflow: hidden;
+
+      &::after {
+        content: none !important;
+        display: none !important;
+      }
+    }
   }
 
   &:hover .property-listing-item {
@@ -340,7 +351,8 @@ header .main-menu-wrapper .main-nav > li a i {
   }
 
   &__image-footer {
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.82) 100%);
+    background: transparent;
+    text-shadow: 0 2px 8px rgba(15, 23, 42, 0.7);
   }
 
   &__badge {

@@ -2,6 +2,20 @@
 // Do not edit by hand: edit changelog.json instead.
 export const CHANGELOG_ENTRIES = [
   {
+    "date": "2026-06-18",
+    "title": "Sitio web y WhatsApp más prolijos",
+    "items": [
+      {
+        "type": "arreglo",
+        "text": "En el sitio web, las fotos de portada de las propiedades ya no muestran una franja gris oscura en la base de la imagen."
+      },
+      {
+        "type": "mejora",
+        "text": "WhatsApp queda incluido en las novedades para comunicar mejor las mejoras y correcciones recientes del canal de contacto."
+      }
+    ]
+  },
+  {
     "date": "2026-06-12",
     "title": "Mapas nuevos en propiedades",
     "items": [
