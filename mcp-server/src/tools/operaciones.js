@@ -4,6 +4,7 @@
 
 const { z } = require('zod');
 const { getModel } = require('../db');
+const api = require('../apiClient');
 
 function registerOperacionTools(server) {
   const Operacion = () => getModel('Operacion');
@@ -191,25 +192,29 @@ function registerOperacionTools(server) {
       ]);
       const pct = Number(comisionPorcentaje) || 3.5;
       const amount = Number(monto) || propiedad?.price || 0;
-      const created = await Operacion().create({
-        propiedadId: propiedadId || '',
-        clienteId: clienteId || '',
-        agenteId: agenteId || '',
-        tipo: tipo || 'Venta',
-        monto: amount,
-        moneda: moneda || propiedad?.moneda || 'USD',
-        estado: estado || 'En Curso',
-        notas: notas || '',
-        fechaCierre: fechaCierre ? new Date(fechaCierre) : undefined,
-        formaPago: formaPago || 'Contado',
-        comisionPorcentaje: pct,
-        comisionMonto: amount * (pct / 100),
-        metadata: {
-          propiedad: propiedad?.title || '',
-          cliente: cliente?.nombre || '',
-        },
-      });
-      return { content: [{ type: 'text', text: JSON.stringify(created.toObject(), null, 2) }] };
+      try {
+        const created = await api.operaciones.create({
+          propiedadId: propiedadId || '',
+          clienteId: clienteId || '',
+          agenteId: agenteId || '',
+          tipo: tipo || 'Venta',
+          monto: amount,
+          moneda: moneda || propiedad?.moneda || 'USD',
+          estado: estado || 'En Curso',
+          notas: notas || '',
+          fechaCierre: fechaCierre ? new Date(fechaCierre) : undefined,
+          formaPago: formaPago || 'Contado',
+          comisionPorcentaje: pct,
+          comisionMonto: amount * (pct / 100),
+          metadata: {
+            propiedad: propiedad?.title || '',
+            cliente: cliente?.nombre || '',
+          },
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(created, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: `Error al crear operación: ${err.message}` }], isError: true };
+      }
     }
   );
 
@@ -239,9 +244,12 @@ function registerOperacionTools(server) {
       const set = { estado };
       if (fechaCierre) set.fechaCierre = new Date(fechaCierre);
       if (notas !== undefined) set.notas = notas;
-      const updated = await Operacion().findByIdAndUpdate(operacionId, { $set: set }, { new: true }).lean();
-      if (!updated) return { content: [{ type: 'text', text: 'Operación no encontrada' }], isError: true };
-      return { content: [{ type: 'text', text: JSON.stringify(updated, null, 2) }] };
+      try {
+        const updated = await api.operaciones.update(operacionId, set);
+        return { content: [{ type: 'text', text: JSON.stringify(updated, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: err.statusCode === 404 ? 'Operación no encontrada' : `Error: ${err.message}` }], isError: true };
+      }
     }
   );
 }

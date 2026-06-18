@@ -20,6 +20,13 @@ type BuyLeftFormProps = {
 };
 
 const BuyLeftForm = ({ agent, propertySlug }: BuyLeftFormProps) => {
+  const agentWhatsappNumber = String(agent?.phone || "").replace(/\D/g, "");
+
+  const openAgentWhatsApp = () => {
+    if (!agentWhatsappNumber) return;
+    window.open(`https://wa.me/${agentWhatsappNumber}`, "_blank", "noopener,noreferrer");
+  };
+
   const [activeTab, setActiveTab] = useState<"info" | "schedule">("info");
 
   const [infoName, setInfoName] = useState("");
@@ -446,6 +453,16 @@ const BuyLeftForm = ({ agent, propertySlug }: BuyLeftFormProps) => {
                   ) : null}
                 </ul>
               )}
+              {agentWhatsappNumber ? (
+                <button
+                  type="button"
+                  className="btn btn-success w-100 mt-3 d-flex align-items-center justify-content-center gap-2"
+                  onClick={openAgentWhatsApp}
+                >
+                  <i className="fa-brands fa-whatsapp" />
+                  WhatsApp
+                </button>
+              ) : null}
             </div>
             {/* end card body*/}
           </div>
@@ -537,45 +554,6 @@ const BuyLeftForm = ({ agent, propertySlug }: BuyLeftFormProps) => {
                   <input type="text" className="form-control" />
                 </div>
               </form>
-            </div>
-            {/* end card body*/}
-          </div>
-          )}
-          {/* end card */}
-          {/* Items-5 */}
-          {false && (
-          <div className="card mb-0">
-            <div className="custom-map position-relative">
-              <Link
-                to="#"
-                className="btn btn-dark fw-medium"
-              >
-                View Location
-              </Link>
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d9582106.12236644!2d-15.012343587457918!3d54.10244278649341!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x25a3b1142c791a9%3A0xc4f8a0433288257a!2sUnited%20Kingdom!5e0!3m2!1sen!2sin!4v1747587865989!5m2!1sen!2sin"
-                width={600}
-                height={450}
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </div>
-            <div className="card-body">
-              <h6 className="mb-3"> Nearby Landmarks &amp; Visits </h6>
-              <p className="mb-2 text-body">
-                <i className="fa-regular fa-circle-check fs-16 me-2 text-body" />
-                Near By Statue of Liberty
-              </p>
-              <p className="mb-2 text-body">
-                <i className="fa-regular fa-circle-check fs-16 me-2 text-body" />
-                The Metropolitan Museum of Art
-              </p>
-              <p className="mb-0 text-body">
-                <i className="fa-regular fa-circle-check fs-16 me-2 text-body" />
-                Yellowstone National Park
-              </p>
             </div>
             {/* end card body*/}
           </div>

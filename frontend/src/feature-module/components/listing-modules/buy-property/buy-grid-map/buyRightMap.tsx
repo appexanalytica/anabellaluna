@@ -1,8 +1,9 @@
-import { Link } from "react-router";
-import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useRef } from "react";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+import { getMapboxToken } from "../../../../../lib/mapbox";
 
-const center: [number, number] = [-34.6037, -58.3816];
+const center: [number, number] = [-58.3816, -34.6037]; // [lng, lat]
 
 interface Location {
   id: number;
@@ -72,58 +73,69 @@ const locations: Location[] = [
   },
 ];
 
+const buildPopupHtml = (location: Location) => `
+  <div class="card" style="min-width:200px;border:0">
+    <div class="card-img">
+      <div class="buy-grid-img mb-0 rounded-0 position-relative">
+        <img class="img-fluid w-100" alt="img" src="${location.image}" />
+        <div class="d-flex align-items-center justify-content-between position-absolute bottom-0 end-0 start-0 p-3 z-1">
+          <h6 class="text-white mb-0">${location.rent_prize}</h6>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h5 class="title mb-2">${location.rent_name}</h5>
+      <p class="mb-3"><i class="isax isax-location"></i> ${location.rent_address}</p>
+      <div class="mt-2 d-flex align-items-center justify-content-between flex-wrap gap-1">
+        <p class="text-dark fs-14 fw-medium">
+          Listed on: <span class="fw-medium text-body">${location.rent_listedon}</span>
+        </p>
+        <span class="ms-2 badge bg-secondary">${location.rent_Category}</span>
+      </div>
+    </div>
+  </div>`;
+
 const BuyRightMap = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const token = await getMapboxToken();
+      if (cancelled || !token || !containerRef.current || mapRef.current) return;
+      mapboxgl.accessToken = token;
+      const map = new mapboxgl.Map({
+        container: containerRef.current,
+        style: "mapbox://styles/mapbox/streets-v12",
+        center,
+        zoom: 13,
+      });
+      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
+      map.scrollZoom.disable();
+
+      locations.forEach((location) => {
+        const el = document.createElement("div");
+        el.style.cssText =
+          "width:20px;height:20px;border-radius:50%;background:#6366f1;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3);cursor:pointer";
+        new mapboxgl.Marker({ element: el })
+          .setLngLat([location.lng, location.lat])
+          .setPopup(new mapboxgl.Popup({ offset: 16, maxWidth: "260px" }).setHTML(buildPopupHtml(location)))
+          .addTo(map);
+      });
+
+      mapRef.current = map;
+    })();
+    return () => {
+      cancelled = true;
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
   return (
     <div id="map" className="map-listing">
-      <MapContainer
-        center={center}
-        zoom={13}
-        style={{ width: "100%", height: "100%" }}
-        scrollWheelZoom={false}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
-        {locations.map((location) => (
-          <CircleMarker
-            key={location.id}
-            center={[location.lat, location.lng]}
-            radius={10}
-            pathOptions={{ fillColor: "#6366f1", fillOpacity: 1, color: "#fff", weight: 2 }}
-          >
-            <Popup>
-              <div className="card" style={{ minWidth: 200 }}>
-                <div className="card-img">
-                  <div className="buy-grid-img mb-0 rounded-0 position-relative">
-                    <Link to="#" className="property-img">
-                      <img className="img-fluid w-100" alt="img" src={location.image} />
-                    </Link>
-                    <div className="d-flex align-items-center justify-content-between position-absolute bottom-0 end-0 start-0 p-3 z-1">
-                      <h6 className="text-white mb-0">{location.rent_prize}</h6>
-                    </div>
-                  </div>
-                </div>
-                <div className="card-body">
-                  <h5 className="title mb-2">
-                    <Link to="#" tabIndex={-1}>{location.rent_name}</Link>
-                  </h5>
-                  <p className="mb-3">
-                    <i className="isax isax-location"></i>
-                    {location.rent_address}
-                  </p>
-                  <div className="mt-2 d-flex align-items-center justify-content-between flex-wrap gap-1">
-                    <p className="text-dark fs-14 fw-medium">
-                      Listed on: <span className="fw-medium text-body">{location.rent_listedon}</span>
-                    </p>
-                    <span className="ms-2 badge bg-secondary">{location.rent_Category}</span>
-                  </div>
-                </div>
-              </div>
-            </Popup>
-          </CircleMarker>
-        ))}
-      </MapContainer>
+      <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
     </div>
   );
 };

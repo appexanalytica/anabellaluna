@@ -1,9 +1,12 @@
 /**
  * MCP Tools — Citas / Agenda
+ *
+ * Regla: las operaciones de ESCRITURA pasan por la API del backend (apiClient).
  */
 
 const { z } = require('zod');
 const { getModel } = require('../db');
+const api = require('../apiClient');
 
 function registerCitaTools(server) {
   const Cita = () => getModel('Cita');
@@ -173,8 +176,12 @@ function registerCitaTools(server) {
       if (propiedadId) doc.propiedadId = propiedadId;
       if (agenteId) doc.agenteId = agenteId;
 
-      const created = await Cita().create(doc);
-      return persistedResult(Cita(), created._id, 'cita');
+      try {
+        const created = await api.citas.create(doc);
+        return { content: [{ type: 'text', text: JSON.stringify({ persisted: true, item: created }, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: `Error al crear cita: ${err.message}` }], isError: true };
+      }
     }
   );
 
@@ -206,9 +213,13 @@ function registerCitaTools(server) {
       if (clienteId !== undefined) set.clienteId = clienteId;
       if (propiedadId !== undefined) set.propiedadId = propiedadId;
 
-      const updated = await Cita().findByIdAndUpdate(citaId, { $set: set }, { new: true, runValidators: true }).lean();
-      if (!updated) return { content: [{ type: 'text', text: 'Cita no encontrada' }], isError: true };
-      return persistedResult(Cita(), updated._id, 'cita');
+      try {
+        const updated = await api.citas.update(citaId, set);
+        return { content: [{ type: 'text', text: JSON.stringify({ persisted: true, item: updated }, null, 2) }] };
+      } catch (err) {
+        if (err.statusCode === 404) return { content: [{ type: 'text', text: 'Cita no encontrada' }], isError: true };
+        return { content: [{ type: 'text', text: `Error al actualizar cita: ${err.message}` }], isError: true };
+      }
     }
   );
 
@@ -228,15 +239,17 @@ function registerCitaTools(server) {
         'metadata.resultado': resultado,
         'metadata.resultadoAt': new Date(),
       };
-      const updated = await Cita().findByIdAndUpdate(citaId, { $set: set }, { new: true, runValidators: true }).lean();
-      if (!updated) return { content: [{ type: 'text', text: 'Cita no encontrada' }], isError: true };
-
-      const [cliente, propiedad] = await Promise.all([
-        updated.clienteId ? Cliente().findById(updated.clienteId).select('nombre email telefono').lean() : null,
-        updated.propiedadId ? Propiedad().findById(updated.propiedadId).select('title address price moneda').lean() : null,
-      ]);
-
-      return { content: [{ type: 'text', text: JSON.stringify({ persisted: true, cita: updated, cliente, propiedad }, null, 2) }] };
+      try {
+        const updated = await api.citas.update(citaId, set);
+        const [cliente, propiedad] = await Promise.all([
+          updated.clienteId ? Cliente().findById(updated.clienteId).select('nombre email telefono').lean() : null,
+          updated.propiedadId ? Propiedad().findById(updated.propiedadId).select('title address price moneda').lean() : null,
+        ]);
+        return { content: [{ type: 'text', text: JSON.stringify({ persisted: true, cita: updated, cliente, propiedad }, null, 2) }] };
+      } catch (err) {
+        if (err.statusCode === 404) return { content: [{ type: 'text', text: 'Cita no encontrada' }], isError: true };
+        return { content: [{ type: 'text', text: `Error al registrar resultado: ${err.message}` }], isError: true };
+      }
     }
   );
 
@@ -249,13 +262,13 @@ function registerCitaTools(server) {
     },
     async ({ citaId, reason }) => {
       if (!citaId) return { content: [{ type: 'text', text: 'citaId requerido' }], isError: true };
-      const updated = await Cita().findByIdAndUpdate(
-        citaId,
-        { $set: { estado: 'Cancelada', notas: reason || 'Cancelada' } },
-        { new: true, runValidators: true }
-      ).lean();
-      if (!updated) return { content: [{ type: 'text', text: 'Cita no encontrada' }], isError: true };
-      return persistedResult(Cita(), updated._id, 'cita');
+      try {
+        await api.citas.cancel(citaId);
+        return { content: [{ type: 'text', text: JSON.stringify({ cancelled: true, citaId }, null, 2) }] };
+      } catch (err) {
+        if (err.statusCode === 404) return { content: [{ type: 'text', text: 'Cita no encontrada' }], isError: true };
+        return { content: [{ type: 'text', text: `Error al cancelar cita: ${err.message}` }], isError: true };
+      }
     }
   );
 }

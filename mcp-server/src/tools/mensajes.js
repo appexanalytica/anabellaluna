@@ -4,6 +4,7 @@
 
 const { z } = require('zod');
 const { getModel } = require('../db');
+const api = require('../apiClient');
 
 function registerMensajeTools(server) {
   const Message = () => getModel('Message');
@@ -62,16 +63,19 @@ function registerMensajeTools(server) {
     async ({ from, to, subject, body, senderType, receiverType }) => {
       if (!from || !body) return { content: [{ type: 'text', text: 'from y body requeridos' }], isError: true };
       if ((receiverType || 'agent') === 'agent' && !to) return { content: [{ type: 'text', text: 'to requerido para mensajes a agente' }], isError: true };
-      const created = await Message().create({
-        senderId: from,
-        senderType: senderType || 'agent',
-        receiverId: to || undefined,
-        receiverType: receiverType || 'agent',
-        content: subject ? `${subject}\n\n${body}` : body,
-        contentType: 'text',
-        read: false,
-      });
-      return { content: [{ type: 'text', text: JSON.stringify(created.toObject(), null, 2) }] };
+      try {
+        const created = await api.messages.send({
+          senderId: from,
+          senderType: senderType || 'agent',
+          receiverId: to || undefined,
+          receiverType: receiverType || 'agent',
+          content: subject ? `${subject}\n\n${body}` : body,
+          contentType: 'text',
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(created, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: `Error al enviar mensaje: ${err.message}` }], isError: true };
+      }
     }
   );
 
@@ -82,9 +86,12 @@ function registerMensajeTools(server) {
       messageId: z.string().describe('ID del mensaje'),
     },
     async ({ messageId }) => {
-      const updated = await Message().findByIdAndUpdate(messageId, { $set: { read: true, readAt: new Date() } }, { new: true }).lean();
-      if (!updated) return { content: [{ type: 'text', text: 'Mensaje no encontrado' }], isError: true };
-      return { content: [{ type: 'text', text: JSON.stringify(updated, null, 2) }] };
+      try {
+        const updated = await api.messages.markRead(messageId);
+        return { content: [{ type: 'text', text: JSON.stringify(updated, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: err.statusCode === 404 ? 'Mensaje no encontrado' : `Error: ${err.message}` }], isError: true };
+      }
     }
   );
 }

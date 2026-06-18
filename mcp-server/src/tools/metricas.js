@@ -4,6 +4,7 @@
 
 const { z } = require('zod');
 const { getModel } = require('../db');
+const api = require('../apiClient');
 
 function registerMetricasTools(server) {
   const Cliente = () => getModel('Cliente');
@@ -111,8 +112,12 @@ function registerMetricasTools(server) {
         type: type || 'note',
         notes: notes || '',
       };
-      const created = await Activity().create(doc);
-      return { content: [{ type: 'text', text: JSON.stringify(created.toObject(), null, 2) }] };
+      try {
+        const created = await api.activities.create(doc);
+        return { content: [{ type: 'text', text: JSON.stringify(created, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: `Error al registrar actividad: ${err.message}` }], isError: true };
+      }
     }
   );
 

@@ -1,9 +1,13 @@
 /**
  * MCP Tools — Clientes
+ *
+ * Regla: las operaciones de ESCRITURA pasan por la API del backend (apiClient).
+ * Las operaciones de LECTURA usan acceso directo a MongoDB para mayor rendimiento.
  */
 
 const { z } = require('zod');
 const { getModel } = require('../db');
+const api = require('../apiClient');
 
 function registerClienteTools(server) {
   const Cliente = () => getModel('Cliente');
@@ -237,7 +241,7 @@ function registerClienteTools(server) {
 
   server.tool(
     'create_cliente',
-    'Crea un nuevo cliente en el CRM.',
+    'Crea un nuevo cliente en el CRM. Pasa por la API del backend para validaciones y auditoría.',
     {
       nombre: z.string().describe('Nombre completo (requerido)'),
       email: z.string().optional().describe('Email'),
@@ -248,16 +252,25 @@ function registerClienteTools(server) {
     },
     async ({ nombre, email, telefono, direccion, notas, agenteId }) => {
       if (!nombre || !nombre.trim()) return { content: [{ type: 'text', text: 'nombre es requerido' }], isError: true };
-      const doc = { nombre: nombre.trim(), email: email || '', telefono: telefono || '', direccion: direccion || '', notas: notas || '' };
-      if (agenteId) doc.agenteId = agenteId;
-      const created = await Cliente().create(doc);
-      return persistedResult(Cliente(), created._id, 'cliente');
+      try {
+        const created = await api.clientes.create({
+          nombre: nombre.trim(),
+          email: email || '',
+          telefono: telefono || '',
+          direccion: direccion || '',
+          notas: notas || '',
+          ...(agenteId ? { agenteId } : {}),
+        });
+        return { content: [{ type: 'text', text: JSON.stringify({ persisted: true, item: created }, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: `Error al crear cliente: ${err.message}` }], isError: true };
+      }
     }
   );
 
   server.tool(
     'update_cliente',
-    'Actualiza campos de un cliente existente.',
+    'Actualiza campos de un cliente existente. Pasa por la API del backend para validaciones y auditoría.',
     {
       clienteId: z.string().describe('ID del cliente'),
       nombre: z.string().optional().describe('Nuevo nombre'),
@@ -267,29 +280,37 @@ function registerClienteTools(server) {
       notas: z.string().optional().describe('Nuevas notas'),
     },
     async ({ clienteId, nombre, email, telefono, direccion, notas }) => {
-      const set = {};
-      if (nombre !== undefined) set.nombre = nombre;
-      if (email !== undefined) set.email = email;
-      if (telefono !== undefined) set.telefono = telefono;
-      if (direccion !== undefined) set.direccion = direccion;
-      if (notas !== undefined) set.notas = notas;
-      const updated = await Cliente().findByIdAndUpdate(clienteId, { $set: set }, { new: true, runValidators: true }).lean();
-      if (!updated) return { content: [{ type: 'text', text: 'Cliente no encontrado' }], isError: true };
-      return persistedResult(Cliente(), updated._id, 'cliente');
+      const body = {};
+      if (nombre !== undefined) body.nombre = nombre;
+      if (email !== undefined) body.email = email;
+      if (telefono !== undefined) body.telefono = telefono;
+      if (direccion !== undefined) body.direccion = direccion;
+      if (notas !== undefined) body.notas = notas;
+      try {
+        const updated = await api.clientes.update(clienteId, body);
+        return { content: [{ type: 'text', text: JSON.stringify({ persisted: true, item: updated }, null, 2) }] };
+      } catch (err) {
+        if (err.statusCode === 404) return { content: [{ type: 'text', text: 'Cliente no encontrado' }], isError: true };
+        return { content: [{ type: 'text', text: `Error al actualizar cliente: ${err.message}` }], isError: true };
+      }
     }
   );
 
   server.tool(
     'update_cliente_fidelizado',
-    'Marca o desmarca un cliente como fidelizado.',
+    'Marca o desmarca un cliente como fidelizado. Pasa por la API del backend.',
     {
       clienteId: z.string().describe('ID del cliente'),
       fidelizado: z.boolean().describe('Estado de fidelización'),
     },
     async ({ clienteId, fidelizado }) => {
-      const updated = await Cliente().findByIdAndUpdate(clienteId, { $set: { fidelizado } }, { new: true, runValidators: true }).lean();
-      if (!updated) return { content: [{ type: 'text', text: 'Cliente no encontrado' }], isError: true };
-      return persistedResult(Cliente(), updated._id, 'cliente');
+      try {
+        const updated = await api.clientes.setFidelizado(clienteId, fidelizado);
+        return { content: [{ type: 'text', text: JSON.stringify({ persisted: true, item: updated }, null, 2) }] };
+      } catch (err) {
+        if (err.statusCode === 404) return { content: [{ type: 'text', text: 'Cliente no encontrado' }], isError: true };
+        return { content: [{ type: 'text', text: `Error: ${err.message}` }], isError: true };
+      }
     }
   );
 }

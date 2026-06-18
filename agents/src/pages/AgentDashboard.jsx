@@ -19,6 +19,7 @@ import {
 import Chart from 'react-apexcharts';
 import { useStateContext } from '../contexts/ContextProvider';
 import { crmService } from '../services/crmService';
+import AISuggestionsPanel from '../components/ai/AISuggestionsPanel';
 
 const AgentDashboard = () => {
   const { currentMode } = useStateContext();
@@ -485,6 +486,11 @@ const AgentDashboard = () => {
             </ul>
           </div>
         </div>
+      </div>
+
+      {/* AI Suggestions */}
+      <div className="mt-6">
+        <AISuggestionsPanel isDark={isDark} limit={6} />
       </div>
 
       {/* Widget adicional: rendimiento personal */}

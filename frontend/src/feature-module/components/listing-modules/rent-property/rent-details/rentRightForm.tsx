@@ -18,6 +18,13 @@ type RentRightFormProps = {
 };
 
 const RentRightForm = ({ agent, propertySlug }: RentRightFormProps) => {
+  const agentWhatsappNumber = String(agent?.phone || "").replace(/\D/g, "");
+
+  const openAgentWhatsApp = () => {
+    if (!agentWhatsappNumber) return;
+    window.open(`https://wa.me/${agentWhatsappNumber}`, "_blank", "noopener,noreferrer");
+  };
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -111,6 +118,16 @@ const RentRightForm = ({ agent, propertySlug }: RentRightFormProps) => {
               ) : null}
             </div>
           )}
+          {agentWhatsappNumber ? (
+            <button
+              type="button"
+              className="btn btn-success w-100 mt-3 d-flex align-items-center justify-content-center gap-2"
+              onClick={openAgentWhatsApp}
+            >
+              <i className="fa-brands fa-whatsapp" />
+              WhatsApp
+            </button>
+          ) : null}
         </div>
         {/* end card body*/}
       </div>

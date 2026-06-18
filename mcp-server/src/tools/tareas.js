@@ -1,9 +1,12 @@
 /**
  * MCP Tools — Tareas
+ *
+ * Regla: las operaciones de ESCRITURA pasan por la API del backend (apiClient).
  */
 
 const { z } = require('zod');
 const { getModel } = require('../db');
+const api = require('../apiClient');
 
 function registerTareaTools(server) {
   const Tarea = () => getModel('Tarea');
@@ -138,8 +141,12 @@ function registerTareaTools(server) {
       if (clienteId) doc.clienteId = clienteId;
       if (propiedadId) doc.propiedadId = propiedadId;
 
-      const created = await Tarea().create(doc);
-      return { content: [{ type: 'text', text: JSON.stringify(created.toObject(), null, 2) }] };
+      try {
+        const created = await api.tareas.create(doc);
+        return { content: [{ type: 'text', text: JSON.stringify(created, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: `Error al crear tarea: ${err.message}` }], isError: true };
+      }
     }
   );
 
@@ -152,11 +159,13 @@ function registerTareaTools(server) {
     },
     async ({ tareaId, status }) => {
       if (!tareaId || !status) return { content: [{ type: 'text', text: 'tareaId y status requeridos' }], isError: true };
-      const set = { status };
-      if (status === 'completada') { set.completed = true; set.completedAt = new Date(); }
-      const updated = await Tarea().findByIdAndUpdate(tareaId, { $set: set }, { new: true }).lean();
-      if (!updated) return { content: [{ type: 'text', text: 'Tarea no encontrada' }], isError: true };
-      return { content: [{ type: 'text', text: JSON.stringify(updated, null, 2) }] };
+      try {
+        const updated = await api.tareas.updateStatus(tareaId, status);
+        return { content: [{ type: 'text', text: JSON.stringify(updated, null, 2) }] };
+      } catch (err) {
+        if (err.statusCode === 404) return { content: [{ type: 'text', text: 'Tarea no encontrada' }], isError: true };
+        return { content: [{ type: 'text', text: `Error al actualizar tarea: ${err.message}` }], isError: true };
+      }
     }
   );
 
@@ -171,9 +180,12 @@ function registerTareaTools(server) {
       if (!tareaId || !dueDate) return { content: [{ type: 'text', text: 'tareaId y dueDate requeridos' }], isError: true };
       const d = new Date(dueDate);
       if (Number.isNaN(d.getTime())) return { content: [{ type: 'text', text: 'dueDate inválida' }], isError: true };
-      const updated = await Tarea().findByIdAndUpdate(tareaId, { $set: { dueDate: d } }, { new: true }).lean();
-      if (!updated) return { content: [{ type: 'text', text: 'Tarea no encontrada' }], isError: true };
-      return { content: [{ type: 'text', text: JSON.stringify(updated, null, 2) }] };
+      try {
+        const updated = await api.tareas.update(tareaId, { dueDate: d });
+        return { content: [{ type: 'text', text: JSON.stringify(updated, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: err.statusCode === 404 ? 'Tarea no encontrada' : `Error: ${err.message}` }], isError: true };
+      }
     }
   );
 
@@ -189,22 +201,29 @@ function registerTareaTools(server) {
       fromUserName: z.string().optional(),
     },
     async ({ tareaId, assigneeId, assigneeName, reason, fromUserId, fromUserName }) => {
-      const delegation = fromUserId ? {
-        fromUserId,
-        fromUserName: fromUserName || '',
-        toUserId: assigneeId,
-        toUserName: assigneeName || '',
-        reason: reason || '',
-        delegatedAt: new Date(),
-      } : null;
-      const update = {
-        $set: { assigneeId, ...(assigneeName ? { assigneeName } : {}) },
-        ...(delegation ? { $push: { delegations: delegation } } : {}),
-      };
-      const updated = await Tarea().findByIdAndUpdate(tareaId, update, { new: true }).lean();
-      if (!updated) return { content: [{ type: 'text', text: 'Tarea no encontrada' }], isError: true };
-      const propiedad = updated.propiedadId ? await Propiedad().findById(updated.propiedadId).select('title address').lean() : null;
-      return { content: [{ type: 'text', text: JSON.stringify({ tarea: updated, propiedad }, null, 2) }] };
+      try {
+        let updated;
+        if (fromUserId) {
+          // Use delegate route — preserves delegation history
+          updated = await api.tareas.delegate(tareaId, {
+            toUserId: assigneeId,
+            toUserName: assigneeName || '',
+            reason: reason || '',
+            fromUserId,
+            fromUserName: fromUserName || '',
+          });
+        } else {
+          // Simple reassignment
+          updated = await api.tareas.update(tareaId, {
+            assigneeId,
+            ...(assigneeName ? { assigneeName } : {}),
+          });
+        }
+        const propiedad = updated.propiedadId ? await Propiedad().findById(updated.propiedadId).select('title address').lean() : null;
+        return { content: [{ type: 'text', text: JSON.stringify({ tarea: updated, propiedad }, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: err.statusCode === 404 ? 'Tarea no encontrada' : `Error: ${err.message}` }], isError: true };
+      }
     }
   );
 }

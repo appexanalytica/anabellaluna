@@ -4,6 +4,7 @@
 
 const { z } = require('zod');
 const { getModel } = require('../db');
+const api = require('../apiClient');
 
 function registerPropiedadTools(server) {
   const Propiedad = () => getModel('Propiedad');
@@ -15,13 +16,6 @@ function registerPropiedadTools(server) {
   const safeLimit = (limit, fallback = 20) => Math.min(Math.max(Number(limit) || fallback, 1), 50);
   const isObjectId = (v) => /^[a-fA-F0-9]{24}$/.test(String(v || ''));
   const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const persistedResult = async (model, id, label) => {
-    const persisted = await model.findById(id).lean();
-    if (!persisted) {
-      return { content: [{ type: 'text', text: `No se pudo confirmar la persistencia de ${label}` }], isError: true };
-    }
-    return { content: [{ type: 'text', text: JSON.stringify({ persisted: true, item: persisted }, null, 2) }] };
-  };
 
   server.tool(
     'count_propiedades',
@@ -276,12 +270,15 @@ function registerPropiedadTools(server) {
         if (agentId) clienteFilter.agenteId = String(agentId);
         let cliente = await Cliente().findOne(clienteFilter).lean();
         if (!cliente) {
-          const createdCliente = await Cliente().create({
-            nombre: ownerNameCandidate,
-            agenteId: agentId ? String(agentId) : '',
-            metadata: { tipoCliente: 'Propietario', estado: 'Lead', origen: 'Otro' },
-          });
-          cliente = createdCliente.toObject ? createdCliente.toObject() : createdCliente;
+          try {
+            cliente = await api.clientes.create({
+              nombre: ownerNameCandidate,
+              agenteId: agentId ? String(agentId) : '',
+              metadata: { tipoCliente: 'Propietario', estado: 'Lead', origen: 'Otro' },
+            });
+          } catch (err) {
+            return { content: [{ type: 'text', text: `Error al crear cliente propietario: ${err.message}` }], isError: true };
+          }
           ownerNote = `Cliente "${ownerNameCandidate}" no estaba agendado; se creó automáticamente y se vinculó como dueño.`;
         } else {
           ownerNote = `Se vinculó al cliente existente "${cliente.nombre}" como dueño.`;
@@ -289,12 +286,16 @@ function registerPropiedadTools(server) {
         doc.ownerId = String(cliente._id);
       }
 
-      const created = await Propiedad().create(doc);
-      const result = await persistedResult(Propiedad(), created._id, 'propiedad');
-      if (ownerNote && !result.isError && result.content && result.content[0]) {
-        result.content[0].text += `\n\n${ownerNote}`;
+      try {
+        const created = await api.propiedades.create(doc);
+        const result = { content: [{ type: 'text', text: JSON.stringify({ persisted: true, item: created }, null, 2) }] };
+        if (ownerNote) {
+          result.content[0].text += `\n\n${ownerNote}`;
+        }
+        return result;
+      } catch (err) {
+        return { content: [{ type: 'text', text: `Error al crear propiedad: ${err.message}` }], isError: true };
       }
-      return result;
     }
   );
 
@@ -323,9 +324,12 @@ function registerPropiedadTools(server) {
       if (published !== undefined) set.published = published;
       if (featured !== undefined) set.featured = featured;
 
-      const updated = await Propiedad().findByIdAndUpdate(propiedadId, { $set: set }, { new: true, runValidators: true }).lean();
-      if (!updated) return { content: [{ type: 'text', text: 'Propiedad no encontrada' }], isError: true };
-      return persistedResult(Propiedad(), updated._id, 'propiedad');
+      try {
+        const updated = await api.propiedades.update(propiedadId, set);
+        return { content: [{ type: 'text', text: JSON.stringify({ persisted: true, item: updated }, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: err.statusCode === 404 ? 'Propiedad no encontrada' : `Error: ${err.message}` }], isError: true };
+      }
     }
   );
 
@@ -337,9 +341,12 @@ function registerPropiedadTools(server) {
       published: z.boolean().describe('true para publicar, false para despublicar'),
     },
     async ({ propiedadId, published }) => {
-      const updated = await Propiedad().findByIdAndUpdate(propiedadId, { $set: { published } }, { new: true, runValidators: true }).lean();
-      if (!updated) return { content: [{ type: 'text', text: 'Propiedad no encontrada' }], isError: true };
-      return persistedResult(Propiedad(), updated._id, 'propiedad');
+      try {
+        const updated = await api.propiedades.setPublished(propiedadId, published);
+        return { content: [{ type: 'text', text: JSON.stringify({ persisted: true, item: updated }, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: err.statusCode === 404 ? 'Propiedad no encontrada' : `Error: ${err.message}` }], isError: true };
+      }
     }
   );
 }

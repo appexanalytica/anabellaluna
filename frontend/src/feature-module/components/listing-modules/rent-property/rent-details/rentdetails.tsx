@@ -12,6 +12,7 @@ import publicService, { type PropertyDetail } from "../../../../../services/publ
 import { buildHeroBackground, getAccentColor, heroTextColorClass, heroMutedColor, resolveMediaUrl } from "../../common/funnelUtils";
 import { VideoOverlay, VideoSection } from "../../common/VideoOverlay";
 import VirtualTourViewer from "../../../virtual-tour/VirtualTourViewer";
+import MapboxMap from "../../../../../core/common/mapbox-map";
 import {
   scrollToElementForBrowser,
   useIosSafariClass,
@@ -192,8 +193,8 @@ const RentDetails = () => {
     trackEvent("hero_cta_click", { propertyId: property?.id, slug });
   }, [isIosWebKitBrowser, property?.id, slug]);
 
-  const openWhatsApp = useCallback((source: string) => {
-    const num = whatsappNumber.replace(/\D/g, "");
+  const openWhatsApp = useCallback((source: string, phoneOverride?: string) => {
+    const num = String(phoneOverride || whatsappNumber).replace(/\D/g, "");
     const msg = encodeURIComponent(`Hola, me interesa la propiedad en alquiler: ${property?.title || ""} (${window.location.href})`);
     window.open(`https://wa.me/${num}?text=${msg}`, "_blank");
     trackEvent("whatsapp_cta_click", { propertyId: property?.id, slug, source });
@@ -597,8 +598,7 @@ const RentDetails = () => {
                     </div>
                   )}
                   <div className="rounded-3 overflow-hidden" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.1)", height: 320 }}>
-                    <iframe title="Mapa de ubicación" src={`https://www.google.com/maps?q=${property.location.lat},${property.location.lng}&z=15&output=embed`}
-                      style={{ width: "100%", height: "100%", border: 0 }} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+                    <MapboxMap lat={Number(property.location.lat)} lng={Number(property.location.lng)} height="100%" />
                   </div>
                 </div>
               )}
@@ -641,8 +641,8 @@ const RentDetails = () => {
                               <i className="material-icons-outlined" style={{ fontSize: 16 }}>email</i>Email
                             </a>
                           )}
-                          {whatsappNumber && (
-                            <button className="btn btn-sm btn-success d-flex align-items-center gap-1" onClick={() => openWhatsApp("agent_block")}>
+                          {property.agent.phone && (
+                            <button className="btn btn-sm btn-success d-flex align-items-center gap-1" onClick={() => openWhatsApp("agent_block", property.agent?.phone)}>
                               <i className="fa-brands fa-whatsapp" /> WhatsApp
                             </button>
                           )}

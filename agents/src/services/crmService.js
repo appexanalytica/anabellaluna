@@ -169,11 +169,6 @@ export const crmService = {
       getAuthUrl: () => api.get('/crm/integrations/google-calendar/auth-url'),
       disconnect: () => api.post('/crm/integrations/google-calendar/disconnect', {}),
     },
-    googleMaps: {
-      getConfig: () => api.get('/crm/integrations/google-maps/config'),
-      saveConfig: (data) => api.put('/crm/integrations/google-maps/config', data),
-      deleteConfig: () => api.delete('/crm/integrations/google-maps/config'),
-    },
     googleCloud: {
       getConfig: () => api.get('/crm/integrations/google-cloud/config'),
       saveConfig: (data) => api.put('/crm/integrations/google-cloud/config', data),

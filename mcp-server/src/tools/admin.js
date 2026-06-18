@@ -5,6 +5,7 @@
 
 const { z } = require('zod');
 const { getModel } = require('../db');
+const api = require('../apiClient');
 
 function registerAdminTools(server) {
   const Agente = () => getModel('Agente');
@@ -52,9 +53,12 @@ function registerAdminTools(server) {
       if (telefono !== undefined) set.telefono = telefono;
       if (activo !== undefined) set.activo = activo;
       if (comision !== undefined) set.comision = comision;
-      const updated = await Agente().findByIdAndUpdate(agenteId, { $set: set }, { new: true }).lean();
-      if (!updated) return { content: [{ type: 'text', text: 'Agente no encontrado' }], isError: true };
-      return { content: [{ type: 'text', text: JSON.stringify(updated, null, 2) }] };
+      try {
+        const updated = await api.agentes.update(agenteId, set);
+        return { content: [{ type: 'text', text: JSON.stringify(updated, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: err.statusCode === 404 ? 'Agente no encontrado' : `Error: ${err.message}` }], isError: true };
+      }
     }
   );
 
@@ -150,11 +154,12 @@ function registerAdminTools(server) {
       notes: z.string().optional(),
     },
     async ({ bookingId, status, notes }) => {
-      const set = { status };
-      if (notes) set.adminNotes = notes;
-      const updated = await BookingRequest().findByIdAndUpdate(bookingId, { $set: set }, { new: true }).lean();
-      if (!updated) return { content: [{ type: 'text', text: 'Reserva no encontrada' }], isError: true };
-      return { content: [{ type: 'text', text: JSON.stringify(updated, null, 2) }] };
+      try {
+        const updated = await api.bookings.updateStatus(bookingId, status, notes);
+        return { content: [{ type: 'text', text: JSON.stringify(updated, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: err.statusCode === 404 ? 'Reserva no encontrada' : `Error: ${err.message}` }], isError: true };
+      }
     }
   );
 
@@ -213,33 +218,40 @@ function registerAdminTools(server) {
         ],
       }).lean();
       if (existing) {
-        await Activity().create({
-          agenteId: agenteId || existing.agenteId || '',
-          clientId: String(existing._id),
-          type: 'web_contact',
-          notes: `${msg.asunto || 'Consulta web'}: ${msg.mensaje}${notasExtra ? `\n${notasExtra}` : ''}`,
-          metadata: { contactMessageId: String(msg._id), convertedToExisting: true },
-        });
+        try {
+          await api.activities.create({
+            agenteId: agenteId || existing.agenteId || '',
+            clientId: String(existing._id),
+            type: 'web_contact',
+            notes: `${msg.asunto || 'Consulta web'}: ${msg.mensaje}${notasExtra ? `\n${notasExtra}` : ''}`,
+            metadata: { contactMessageId: String(msg._id), convertedToExisting: true },
+          });
+        } catch (err) {
+          return { content: [{ type: 'text', text: `Error al registrar actividad: ${err.message}` }], isError: true };
+        }
         return { content: [{ type: 'text', text: JSON.stringify({ cliente: existing, reusedExisting: true }, null, 2) }] };
       }
 
-      const cliente = await Cliente().create({
-        nombre: msg.nombre,
-        email: msg.email || '',
-        telefono: msg.telefono || '',
-        agenteId: agenteId || '',
-        notas: `${msg.asunto || 'Consulta web'}: ${msg.mensaje}${notasExtra ? `\n${notasExtra}` : ''}`,
-        metadata: { source: 'contact_message', contactMessageId: String(msg._id) },
-      });
-      await Activity().create({
-        agenteId: agenteId || '',
-        clientId: String(cliente._id),
-        type: 'web_contact',
-        notes: `${msg.asunto || 'Consulta web'}: ${msg.mensaje}`,
-        metadata: { contactMessageId: String(msg._id), convertedToCliente: true },
-      });
-
-      return { content: [{ type: 'text', text: JSON.stringify({ cliente: cliente.toObject(), reusedExisting: false }, null, 2) }] };
+      try {
+        const cliente = await api.clientes.create({
+          nombre: msg.nombre,
+          email: msg.email || '',
+          telefono: msg.telefono || '',
+          agenteId: agenteId || '',
+          notas: `${msg.asunto || 'Consulta web'}: ${msg.mensaje}${notasExtra ? `\n${notasExtra}` : ''}`,
+          metadata: { source: 'contact_message', contactMessageId: String(msg._id) },
+        });
+        await api.activities.create({
+          agenteId: agenteId || '',
+          clientId: String(cliente._id),
+          type: 'web_contact',
+          notes: `${msg.asunto || 'Consulta web'}: ${msg.mensaje}`,
+          metadata: { contactMessageId: String(msg._id), convertedToCliente: true },
+        });
+        return { content: [{ type: 'text', text: JSON.stringify({ cliente, reusedExisting: false }, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text', text: `Error al convertir contacto: ${err.message}` }], isError: true };
+      }
     }
   );
 

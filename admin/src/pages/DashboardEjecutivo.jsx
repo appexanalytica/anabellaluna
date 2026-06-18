@@ -4,6 +4,7 @@ import { HiOutlineDotsHorizontal, HiTrendingUp } from 'react-icons/hi';
 import Chart from 'react-apexcharts';
 import { useStateContext } from '../contexts/ContextProvider';
 import { crmService } from '../services/crmService';
+import AISuggestionsPanel from '../components/ai/AISuggestionsPanel';
 
 const DashboardEjecutivo = () => {
   const { currentMode } = useStateContext();
@@ -557,6 +558,11 @@ const DashboardEjecutivo = () => {
             })}
           </div>
         </div>
+      </div>
+
+      {/* AI Suggestions Panel */}
+      <div className="mt-6">
+        <AISuggestionsPanel currentMode={currentMode} limit={8} />
       </div>
 
       {/* Footer Stats */}

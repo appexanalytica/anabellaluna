@@ -1,22 +1,22 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import AIMessageBubble from './AIMessageBubble';
-import { useAIChat }   from '../../hooks/useAIChat';
 import { useStateContext } from '../../contexts/ContextProvider';
-import aiService from '../../services/aiService';
+import aiGatewayService from '../../services/aiGatewayService';
+import { useAIGatewayChat } from '../../hooks/useAIGatewayChat';
 import orbSvg from '../../assets/ai_orb.svg';
 
 // ── Orb button ────────────────────────────────────────────────────────────────
 
-const OrbButton = ({ onClick, isOpen }) => (
+const OrbButton = ({ onClick, isOpen, pulse }) => (
   <button
     onClick={onClick}
-    title="Asistente AI"
+    title="Asistente AI Cognitivo"
     style={{
       position:   'fixed',
       bottom:     24,
       right:      24,
-      width:      64,
-      height:     64,
+      width:      56,
+      height:     56,
       borderRadius: '50%',
       border:     'none',
       padding:    0,
@@ -33,64 +33,82 @@ const OrbButton = ({ onClick, isOpen }) => (
     onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.12)'; }}
     onMouseLeave={(e) => { e.currentTarget.style.transform = isOpen ? 'scale(1.08)' : 'scale(1)'; }}
   >
-    <img src={orbSvg} alt="AI" style={{ width: 64, height: 64, display: 'block', borderRadius: '50%' }} draggable={false} />
+    <img
+      src={orbSvg}
+      alt="AI"
+      style={{ width: 56, height: 56, display: 'block', borderRadius: '50%' }}
+      draggable={false}
+    />
+    {pulse && !isOpen && (
+      <span style={{
+        position:     'absolute',
+        top:          2,
+        right:        2,
+        width:        12,
+        height:       12,
+        borderRadius: '50%',
+        background:   '#22c55e',
+        border:       '2px solid #fff',
+        animation:    'orbPulse 2s infinite',
+      }} />
+    )}
   </button>
 );
 
+// ── Agent badge ──────────────────────────────────────────────────────────────
+
+const AgentBadge = ({ name, isDark }) => {
+  if (!name) return null;
+  const label = name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  return (
+    <span style={{
+      display: 'inline-block',
+      padding: '2px 8px',
+      borderRadius: 10,
+      fontSize: 10,
+      fontWeight: 600,
+      background: isDark ? 'rgba(155,109,255,0.15)' : 'rgba(107,61,232,0.08)',
+      color: isDark ? '#c084fc' : '#7c3aed',
+      marginBottom: 4,
+    }}>
+      {label}
+    </span>
+  );
+};
+
 // ── Floating chat panel ───────────────────────────────────────────────────────
 
-const FloatingChat = ({ conversationId, onClose, isDark }) => {
-  const { messages, loading, hydrating, error, sendMessage } = useAIChat(conversationId);
+const FloatingChat = ({ onClose, isDark }) => {
+  const { messages, loading, error, lastAgent, sendMessage, clearMessages } = useAIGatewayChat();
 
-  const [input,   setInput]   = useState('');
-  const [viewportReady, setViewportReady] = useState(false);
+  const [input, setInput] = useState('');
   const messagesRef = useRef(null);
-  const inputRef  = useRef(null);
+  const inputRef = useRef(null);
   const nearBottomRef = useRef(true);
-  const draftKey = `ai-orb:${conversationId}:draft`;
-  const scrollKey = `ai-orb:${conversationId}:scroll`;
-
-  useEffect(() => {
-    try { setInput(localStorage.getItem(draftKey) || ''); } catch { setInput(''); }
-  }, [draftKey]);
-
-  useEffect(() => {
-    try { localStorage.setItem(draftKey, input); } catch { /* ignore */ }
-  }, [draftKey, input]);
-
-  useLayoutEffect(() => { setViewportReady(false); }, [conversationId]);
 
   useLayoutEffect(() => {
     const el = messagesRef.current;
-    if (!el || hydrating) return;
-    const saved = Number(localStorage.getItem(scrollKey));
-    el.scrollTop = Number.isFinite(saved) && saved > 0 ? Math.min(saved, el.scrollHeight) : el.scrollHeight;
-    nearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-    setViewportReady(true);
-  }, [hydrating, messages.length, scrollKey]);
-
-  useLayoutEffect(() => {
-    const el = messagesRef.current;
-    if (!el || !viewportReady || hydrating) return;
+    if (!el) return;
     if (nearBottomRef.current || loading) {
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
     }
-  }, [messages.length, loading, viewportReady, hydrating]);
+  }, [messages.length, loading]);
 
   useLayoutEffect(() => {
     const el = inputRef.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, 100)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 110)}px`;
   }, [input]);
 
-  useEffect(() => { setTimeout(() => inputRef.current?.focus(), 100); }, []);
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, []);
 
   const handleMessagesScroll = () => {
     const el = messagesRef.current;
     if (!el) return;
     nearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 96;
-    try { localStorage.setItem(scrollKey, String(el.scrollTop)); } catch { /* ignore */ }
   };
 
   const handleSend = useCallback(async (e) => {
@@ -107,18 +125,20 @@ const FloatingChat = ({ conversationId, onClose, isDark }) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
-  const bg     = isDark ? '#0f172a' : '#fff';
+  const bg = isDark ? '#0f172a' : '#fff';
   const border = isDark ? 'rgba(155,109,255,0.25)' : 'rgba(107,61,232,0.18)';
+  const inputBg = isDark ? '#1e293b' : '#f8fafc';
+  const textCol = isDark ? '#e2e8f0' : '#1e293b';
 
   return (
     <div style={{
       position:      'fixed',
-      bottom:        100,
+      bottom:        92,
       right:         24,
-      width:         360,
+      width:         380,
       maxWidth:      'calc(100vw - 32px)',
-      height:        500,
-      maxHeight:     'calc(100vh - 120px)',
+      height:        520,
+      maxHeight:     'calc(100vh - 110px)',
       zIndex:        9998,
       display:       'flex',
       flexDirection: 'column',
@@ -132,7 +152,7 @@ const FloatingChat = ({ conversationId, onClose, isDark }) => {
 
       {/* Header */}
       <div style={{
-        padding:    '13px 16px',
+        padding:    '12px 16px',
         background: isDark
           ? 'linear-gradient(135deg, #1e1040 0%, #2d1b6e 100%)'
           : 'linear-gradient(135deg, #6b3de8 0%, #9b6dff 100%)',
@@ -141,80 +161,78 @@ const FloatingChat = ({ conversationId, onClose, isDark }) => {
         gap:        10,
         flexShrink: 0,
       }}>
-        <img src={orbSvg} alt="" style={{ width: 30, height: 30, borderRadius: '50%' }} />
+        <img src={orbSvg} alt="" style={{ width: 28, height: 28, borderRadius: '50%' }} />
         <div style={{ flex: 1 }}>
-          <div style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>Asistente AI</div>
-          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10, marginTop: 1 }}>
-            {loading ? 'Escribiendo...' : 'Online'}
+          <div style={{ color: '#fff', fontWeight: 700, fontSize: 13, lineHeight: 1.2 }}>
+            Asistente Cognitivo
+          </div>
+          <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 10, marginTop: 1 }}>
+            {loading ? 'Analizando...' : lastAgent ? lastAgent.replace(/_/g, ' ') : 'Multi-agente'}
           </div>
         </div>
         <button
+          onClick={clearMessages}
+          title="Nueva conversación"
+          style={{
+            background: 'rgba(255,255,255,0.15)',
+            border: 'none', borderRadius: 6,
+            width: 26, height: 26, cursor: 'pointer',
+            color: '#fff', fontSize: 13,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0, marginRight: 4,
+          }}
+        >⟳</button>
+        <button
           onClick={onClose}
           style={{
-            background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%',
-            width: 26, height: 26, cursor: 'pointer', color: '#fff', fontSize: 14,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            background: 'rgba(255,255,255,0.15)',
+            border: 'none', borderRadius: '50%',
+            width: 26, height: 26, cursor: 'pointer',
+            color: '#fff', fontSize: 15,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
           }}
         >×</button>
       </div>
 
       {/* Messages */}
       <div style={{
-        flex:          1,
-        overflowY:     'auto',
-        padding:       '14px 12px',
-        display:       'flex',
-        flexDirection: 'column',
-        gap:           2,
-        opacity:        viewportReady || hydrating ? 1 : 0,
-        transition:     'opacity 0.12s ease',
+        flex: 1, overflowY: 'auto', padding: '14px 12px',
+        display: 'flex', flexDirection: 'column', gap: 2,
       }}
       ref={messagesRef}
       onScroll={handleMessagesScroll}
       >
-        {hydrating && messages.length === 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[0, 1, 2].map((item) => (
-              <div
-                key={item}
-                style={{
-                  width: item === 1 ? '58%' : '76%',
-                  height: item === 1 ? 30 : 42,
-                  borderRadius: 16,
-                  background: isDark ? '#1f2937' : '#e5e7eb',
-                  opacity: 0.72,
-                  alignSelf: item === 1 ? 'flex-end' : 'flex-start',
-                }}
-              />
-            ))}
-          </div>
-        )}
-
-        {messages.length === 0 && !loading && !hydrating && (
+        {messages.length === 0 && !loading && (
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
-            color: isDark ? '#475569' : '#94a3b8',
-            textAlign: 'center', padding: '20px 14px', gap: 10,
+            color: isDark ? '#475569' : '#94a3b8', textAlign: 'center',
+            padding: '20px 14px', gap: 8,
           }}>
-            <img src={orbSvg} alt="" style={{ width: 48, height: 48, opacity: 0.8 }} />
+            <img src={orbSvg} alt="" style={{ width: 44, height: 44, opacity: 0.8 }} />
             <div style={{ fontWeight: 600, fontSize: 13, color: isDark ? '#94a3b8' : '#64748b' }}>
-              ¿En qué te ayudo?
+              Plataforma Cognitiva
             </div>
-            <div style={{ fontSize: 11, lineHeight: 1.5, maxWidth: 240 }}>
-              Podés pedirme agendar citas, consultar clientes, revisar operaciones o pedir análisis.
+            <div style={{ fontSize: 11, lineHeight: 1.5, maxWidth: 260 }}>
+              Consultá sobre tus leads, propiedades, tareas o métricas de conversión.
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, justifyContent: 'center', marginTop: 6 }}>
-              {['Agendar cita', 'Ver mis clientes', 'Operaciones del mes', 'Campañas activas'].map((s) => (
+              {[
+                'Mis leads calientes',
+                'Tareas pendientes',
+                'Resumen del día',
+                'Propiedades sin actividad',
+              ].map((s) => (
                 <button
                   key={s}
                   onClick={() => { setInput(s); setTimeout(() => inputRef.current?.focus(), 50); }}
                   style={{
-                    padding: '4px 9px', borderRadius: 20,
+                    padding: '4px 9px', borderRadius: 18,
                     border: `1px solid ${isDark ? 'rgba(155,109,255,0.3)' : 'rgba(107,61,232,0.2)'}`,
                     background: isDark ? 'rgba(155,109,255,0.08)' : 'rgba(107,61,232,0.05)',
                     color: isDark ? '#c084fc' : '#6b3de8',
-                    fontSize: 11, cursor: 'pointer', fontWeight: 500,
+                    fontSize: 10, cursor: 'pointer', fontWeight: 500,
                   }}
                 >{s}</button>
               ))}
@@ -223,15 +241,22 @@ const FloatingChat = ({ conversationId, onClose, isDark }) => {
         )}
 
         {messages.map((msg) => (
-          <AIMessageBubble key={msg._id} message={msg} isDark={isDark} />
+          <div key={msg._id}>
+            {msg.role === 'assistant' && msg.agent && (
+              <AgentBadge name={msg.agent} isDark={isDark} />
+            )}
+            <AIMessageBubble message={msg} currentMode={isDark ? 'Dark' : 'Light'} />
+          </div>
         ))}
 
         {loading && (
-          <div style={{ alignSelf: 'flex-start', display: 'flex', gap: 5, padding: '8px 10px', alignItems: 'center' }}>
+          <div style={{ alignSelf: 'flex-start', display: 'flex', gap: 6, padding: '8px 10px' }}>
             {[0, 1, 2].map((i) => (
               <span key={i} style={{
-                width: 6, height: 6, borderRadius: '50%', background: '#9b6dff',
-                animation: 'orbBounce 1.2s infinite', animationDelay: `${i * 0.18}s`,
+                width: 6, height: 6, borderRadius: '50%',
+                background: '#9b6dff',
+                animation: 'orbBounce 1.2s infinite',
+                animationDelay: `${i * 0.18}s`,
                 display: 'inline-block',
               }} />
             ))}
@@ -245,16 +270,17 @@ const FloatingChat = ({ conversationId, onClose, isDark }) => {
             border: '1px solid #fca5a5',
             color: isDark ? '#fca5a5' : '#dc2626',
             fontSize: 11, alignSelf: 'flex-start', maxWidth: '85%',
-          }}>{error}</div>
+          }}>
+            {error}
+          </div>
         )}
-
       </div>
 
       {/* Input */}
       <div style={{
         padding: '9px 10px',
         borderTop: `1px solid ${border}`,
-        background: isDark ? '#1e293b' : '#f8fafc',
+        background: inputBg,
         display: 'flex', gap: 7, alignItems: 'flex-end', flexShrink: 0,
       }}>
         <textarea
@@ -262,16 +288,15 @@ const FloatingChat = ({ conversationId, onClose, isDark }) => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Mensaje"
+          placeholder="Mensaje..."
           disabled={loading}
           rows={1}
           style={{
             flex: 1,
             background: isDark ? '#0f172a' : '#fff',
             border: `1px solid ${isDark ? 'rgba(155,109,255,0.2)' : '#e2e8f0'}`,
-            borderRadius: 18, padding: '8px 11px', fontSize: 12,
-            color: isDark ? '#e2e8f0' : '#1e293b',
-            resize: 'none', minHeight: 36, maxHeight: 90,
+            borderRadius: 16, padding: '8px 11px', fontSize: 12,
+            color: textCol, resize: 'none', minHeight: 36, maxHeight: 90,
             outline: 'none', lineHeight: 1.5, fontFamily: 'inherit',
           }}
         />
@@ -283,12 +308,15 @@ const FloatingChat = ({ conversationId, onClose, isDark }) => {
             background: loading || !input.trim()
               ? (isDark ? '#334155' : '#e2e8f0')
               : 'linear-gradient(135deg, #6b3de8, #9b6dff)',
-            color: loading || !input.trim() ? (isDark ? '#64748b' : '#94a3b8') : '#fff',
+            color: loading || !input.trim()
+              ? (isDark ? '#64748b' : '#94a3b8') : '#fff',
             cursor: loading || !input.trim() ? 'not-allowed' : 'pointer',
             fontSize: 16, display: 'flex', alignItems: 'center',
-            justifyContent: 'center', flexShrink: 0, transition: 'background 0.2s',
+            justifyContent: 'center', flexShrink: 0,
           }}
-        >{loading ? '...' : '↑'}</button>
+        >
+          {loading ? '...' : '↑'}
+        </button>
       </div>
     </div>
   );
@@ -299,41 +327,15 @@ const FloatingChat = ({ conversationId, onClose, isDark }) => {
 const AIFloatingOrb = () => {
   const { currentMode } = useStateContext();
   const isDark = currentMode === 'Dark';
-
-  const [isOpen,         setIsOpen]         = useState(false);
-  const [conversationId, setConversationId] = useState(null);
-  const [loadingConv,    setLoadingConv]    = useState(false);
-  const contextKey = 'agent_assistant';
-
-  const ensureConversation = useCallback(async () => {
-    if (conversationId) return conversationId;
-    setLoadingConv(true);
-    try {
-      const existing = await aiService.getConversations({ context: contextKey });
-      const conv = existing?.[0] || await aiService.createConversation({
-        context: contextKey,
-        title: 'Asistente AI',
-        contextType: 'general',
-      });
-      const id   = conv._id || conv.id;
-      setConversationId(id);
-      return id;
-    } catch (err) {
-      console.error('[AIOrb] Failed to create conversation:', err.message);
-      return null;
-    } finally {
-      setLoadingConv(false);
-    }
-  }, [conversationId, contextKey]);
-
-  const handleToggle = async () => {
-    if (!isOpen) await ensureConversation();
-    setIsOpen((v) => !v);
-  };
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
       <style>{`
+        @keyframes orbPulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.5); opacity: 0.4; }
+        }
         @keyframes orbSlideIn {
           from { opacity: 0; transform: translateY(24px) scale(0.95); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
@@ -344,23 +346,13 @@ const AIFloatingOrb = () => {
         }
       `}</style>
 
-      <OrbButton onClick={handleToggle} isOpen={isOpen} />
+      <OrbButton onClick={() => setIsOpen((v) => !v)} isOpen={isOpen} pulse={true} />
 
-      {isOpen && conversationId && !loadingConv && (
-        <FloatingChat conversationId={conversationId} onClose={() => setIsOpen(false)} isDark={isDark} />
-      )}
-
-      {isOpen && loadingConv && (
-        <div style={{
-          position: 'fixed', bottom: 100, right: 24,
-          padding: '14px 20px', borderRadius: 12,
-          background: isDark ? '#1e293b' : '#fff',
-          boxShadow: '0 8px 32px rgba(107,61,232,0.2)',
-          color: isDark ? '#94a3b8' : '#64748b',
-          fontSize: 12, zIndex: 9998,
-        }}>
-          Iniciando conversación...
-        </div>
+      {isOpen && (
+        <FloatingChat
+          onClose={() => setIsOpen(false)}
+          isDark={isDark}
+        />
       )}
     </>
   );
