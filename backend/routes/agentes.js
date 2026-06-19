@@ -266,7 +266,7 @@ router.delete('/:id', authenticateTokenOrService, requireRole('admin'), async (r
 
 // Get all agents with performance metrics (admin only)
 
-router.get('/metrics/all', authenticateToken, requireRole('admin'), async (req, res) => {
+router.get('/metrics/all', authenticateTokenOrService, requireCRMUser, async (req, res) => {
 
   try {
 
@@ -280,13 +280,15 @@ router.get('/metrics/all', authenticateToken, requireRole('admin'), async (req, 
 
 
 
-    const agentes = await Agente.find().lean();
+    const scopeId = agentScopeId(req);
+    const agenteFilter = scopeId ? { _id: scopeId } : {};
+    const agentes = await Agente.find(agenteFilter).lean();
 
     
 
     const agentesConMetricas = await Promise.all(agentes.map(async (agente) => {
 
-      const agenteId = agente._id;
+      const agenteId = String(agente._id);
 
       
 
@@ -298,13 +300,13 @@ router.get('/metrics/all', authenticateToken, requireRole('admin'), async (req, 
 
       // Count properties assigned to this agent
 
-      const propiedadesCount = await Propiedad.countDocuments({ agentId: String(agenteId) }).catch(() => 0);
+      const propiedadesCount = await Propiedad.countDocuments({ agentId: agenteId }).catch(() => 0);
 
       // Real sales, commission & portfolio metrics from Operacion + Propiedad
-      const propiedadesAsignadas = await Propiedad.find({ agentId: String(agenteId) }).select('price status').lean().catch(() => []);
+      const propiedadesAsignadas = await Propiedad.find({ agentId: agenteId }).select('price status').lean().catch(() => []);
       const valorCartera = Math.round(propiedadesAsignadas.reduce((s, p) => s + Number(p.price || 0), 0));
       const propiedadesVendidas = propiedadesAsignadas.filter((p) => p.status === 'Vendida').length;
-      const ops = await Operacion.find({ agenteId: String(agenteId) }).lean().catch(() => []);
+      const ops = await Operacion.find({ agenteId: agenteId }).lean().catch(() => []);
       const opsClosed = ops.filter((o) => ['Cerrada', 'Completada'].includes(o.estado));
       const ventas = opsClosed.filter((o) => o.tipo === 'Venta').length;
       const alquileres = opsClosed.filter((o) => o.tipo === 'Alquiler').length;
@@ -499,7 +501,7 @@ router.get('/metrics/:id', authenticateToken, requireCRMUser, async (req, res) =
 
     
 
-    const agenteId = agente._id;
+    const agenteId = String(agente._id);
 
     
 
@@ -507,10 +509,10 @@ router.get('/metrics/:id', authenticateToken, requireCRMUser, async (req, res) =
 
     const clientes = await Cliente.find({ agenteId }).select('nombre email estado metadata createdAt').lean().catch(() => []);
 
-    const propiedades = await Propiedad.find({ agentId: String(agenteId) }).select('title tipo operacion price status').lean().catch(() => []);
+    const propiedades = await Propiedad.find({ agentId: agenteId }).select('title tipo operacion price status').lean().catch(() => []);
 
     // Real sales & commission metrics from Operacion
-    const ops = await Operacion.find({ agenteId: String(agenteId) }).lean().catch(() => []);
+    const ops = await Operacion.find({ agenteId }).lean().catch(() => []);
     const opsClosed = ops.filter((o) => ['Cerrada', 'Completada'].includes(o.estado));
     const ventas = opsClosed.filter((o) => o.tipo === 'Venta').length;
     const alquileres = opsClosed.filter((o) => o.tipo === 'Alquiler').length;
@@ -674,4 +676,3 @@ router.get('/metrics/:id', authenticateToken, requireCRMUser, async (req, res) =
 
 
 module.exports = router;
-
