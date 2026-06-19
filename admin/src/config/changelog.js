@@ -2,6 +2,20 @@
 // Do not edit by hand: edit changelog.json instead.
 export const CHANGELOG_ENTRIES = [
   {
+    "date": "2026-06-19",
+    "title": "Operaciones y comisiones conectadas",
+    "items": [
+      {
+        "type": "arreglo",
+        "text": "Las ventas y alquileres cargados desde el panel de agentes ahora quedan guardados correctamente como operaciones reales."
+      },
+      {
+        "type": "mejora",
+        "text": "Las comisiones se actualizan con el monto de la operación, el porcentaje del agente y la fecha de cierre o cobro."
+      }
+    ]
+  },
+  {
     "date": "2026-06-18",
     "title": "Recompensas conectadas a datos reales",
     "items": [

@@ -2,6 +2,14 @@
   "$comment": "Changelog visible en el panel de Novedades del sidebar. Redactar en español simple, pensado para el usuario final (no técnico). Tipos válidos: nuevo | mejora | arreglo. Editar este archivo y rebuildear: scripts/write-app-version.js lo convierte en admin/agents src/config/changelog.js.",
   "entries": [
     {
+      "date": "2026-06-19",
+      "title": "Operaciones y comisiones conectadas",
+      "items": [
+        { "type": "arreglo", "text": "Las ventas y alquileres cargados desde el panel de agentes ahora quedan guardados correctamente como operaciones reales." },
+        { "type": "mejora", "text": "Las comisiones se actualizan con el monto de la operación, el porcentaje del agente y la fecha de cierre o cobro." }
+      ]
+    },
+    {
       "date": "2026-06-18",
       "title": "Recompensas conectadas a datos reales",
       "items": [

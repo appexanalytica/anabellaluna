@@ -2,13 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 
 import { toast } from 'react-toastify';
 import Chart from 'react-apexcharts';
-import { FaDollarSign, FaFileContract, FaChartLine, FaPlus, FaPercentage, FaHandshake, FaArrowUp, FaCalendarAlt, FaTimes, FaSave, FaHome, FaClock, FaCheckCircle, FaFunnelDollar } from 'react-icons/fa';
+import { FaDollarSign, FaFileContract, FaChartLine, FaPlus, FaPercentage, FaHandshake, FaArrowUp, FaCalendarAlt, FaTimes, FaSave, FaHome, FaClock, FaCheckCircle, FaFunnelDollar, FaEdit, FaSpinner } from 'react-icons/fa';
 
 import { useStateContext } from '../contexts/ContextProvider';
 import { crmService } from '../services/crmService';
 
+const SIN_AGENTE_INTERMEDIARIO = '__sin_agente_intermediario__';
 const APORTE_COLEGA_COMPRADOR = 'comprador';
 const APORTE_COLEGA_PROPIEDAD = 'propiedad';
+
+const isSinAgenteIntermediario = (value) => value === SIN_AGENTE_INTERMEDIARIO;
 
 const getStoredUser = () => {
   try {
@@ -20,15 +23,17 @@ const getStoredUser = () => {
 
 const createVentaForm = () => {
   const user = getStoredUser();
+  const adminId = user?.sub || user?._id || user?.id || '';
   return {
-    propiedad: '',
-    cliente: '',
+    propiedadId: '',
+    clienteId: '',
     monto: '',
     moneda: 'USD',
-    agente: '',
+    agenteId: user?.agenteId || '',
     fechaCierre: '',
-    comision: '3.5',
-    inmobiliariaNombre: user?.empresa || 'Inmobiliaria',
+    comisionPorcentaje: '3.5',
+    inmobiliariaId: adminId ? String(adminId) : '',
+    inmobiliariaNombre: user?.empresa || user?.nombre || user?.username || 'Inmobiliaria',
     comisionInmobiliariaPorcentaje: '3.5',
     comparteConInmobiliaria: false,
     aporteInmobiliariaColega: APORTE_COLEGA_COMPRADOR,
@@ -39,8 +44,25 @@ const createVentaForm = () => {
     propiedadColegaPrecio: '',
     propiedadColegaDireccion: '',
     formaPago: 'Contado',
-    observaciones: '',
+    estado: 'En Curso',
+    notas: '',
   };
+};
+
+const ventaEmptyWithDefaults = createVentaForm;
+
+const ALQUILER_EMPTY = {
+  propiedadId: '',
+  clienteId: '',
+  monto: '',
+  moneda: 'USD',
+  agenteId: '',
+  fechaCierre: '',
+  duracion: '12',
+  deposito: '',
+  comisionPorcentaje: '1',
+  estado: 'En Curso',
+  notas: '',
 };
 
 const Ventas = () => {
@@ -50,6 +72,7 @@ const Ventas = () => {
   const [showModalVenta, setShowModalVenta] = useState(false);
   const [showModalAlquiler, setShowModalAlquiler] = useState(false);
   const [showModalSeguimiento, setShowModalSeguimiento] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   // Estados para modales de estadísticas
   const [showModalVentasMes, setShowModalVentasMes] = useState(false);
@@ -63,18 +86,7 @@ const Ventas = () => {
     && nuevaVenta.aporteInmobiliariaColega === APORTE_COLEGA_PROPIEDAD;
 
   // Estado para nuevo alquiler
-  const [nuevoAlquiler, setNuevoAlquiler] = useState({
-    propiedad: '',
-    cliente: '',
-    montoMensual: '',
-    moneda: 'USD',
-    agente: '',
-    fechaInicio: '',
-    duracion: '12',
-    deposito: '',
-    comision: '1',
-    observaciones: '',
-  });
+  const [nuevoAlquiler, setNuevoAlquiler] = useState(ALQUILER_EMPTY);
 
   // Estado para seguimiento
   const [nuevoSeguimiento, setNuevoSeguimiento] = useState({
@@ -88,6 +100,10 @@ const Ventas = () => {
 
   const [statsData, setStatsData] = useState(null);
   const [operaciones, setOperaciones] = useState([]);
+  const [propiedadesList, setPropiedadesList] = useState([]);
+  const [clientesList, setClientesList] = useState([]);
+  const [agentesList, setAgentesList] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
 
   const loadStats = useCallback(async () => {
     try {
@@ -102,6 +118,27 @@ const Ventas = () => {
   useEffect(() => {
     loadStats();
   }, [loadStats]);
+
+  const loadModalData = useCallback(async () => {
+    try {
+      const [props, clientes, agentes] = await Promise.all([
+        crmService.propiedades.getAll().catch(() => []),
+        crmService.clientes.getAll().catch(() => []),
+        crmService.agentes.getAll().catch(() => []),
+      ]);
+      setPropiedadesList(Array.isArray(props) ? props : []);
+      setClientesList(Array.isArray(clientes) ? clientes : []);
+      setAgentesList(Array.isArray(agentes) ? agentes : []);
+    } catch (err) {
+      toast.error('Error cargando datos para la operación');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showModalVenta || showModalAlquiler) {
+      loadModalData();
+    }
+  }, [showModalVenta, showModalAlquiler, loadModalData]);
 
   // KPIs de Ventas
   const sk = statsData?.kpis || {};
@@ -248,6 +285,7 @@ const Ventas = () => {
   };
 
   const handleOpenVentaModal = () => {
+    setEditingId(null);
     setNuevaVenta((prev) => ({
       ...createVentaForm(),
       ...prev,
@@ -256,13 +294,58 @@ const Ventas = () => {
     setShowModalVenta(true);
   };
 
-  const handleVentaSubmit = (e) => {
+  const handleVentaSubmit = async (e) => {
     e.preventDefault();
-    // Check milestones (non-blocking)
-    crmService.rewards.checkMilestones('operation').catch(() => {});
-    toast.success('¡Venta registrada exitosamente!');
-    setShowModalVenta(false);
-    setNuevaVenta(createVentaForm());
+    const usaPropiedadExterna = nuevaVenta.comparteConInmobiliaria
+      && nuevaVenta.aporteInmobiliariaColega === APORTE_COLEGA_PROPIEDAD;
+    setSubmitting(true);
+    try {
+      const payload = {
+        tipo: 'Venta',
+        propiedadId: usaPropiedadExterna ? '' : nuevaVenta.propiedadId,
+        clienteId: nuevaVenta.clienteId,
+        agenteId: nuevaVenta.agenteId === SIN_AGENTE_INTERMEDIARIO ? '' : nuevaVenta.agenteId,
+        monto: Number(nuevaVenta.monto),
+        moneda: nuevaVenta.moneda,
+        comisionPorcentaje: isSinAgenteIntermediario(nuevaVenta.agenteId) ? 0 : Number(nuevaVenta.comisionPorcentaje),
+        formaPago: nuevaVenta.formaPago,
+        fechaCierre: nuevaVenta.fechaCierre || undefined,
+        estado: editingId ? (nuevaVenta.estado || 'En Curso') : 'En Curso',
+        notas: nuevaVenta.notas,
+        metadata: {
+          inmobiliariaId: nuevaVenta.inmobiliariaId,
+          inmobiliaria: nuevaVenta.inmobiliariaNombre,
+          comisionInmobiliariaPorcentaje: Number(nuevaVenta.comisionInmobiliariaPorcentaje || 0),
+          comparteConInmobiliaria: Boolean(nuevaVenta.comparteConInmobiliaria),
+          aporteInmobiliariaColega: nuevaVenta.comparteConInmobiliaria ? nuevaVenta.aporteInmobiliariaColega : '',
+          origenPropiedad: usaPropiedadExterna ? 'externa' : 'interna',
+          propiedad: usaPropiedadExterna ? nuevaVenta.propiedadColegaNombre : '',
+          inmobiliariaColega: nuevaVenta.comparteConInmobiliaria ? nuevaVenta.inmobiliariaColega : '',
+          colega: nuevaVenta.comparteConInmobiliaria ? nuevaVenta.colega : '',
+          comisionColegaPorcentaje: nuevaVenta.comparteConInmobiliaria ? Number(nuevaVenta.comisionColegaPorcentaje || 0) : 0,
+          propiedadColegaNombre: usaPropiedadExterna ? nuevaVenta.propiedadColegaNombre : '',
+          propiedadColegaPrecio: usaPropiedadExterna ? Number(nuevaVenta.propiedadColegaPrecio || 0) : 0,
+          propiedadColegaDireccion: usaPropiedadExterna ? nuevaVenta.propiedadColegaDireccion : '',
+        },
+      };
+      if (editingId) {
+        await crmService.operaciones.update(editingId, payload);
+        toast.success('Venta actualizada exitosamente');
+      } else {
+        await crmService.operaciones.create(payload);
+        toast.success('¡Venta registrada exitosamente!');
+      }
+      crmService.rewards.checkMilestones('operation').catch(() => {});
+      setShowModalVenta(false);
+      setEditingId(null);
+      setNuevaVenta(createVentaForm());
+      loadStats();
+    } catch (err) {
+      toast.error(editingId ? 'Error al actualizar la venta' : 'Error al registrar la venta');
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // Funciones de manejo para Alquiler
@@ -271,22 +354,41 @@ const Ventas = () => {
     setNuevoAlquiler((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAlquilerSubmit = (e) => {
+  const handleAlquilerSubmit = async (e) => {
     e.preventDefault();
-    toast.success('¡Alquiler registrado exitosamente!');
-    setShowModalAlquiler(false);
-    setNuevoAlquiler({
-      propiedad: '',
-      cliente: '',
-      montoMensual: '',
-      moneda: 'USD',
-      agente: '',
-      fechaInicio: '',
-      duracion: '12',
-      deposito: '',
-      comision: '1',
-      observaciones: '',
-    });
+    setSubmitting(true);
+    try {
+      const payload = {
+        tipo: 'Alquiler',
+        propiedadId: nuevoAlquiler.propiedadId,
+        clienteId: nuevoAlquiler.clienteId,
+        agenteId: nuevoAlquiler.agenteId === SIN_AGENTE_INTERMEDIARIO ? '' : nuevoAlquiler.agenteId,
+        monto: Number(nuevoAlquiler.monto),
+        moneda: nuevoAlquiler.moneda,
+        comisionPorcentaje: isSinAgenteIntermediario(nuevoAlquiler.agenteId) ? 0 : Number(nuevoAlquiler.comisionPorcentaje),
+        duracion: Number(nuevoAlquiler.duracion) || 12,
+        deposito: Number(nuevoAlquiler.deposito) || 0,
+        fechaCierre: nuevoAlquiler.fechaCierre || undefined,
+        estado: editingId ? (nuevoAlquiler.estado || 'En Curso') : 'En Curso',
+        notas: nuevoAlquiler.notas,
+      };
+      if (editingId) {
+        await crmService.operaciones.update(editingId, payload);
+        toast.success('Alquiler actualizado exitosamente');
+      } else {
+        await crmService.operaciones.create(payload);
+        toast.success('¡Alquiler registrado exitosamente!');
+      }
+      setShowModalAlquiler(false);
+      setEditingId(null);
+      setNuevoAlquiler(ALQUILER_EMPTY);
+      loadStats();
+    } catch (err) {
+      toast.error(editingId ? 'Error al actualizar el alquiler' : 'Error al registrar el alquiler');
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // Funciones de manejo para Seguimiento
@@ -669,7 +771,12 @@ const Ventas = () => {
                     {!ventaUsaPropiedadExterna ? (
                       <div>
                         <label htmlFor="field-128" className="block text-sm font-medium mb-2 dark:text-gray-200">Propiedad nuestra *</label>
-                        <input id="field-128" type="text" name="propiedad" value={nuevaVenta.propiedad} onChange={handleVentaChange} required={!ventaUsaPropiedadExterna} placeholder="Depto 2amb Palermo" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:text-gray-100" />
+                        <select id="field-128" name="propiedadId" value={nuevaVenta.propiedadId} onChange={handleVentaChange} required={!ventaUsaPropiedadExterna} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:text-gray-100">
+                          <option value="">Seleccionar propiedad</option>
+                          {propiedadesList.map((p) => (
+                            <option key={p._id} value={p._id}>{p.title || p.address || p._id}</option>
+                          ))}
+                        </select>
                       </div>
                     ) : (
                       <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20">
@@ -681,7 +788,12 @@ const Ventas = () => {
                       <label htmlFor="field-129" className="block text-sm font-medium mb-2 dark:text-gray-200">
                         {ventaUsaPropiedadExterna ? 'Cliente comprador *' : nuevaVenta.comparteConInmobiliaria ? 'Cliente vendedor *' : 'Cliente *'}
                       </label>
-                      <input id="field-129" type="text" name="cliente" value={nuevaVenta.cliente} onChange={handleVentaChange} required placeholder="Juan Pérez" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:text-gray-100" />
+                      <select id="field-129" name="clienteId" value={nuevaVenta.clienteId} onChange={handleVentaChange} required className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:text-gray-100">
+                        <option value="">Seleccionar cliente</option>
+                        {clientesList.map((c) => (
+                          <option key={c._id} value={c._id}>{c.nombre} {c.apellido || ''}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label htmlFor="field-130" className="block text-sm font-medium mb-2 dark:text-gray-200">Monto *</label>
@@ -696,13 +808,12 @@ const Ventas = () => {
                     </div>
                     <div>
                       <label htmlFor="field-132" className="block text-sm font-medium mb-2 dark:text-gray-200">Agente *</label>
-                      <select id="field-132" name="agente" value={nuevaVenta.agente} onChange={handleVentaChange} required className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:text-gray-100">
+                      <select id="field-132" name="agenteId" value={nuevaVenta.agenteId} onChange={handleVentaChange} required className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:text-gray-100">
                         <option value="">Seleccionar agente</option>
-                        <option value="Ana López">Ana López</option>
-                        <option value="Carlos Ruiz">Carlos Ruiz</option>
-                        <option value="Laura Fernández">Laura Fernández</option>
-                        <option value="Sofía Torres">Sofía Torres</option>
-                        <option value="Marcos Silva">Marcos Silva</option>
+                        <option value={SIN_AGENTE_INTERMEDIARIO}>Sin agente intermediario</option>
+                        {agentesList.map((a) => (
+                          <option key={a._id} value={a._id}>{a.nombre}</option>
+                        ))}
                       </select>
                     </div>
                     <div>
@@ -711,7 +822,7 @@ const Ventas = () => {
                     </div>
                     <div>
                       <label htmlFor="field-134" className="block text-sm font-medium mb-2 dark:text-gray-200">Comisión (%)</label>
-                      <input id="field-134" type="number" name="comision" value={nuevaVenta.comision} onChange={handleVentaChange} step="0.1" placeholder="3.5" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:text-gray-100" />
+                      <input id="field-134" type="number" name="comisionPorcentaje" value={nuevaVenta.comisionPorcentaje} onChange={handleVentaChange} step="0.1" placeholder="3.5" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:text-gray-100" />
                     </div>
                     <div>
                       <label htmlFor="field-venta-inmobiliaria" className="block text-sm font-medium mb-2 dark:text-gray-200">Inmobiliaria</label>
@@ -789,7 +900,7 @@ const Ventas = () => {
 
                 <div>
                   <label htmlFor="field-136" className="block text-sm font-medium mb-2 dark:text-gray-200">Observaciones</label>
-                  <textarea id="field-136" name="observaciones" value={nuevaVenta.observaciones} onChange={handleVentaChange} rows="3" placeholder="Detalles adicionales de la operación..." className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:text-gray-100" />
+                  <textarea id="field-136" name="notas" value={nuevaVenta.notas} onChange={handleVentaChange} rows="3" placeholder="Detalles adicionales de la operación..." className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:text-gray-100" />
                 </div>
 
                 <div className="flex gap-3 justify-end pt-4 border-t dark:border-gray-700">
@@ -831,15 +942,25 @@ const Ventas = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="field-137" className="block text-sm font-medium mb-2 dark:text-gray-200">Propiedad *</label>
-                      <input id="field-137" type="text" name="propiedad" value={nuevoAlquiler.propiedad} onChange={handleAlquilerChange} required placeholder="Casa 3amb Belgrano" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      <select id="field-137" name="propiedadId" value={nuevoAlquiler.propiedadId} onChange={handleAlquilerChange} required className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                        <option value="">Seleccionar propiedad</option>
+                        {propiedadesList.map((p) => (
+                          <option key={p._id} value={p._id}>{p.title || p.address || p._id}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label htmlFor="field-138" className="block text-sm font-medium mb-2 dark:text-gray-200">Cliente *</label>
-                      <input id="field-138" type="text" name="cliente" value={nuevoAlquiler.cliente} onChange={handleAlquilerChange} required placeholder="María González" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      <select id="field-138" name="clienteId" value={nuevoAlquiler.clienteId} onChange={handleAlquilerChange} required className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                        <option value="">Seleccionar cliente</option>
+                        {clientesList.map((c) => (
+                          <option key={c._id} value={c._id}>{c.nombre} {c.apellido || ''}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label htmlFor="field-139" className="block text-sm font-medium mb-2 dark:text-gray-200">Monto Mensual *</label>
-                      <input id="field-139" type="number" name="montoMensual" value={nuevoAlquiler.montoMensual} onChange={handleAlquilerChange} required placeholder="1200" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      <input id="field-139" type="number" name="monto" value={nuevoAlquiler.monto} onChange={handleAlquilerChange} required placeholder="1200" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
                     </div>
                     <div>
                       <label htmlFor="field-140" className="block text-sm font-medium mb-2 dark:text-gray-200">Moneda *</label>
@@ -850,18 +971,17 @@ const Ventas = () => {
                     </div>
                     <div>
                       <label htmlFor="field-141" className="block text-sm font-medium mb-2 dark:text-gray-200">Agente *</label>
-                      <select id="field-141" name="agente" value={nuevoAlquiler.agente} onChange={handleAlquilerChange} required className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                      <select id="field-141" name="agenteId" value={nuevoAlquiler.agenteId} onChange={handleAlquilerChange} required className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
                         <option value="">Seleccionar agente</option>
-                        <option value="Ana López">Ana López</option>
-                        <option value="Carlos Ruiz">Carlos Ruiz</option>
-                        <option value="Laura Fernández">Laura Fernández</option>
-                        <option value="Sofía Torres">Sofía Torres</option>
-                        <option value="Marcos Silva">Marcos Silva</option>
+                        <option value={SIN_AGENTE_INTERMEDIARIO}>Sin agente intermediario</option>
+                        {agentesList.map((a) => (
+                          <option key={a._id} value={a._id}>{a.nombre}</option>
+                        ))}
                       </select>
                     </div>
                     <div>
                       <label htmlFor="field-142" className="block text-sm font-medium mb-2 dark:text-gray-200">Fecha de Inicio *</label>
-                      <input id="field-142" type="date" name="fechaInicio" value={nuevoAlquiler.fechaInicio} onChange={handleAlquilerChange} required className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      <input id="field-142" type="date" name="fechaCierre" value={nuevoAlquiler.fechaCierre} onChange={handleAlquilerChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
                     </div>
                     <div>
                       <label htmlFor="field-143" className="block text-sm font-medium mb-2 dark:text-gray-200">Duración (meses)</label>
@@ -873,14 +993,14 @@ const Ventas = () => {
                     </div>
                     <div>
                       <label htmlFor="field-145" className="block text-sm font-medium mb-2 dark:text-gray-200">Comisión (meses)</label>
-                      <input id="field-145" type="number" name="comision" value={nuevoAlquiler.comision} onChange={handleAlquilerChange} step="0.5" placeholder="1" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      <input id="field-145" type="number" name="comisionPorcentaje" value={nuevoAlquiler.comisionPorcentaje} onChange={handleAlquilerChange} step="0.5" placeholder="1" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
                     </div>
                   </div>
                 </div>
 
                 <div>
                   <label htmlFor="field-146" className="block text-sm font-medium mb-2 dark:text-gray-200">Observaciones</label>
-                  <textarea id="field-146" name="observaciones" value={nuevoAlquiler.observaciones} onChange={handleAlquilerChange} rows="3" placeholder="Detalles adicionales del alquiler..." className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                  <textarea id="field-146" name="notas" value={nuevoAlquiler.notas} onChange={handleAlquilerChange} rows="3" placeholder="Detalles adicionales del alquiler..." className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
                 </div>
 
                 <div className="flex gap-3 justify-end pt-4 border-t dark:border-gray-700">

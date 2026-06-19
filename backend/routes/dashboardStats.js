@@ -15,6 +15,37 @@ const {
 
 const router = express.Router();
 
+const CLOSED_OPERATION_STATES = ['cerrada', 'completada', 'vendida', 'alquilada', 'finalizada'];
+
+function numberOrZero(value) {
+  const num = Number(value || 0);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function isClosedOperation(op) {
+  return CLOSED_OPERATION_STATES.includes(String(op?.estado || '').trim().toLowerCase());
+}
+
+function getOperationCommission(op) {
+  const explicit = numberOrZero(op?.comisionMonto);
+  if (explicit > 0) return explicit;
+  const monto = numberOrZero(op?.monto);
+  const pct = numberOrZero(op?.comisionPorcentaje);
+  return pct > 0 ? (monto * pct) / 100 : 0;
+}
+
+function getAgencyCommission(op) {
+  const explicit = numberOrZero(op?.comisionMonto);
+  if (explicit > 0) return explicit;
+  const monto = numberOrZero(op?.monto);
+  const pct = numberOrZero(op?.metadata?.comisionInmobiliariaPorcentaje || op?.comisionPorcentaje);
+  return pct > 0 ? (monto * pct) / 100 : 0;
+}
+
+function getOperationMetricDate(op) {
+  return op?.comisionFechaCobro || op?.fechaCierre || op?.updatedAt || op?.createdAt;
+}
+
 // ============ HELPER: build date ranges ============
 function startOfDay(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
 function endOfDay(d) { const x = new Date(d); x.setHours(23, 59, 59, 999); return x; }
@@ -127,7 +158,7 @@ router.get('/dashboard', authenticateTokenOrService, requireCRMUser, async (req,
       ...opFilter,
       createdAt: { $gte: monthStart },
     }).lean();
-    const opsClosedThisMonth = opsThisMonth.filter(o => o.estado === 'Cerrada' || o.estado === 'Completada').length;
+    const opsClosedThisMonth = opsThisMonth.filter(isClosedOperation).length;
     const metaOps = 20; // configurable target
     const metaPorcentaje = metaOps > 0 ? Math.min(100, Math.round((opsClosedThisMonth / metaOps) * 100)) : 0;
 
@@ -145,13 +176,10 @@ router.get('/dashboard', authenticateTokenOrService, requireCRMUser, async (req,
       const mStart = new Date(d.getFullYear(), d.getMonth(), 1);
       const mEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
       const monthOps = allOps.filter(o => {
-        const created = new Date(o.createdAt);
-        return created >= mStart && created <= mEnd;
+        const metricDate = new Date(getOperationMetricDate(o));
+        return metricDate >= mStart && metricDate <= mEnd;
       });
-      const totalComisiones = monthOps.reduce((sum, o) => {
-        const pct = Number(o.comisionPorcentaje || 0);
-        return sum + ((o.monto || 0) * pct / 100);
-      }, 0);
+      const totalComisiones = monthOps.filter(isClosedOperation).reduce((sum, o) => sum + getOperationCommission(o), 0);
       comisionesMensuales.push({
         mes: MONTH_LABELS[mStart.getMonth()],
         comisiones: Math.round(totalComisiones / 1000), // in K
@@ -228,10 +256,7 @@ router.get('/dashboard', authenticateTokenOrService, requireCRMUser, async (req,
       .lean();
 
     // ── Rendimiento personal ──
-    const totalOpsAllTime = await Operacion.countDocuments({
-      ...opFilter,
-      $or: [{ estado: 'Cerrada' }, { estado: 'Completada' }],
-    });
+    const totalOpsAllTime = (await Operacion.find(opFilter).select('estado').lean()).filter(isClosedOperation).length;
 
     // ── Captación mensual (last 6 months for trend chart) ──
     const sixMonthsAgo = monthsAgo(5);
@@ -422,20 +447,13 @@ router.get('/operaciones', authenticateToken, requireCRMUser, async (req, res) =
       scopeId ? [] : require('../models/Agente').find({}).lean(),
     ]);
 
-    const closedStatuses = ['Cerrada', 'Completada'];
     const getAgentCommission = (op) => {
       if (!op || !op.agenteId) return 0;
-      const pct = Number(op.comisionPorcentaje || 0);
-      if (!Number.isFinite(pct) || pct <= 0) return 0;
-      return (Number(op.monto || 0) * pct) / 100;
+      return getOperationCommission(op);
     };
     const getInmobiliariaCommission = (op) => {
       if (!op) return 0;
-      const inmobPct = Number(op.metadata?.comisionInmobiliariaPorcentaje || 0);
-      // Use explicit inmobiliaria pct; fall back to agent pct for alquileres / old ops
-      const pct = inmobPct > 0 ? inmobPct : Number(op.comisionPorcentaje || 0);
-      if (!Number.isFinite(pct) || pct <= 0) return 0;
-      return (Number(op.monto || 0) * pct) / 100;
+      return getAgencyCommission(op);
     };
     // Admin sees inmobiliaria commissions; agent sees their own
     const getRelevantCommission = scopeId ? getAgentCommission : getInmobiliariaCommission;
@@ -483,19 +501,19 @@ router.get('/operaciones', authenticateToken, requireCRMUser, async (req, res) =
     }));
 
     // ── KPIs ──
-    const opsThisMonth = allOps.filter(o => new Date(o.createdAt) >= thisMonthStart);
+    const opsThisMonth = allOps.filter(o => new Date(getOperationMetricDate(o)) >= thisMonthStart);
     const opsLastMonth = allOps.filter(o => {
-      const d = new Date(o.createdAt);
+      const d = new Date(getOperationMetricDate(o));
       return d >= lastMonthStart && d <= lastMonthEnd;
     });
-    const closedThisMonth = opsThisMonth.filter(o => closedStatuses.includes(o.estado));
-    const closedLastMonth = opsLastMonth.filter(o => closedStatuses.includes(o.estado));
+    const closedThisMonth = opsThisMonth.filter(isClosedOperation);
+    const closedLastMonth = opsLastMonth.filter(isClosedOperation);
     const ventasCerradasMes = closedThisMonth.filter(o => o.tipo === 'Venta');
     const totalVentasMes = ventasCerradasMes.reduce((s, o) => s + (o.monto || 0), 0);
-    const operacionesActivas = allOps.filter(o => !closedStatuses.includes(o.estado)).length;
+    const operacionesActivas = allOps.filter(o => !isClosedOperation(o)).length;
     const enReserva = allOps.filter(o => o.estado === 'Reservada').length;
     const totalComisionesMes = closedThisMonth.reduce((s, o) => s + getRelevantCommission(o), 0);
-    const totalClosed = allOps.filter(o => closedStatuses.includes(o.estado)).length;
+    const totalClosed = allOps.filter(isClosedOperation).length;
     const tasaCierre = allOps.length > 0 ? Math.round((totalClosed / allOps.length) * 100) : 0;
 
     // Trends vs last month
@@ -523,8 +541,8 @@ router.get('/operaciones', authenticateToken, requireCRMUser, async (req, res) =
       const mStart = new Date(d.getFullYear(), d.getMonth(), 1);
       const mEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
       const mOps = allOps.filter(o => {
-        const created = new Date(o.createdAt);
-        return created >= mStart && created <= mEnd && closedStatuses.includes(o.estado);
+        const metricDate = new Date(getOperationMetricDate(o));
+        return metricDate >= mStart && metricDate <= mEnd && isClosedOperation(o);
       });
       trendMeses.push(MONTH_LABELS[mStart.getMonth()]);
       trendVentas.push(mOps.filter(o => o.tipo === 'Venta').length);
@@ -533,19 +551,19 @@ router.get('/operaciones', authenticateToken, requireCRMUser, async (req, res) =
     const totalVentasTrend = trendVentas.reduce((s, v) => s + v, 0);
     const totalAlquileresTrend = trendAlquileres.reduce((s, v) => s + v, 0);
     const totalComisionesTrend = allOps.filter(o => {
-      const d = new Date(o.createdAt);
-      return d >= monthsAgo(5) && closedStatuses.includes(o.estado);
+      const d = new Date(getOperationMetricDate(o));
+      return d >= monthsAgo(5) && isClosedOperation(o);
     }).reduce((s, o) => s + getRelevantCommission(o), 0);
 
     // ── Estados distribution ──
-    const cerradas = allOps.filter(o => closedStatuses.includes(o.estado)).length;
+    const cerradas = allOps.filter(isClosedOperation).length;
     const enCurso = allOps.filter(o => o.estado === 'En Curso').length;
     const reservadas = allOps.filter(o => o.estado === 'Reservada').length;
 
     // ── Funnel ──
     const totalLeads = allClientes.length;
     const totalVisitas = allCitas.filter(c => c.estado === 'Completada' || c.estado === 'Programada').length;
-    const totalOfertas = allOps.filter(o => !closedStatuses.includes(o.estado)).length + cerradas;
+    const totalOfertas = allOps.filter(o => !isClosedOperation(o)).length + cerradas;
     const funnelConversion = totalLeads > 0 ? ((cerradas / totalLeads) * 100).toFixed(1) : '0';
     const funnelVisitas = totalLeads > 0 ? Math.round((totalVisitas / totalLeads) * 100) : 0;
 
@@ -559,7 +577,7 @@ router.get('/operaciones', authenticateToken, requireCRMUser, async (req, res) =
       for (const ag of allAgentes) {
         const agId = String(ag._id);
         const agOps = allOps.filter(o => String(o.agenteId) === agId);
-        const agClosed = agOps.filter(o => closedStatuses.includes(o.estado));
+        const agClosed = agOps.filter(isClosedOperation);
         const agComision = agClosed.reduce((s, o) => s + getAgentCommission(o), 0);
         agentComisiones.push({
           nombre: ag.nombre || 'Sin nombre',
@@ -572,7 +590,7 @@ router.get('/operaciones', authenticateToken, requireCRMUser, async (req, res) =
 
     // ── Seguimiento panel ──
     const urgentes = allOps.filter(o => {
-      if (closedStatuses.includes(o.estado)) return false;
+      if (isClosedOperation(o)) return false;
       const created = new Date(o.createdAt);
       const daysSince = (now - created) / (1000 * 60 * 60 * 24);
       return daysSince > 14;
