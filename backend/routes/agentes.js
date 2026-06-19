@@ -19,6 +19,32 @@ const { authenticateTokenOrService } = require('../middlewares/serviceAuth');
 
 const router = express.Router();
 
+const CLOSED_OPERATION_STATES = ['cerrada', 'completada', 'vendida', 'alquilada', 'finalizada'];
+
+function numberOrZero(value) {
+  const num = Number(value || 0);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function isClosedOperation(operacion) {
+  return CLOSED_OPERATION_STATES.includes(String(operacion?.estado || '').trim().toLowerCase());
+}
+
+function getOperationCommission(operacion) {
+  const explicit = numberOrZero(operacion?.comisionMonto);
+  if (explicit > 0) return explicit;
+  const monto = numberOrZero(operacion?.monto);
+  const pct = numberOrZero(operacion?.comisionPorcentaje);
+  return pct > 0 ? (monto * pct) / 100 : 0;
+}
+
+function getOperationMetricDate(operacion) {
+  return operacion?.comisionFechaCobro
+    || operacion?.fechaCierre
+    || operacion?.updatedAt
+    || operacion?.createdAt;
+}
+
 
 
 async function generateUniqueUsername() {
@@ -307,15 +333,10 @@ router.get('/metrics/all', authenticateTokenOrService, requireCRMUser, async (re
       const valorCartera = Math.round(propiedadesAsignadas.reduce((s, p) => s + Number(p.price || 0), 0));
       const propiedadesVendidas = propiedadesAsignadas.filter((p) => p.status === 'Vendida').length;
       const ops = await Operacion.find({ agenteId: agenteId }).lean().catch(() => []);
-      const opsClosed = ops.filter((o) => ['Cerrada', 'Completada'].includes(o.estado));
+      const opsClosed = ops.filter(isClosedOperation);
       const ventas = opsClosed.filter((o) => o.tipo === 'Venta').length;
       const alquileres = opsClosed.filter((o) => o.tipo === 'Alquiler').length;
-      const comisiones = Math.round(opsClosed.reduce((s, o) => {
-        const monto = Number(o.monto || 0);
-        const pct = Number(o.comisionPorcentaje || 0);
-        const explicit = Number(o.comisionMonto || 0);
-        return s + (explicit > 0 ? explicit : (pct > 0 ? (monto * pct) / 100 : 0));
-      }, 0));
+      const comisiones = Math.round(opsClosed.reduce((s, o) => s + getOperationCommission(o), 0));
       const clientesCerrados = await Cliente.countDocuments({ agenteId, 'metadata.estado': 'Cerrado' }).catch(() => 0);
       const tasaConversion = clientesCount > 0 ? Math.round((clientesCerrados / clientesCount) * 100) : 0;
       const diasPromCierre = opsClosed.length > 0
@@ -331,7 +352,10 @@ router.get('/metrics/all', authenticateTokenOrService, requireCRMUser, async (re
         d.setMonth(d.getMonth() - i);
         const ms = new Date(d.getFullYear(), d.getMonth(), 1);
         const me = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
-        ventasMensual.push(opsClosed.filter((o) => o.tipo === 'Venta' && new Date(o.createdAt) >= ms && new Date(o.createdAt) <= me).length);
+        ventasMensual.push(opsClosed.filter((o) => {
+          const metricDate = new Date(getOperationMetricDate(o));
+          return o.tipo === 'Venta' && metricDate >= ms && metricDate <= me;
+        }).length);
       }
 
       
@@ -513,15 +537,10 @@ router.get('/metrics/:id', authenticateToken, requireCRMUser, async (req, res) =
 
     // Real sales & commission metrics from Operacion
     const ops = await Operacion.find({ agenteId }).lean().catch(() => []);
-    const opsClosed = ops.filter((o) => ['Cerrada', 'Completada'].includes(o.estado));
+    const opsClosed = ops.filter(isClosedOperation);
     const ventas = opsClosed.filter((o) => o.tipo === 'Venta').length;
     const alquileres = opsClosed.filter((o) => o.tipo === 'Alquiler').length;
-    const comisiones = Math.round(opsClosed.reduce((s, o) => {
-      const monto = Number(o.monto || 0);
-      const pct = Number(o.comisionPorcentaje || 0);
-      const explicit = Number(o.comisionMonto || 0);
-      return s + (explicit > 0 ? explicit : (pct > 0 ? (monto * pct) / 100 : 0));
-    }, 0));
+    const comisiones = Math.round(opsClosed.reduce((s, o) => s + getOperationCommission(o), 0));
     const valorCartera = Math.round(propiedades.reduce((s, p) => s + Number(p.price || 0), 0));
     const propiedadesVendidas = propiedades.filter((p) => p.status === 'Vendida').length;
     const clientesCerrados = clientes.filter((c) => (c.metadata?.estado) === 'Cerrado').length;
@@ -541,7 +560,10 @@ router.get('/metrics/:id', authenticateToken, requireCRMUser, async (req, res) =
       const me = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
       ventasMensual.push({
         mes: ms.toLocaleDateString('es-AR', { month: 'short' }),
-        ventas: opsClosed.filter((o) => o.tipo === 'Venta' && new Date(o.createdAt) >= ms && new Date(o.createdAt) <= me).length,
+        ventas: opsClosed.filter((o) => {
+          const metricDate = new Date(getOperationMetricDate(o));
+          return o.tipo === 'Venta' && metricDate >= ms && metricDate <= me;
+        }).length,
       });
     }
 
