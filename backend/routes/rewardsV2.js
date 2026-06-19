@@ -41,11 +41,18 @@ router.get('/dashboard', authenticateToken, requireCRMUser, async (req, res) => 
       const q = Math.ceil((now.getMonth() + 1) / 3);
       return res.json({
         year: now.getFullYear(), quarter: q,
-        captures: { quarterly: 0, annual: 0, quarterlyGoal: 0, annualGoal: 0 },
-        revenue: { quarterly: 0, annual: 0, quarterlyTarget: 0, annualTarget: 0 },
-        loyalty: { closedCount: 0, loyalCount: 0, totalCount: 0, seniority: 0 },
-        preListing: { weeklyCount: 0, weeklyMinimum: 0, hasBadge: false },
-        tier: { tier: 'none', medal: null, totalRevenue: 0, prize: null },
+        captures: {
+          monthly: { count: 0, target: 0, properties: [] },
+          quarterly: { count: 0, target: 0, properties: [] },
+          annual: { count: 0, target: 0, properties: [] },
+        },
+        revenue: {
+          quarterly: { total: 0, target: 0, operaciones: [] },
+          annual: { total: 0, target: 0, operaciones: [] },
+        },
+        loyalty: { closedCount: 0, loyalCount: 0, totalCount: 0, seniority: 'none' },
+        preListing: { active: false, weekCount: 0, weeklyMin: 0, history: [] },
+        tier: { tier: 'base', medal: 'none', totalRevenue: 0, prize: '' },
         awards: [], tierHistory: [], config: {},
       });
     }
@@ -136,6 +143,7 @@ router.get('/quarterly-awards', authenticateToken, requireCRMUser, async (req, r
   try {
     const year = parseInt(req.query.year) || new Date().getFullYear();
     const quarter = parseInt(req.query.quarter) || engine.currentQuarter();
+    await engine.calculateQuarterlyAwards(year, quarter, await RewardConfig.load());
     const awards = await QuarterlyAward.find({ year, quarter }).sort({ ranking: 1 }).populate('agenteId', 'nombre email avatar').lean();
     res.json({ year, quarter, awards });
   } catch (err) {

@@ -69,6 +69,74 @@ function currentQuarter(date = new Date()) {
   return Math.ceil((date.getMonth() + 1) / 3);
 }
 
+function isValidObjectId(value) {
+  return mongoose.Types.ObjectId.isValid(String(value || ''));
+}
+
+function toDate(value) {
+  const date = value ? new Date(value) : null;
+  return date && !Number.isNaN(date.getTime()) ? date : null;
+}
+
+function inRange(date, dateStart, dateEnd) {
+  if (!date) return false;
+  if (dateStart && date < dateStart) return false;
+  if (dateEnd && date > dateEnd) return false;
+  return true;
+}
+
+function isClosedState(estado) {
+  return CLOSED_STATES.includes(String(estado || '').trim().toLowerCase());
+}
+
+function numberOrZero(value) {
+  const num = Number(value || 0);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function getOperationCommission(op) {
+  const explicit = numberOrZero(op?.comisionMonto);
+  if (explicit > 0) return explicit;
+  const amount = numberOrZero(op?.monto);
+  const pct = numberOrZero(op?.comisionPorcentaje);
+  return pct > 0 ? (amount * pct) / 100 : 0;
+}
+
+function getOperationRewardDate(op) {
+  return toDate(op?.comisionFechaCobro)
+    || toDate(op?.fechaCierre)
+    || toDate(op?.updatedAt)
+    || toDate(op?.createdAt);
+}
+
+function getPropertyCaptureDate(prop) {
+  return toDate(prop?.fechaCaptacion)
+    || toDate(prop?.metadata?.fechaCaptacion)
+    || toDate(prop?.createdAt);
+}
+
+function getPropertyExclusivityDays(prop, captureDate = null) {
+  const explicit = numberOrZero(prop?.exclusividadDias || prop?.metadata?.exclusividadDias || prop?.metadata?.diasExclusividad);
+  if (explicit > 0) return explicit;
+  const start = captureDate || getPropertyCaptureDate(prop);
+  if (!start) return 0;
+  return Math.max(0, Math.floor((Date.now() - start.getTime()) / 86400000));
+}
+
+function isExclusiveProperty(prop) {
+  if (prop?.exclusiva === true) return true;
+  if (prop?.metadata?.exclusiva === true || prop?.metadata?.exclusividad === true) return true;
+  const contract = String(prop?.metadata?.tipoContrato || prop?.metadata?.contrato || '').toLowerCase();
+  if (contract.includes('exclus')) return true;
+  const hasExplicitExclusivitySignal = prop?.exclusiva !== undefined
+    || prop?.metadata?.exclusiva !== undefined
+    || prop?.metadata?.exclusividad !== undefined
+    || Boolean(contract);
+  // Legacy properties were assigned to agents before exclusivity fields existed.
+  // Treat assigned legacy properties as captures so the rewards dashboard reflects DB data.
+  return !hasExplicitExclusivitySignal && Boolean(prop?.agentId);
+}
+
 // ============================================================
 // A) CAPTURE GOALS
 // ============================================================
@@ -79,18 +147,26 @@ function currentQuarter(date = new Date()) {
  */
 async function getCaptureStats(agenteId, dateStart, dateEnd, cfg) {
   const minDays = cfg.captureGoals.minExclusivityDays;
-  const filter = {
-    agentId: String(agenteId),
-    exclusiva: true,
-    exclusividadDias: { $gte: minDays },
-  };
-  if (dateStart || dateEnd) {
-    filter.fechaCaptacion = {};
-    if (dateStart) filter.fechaCaptacion.$gte = dateStart;
-    if (dateEnd) filter.fechaCaptacion.$lte = dateEnd;
-  }
-  const props = await Propiedad.find(filter).select('_id title fechaCaptacion exclusividadDias').lean();
-  return { count: props.length, properties: props };
+  const props = await Propiedad.find({ agentId: String(agenteId) })
+    .select('_id title fechaCaptacion exclusividadDias exclusiva metadata createdAt')
+    .lean();
+
+  const valid = props
+    .map((prop) => {
+      const captureDate = getPropertyCaptureDate(prop);
+      const exclusivityDays = getPropertyExclusivityDays(prop, captureDate);
+      return {
+        ...prop,
+        fechaCaptacion: captureDate,
+        exclusividadDias: exclusivityDays,
+        exclusiveForRewards: isExclusiveProperty(prop),
+      };
+    })
+    .filter((prop) => prop.exclusiveForRewards)
+    .filter((prop) => prop.exclusividadDias >= minDays)
+    .filter((prop) => inRange(prop.fechaCaptacion, dateStart, dateEnd));
+
+  return { count: valid.length, properties: valid };
 }
 
 async function getAgentCaptureGoals(agenteId, year, cfg) {
@@ -117,22 +193,30 @@ async function getAgentCaptureGoals(agenteId, year, cfg) {
 // B) REVENUE GOALS
 // ============================================================
 
-const CLOSED_STATES = ['cerrada', 'completada', 'vendida', 'alquilada', 'Cerrada', 'Completada', 'Vendida', 'Alquilada'];
+const CLOSED_STATES = ['cerrada', 'completada', 'vendida', 'alquilada', 'finalizada'];
 
 /**
- * Sum billed commissions for an agent within a date range.
- * Only counts comisionCobrada === true with a comisionFechaCobro.
+ * Sum commissions for closed operations within a date range.
+ * Uses explicit collection fields when present, and falls back to close/update dates
+ * plus monto * comisionPorcentaje for legacy operations.
  */
 async function getRevenueStats(agenteId, dateStart, dateEnd) {
-  const filter = {
-    agenteId: String(agenteId),
-    comisionCobrada: true,
-    comisionFechaCobro: { $gte: dateStart, $lte: dateEnd },
-    estado: { $in: CLOSED_STATES },
-  };
-  const ops = await Operacion.find(filter).select('_id monto comisionMonto comisionFechaCobro clienteId propiedadId').lean();
-  const total = ops.reduce((sum, o) => sum + (o.comisionMonto || 0), 0);
-  return { total, count: ops.length, operaciones: ops };
+  const ops = await Operacion.find({ agenteId: String(agenteId) })
+    .select('_id monto comisionMonto comisionPorcentaje comisionCobrada comisionFechaCobro fechaCierre estado clienteId propiedadId createdAt updatedAt')
+    .lean();
+
+  const valid = ops
+    .filter((op) => isClosedState(op.estado))
+    .map((op) => ({
+      ...op,
+      rewardDate: getOperationRewardDate(op),
+      rewardCommission: getOperationCommission(op),
+    }))
+    .filter((op) => op.rewardCommission > 0)
+    .filter((op) => inRange(op.rewardDate, dateStart, dateEnd));
+
+  const total = Math.round(valid.reduce((sum, op) => sum + op.rewardCommission, 0));
+  return { total, count: valid.length, operaciones: valid };
 }
 
 async function getAgentRevenueGoals(agenteId, year, cfg) {
@@ -162,7 +246,7 @@ async function calculateClientLoyalty(agenteId, year, cfg) {
   // Closed = clients with at least one completed operacion
   const closedOps = await Operacion.find({
     agenteId: aid,
-    estado: { $in: CLOSED_STATES },
+    estado: { $in: CLOSED_STATES.concat(CLOSED_STATES.map(s => s.charAt(0).toUpperCase() + s.slice(1))) },
   }).select('clienteId').lean();
   const closedSet = new Set(closedOps.map(o => String(o.clienteId)).filter(Boolean));
 
@@ -182,8 +266,8 @@ async function calculateClientLoyalty(agenteId, year, cfg) {
   else if (totalCount >= cfg.clientLoyalty.semiSeniorMin) seniority = 'semi_senior';
   else if (totalCount >= cfg.clientLoyalty.juniorMin) seniority = 'junior';
 
-  const closedIds = [...closedSet].map(id => new mongoose.Types.ObjectId(id));
-  const loyalIds = [...loyalSet].map(id => new mongoose.Types.ObjectId(id));
+  const closedIds = [...closedSet].filter(isValidObjectId).map(id => new mongoose.Types.ObjectId(id));
+  const loyalIds = [...loyalSet].filter(isValidObjectId).map(id => new mongoose.Types.ObjectId(id));
 
   const doc = await CustomerLoyalty.findOneAndUpdate(
     { agenteId, year },
@@ -305,8 +389,8 @@ async function calculateQuarterlyAwards(year, quarter, cfg) {
   for (let i = 0; i < rankings.length; i++) {
     const r = rankings[i];
     let prize = '';
-    if (i === 0) prize = cfg.revenueGoals.quarterlyPrizes.first;
-    if (i === 1) prize = cfg.revenueGoals.quarterlyPrizes.second;
+    if (r.total > 0 && i === 0) prize = cfg.revenueGoals.quarterlyPrizes.first;
+    if (r.total > 0 && i === 1) prize = cfg.revenueGoals.quarterlyPrizes.second;
 
     const doc = await QuarterlyAward.findOneAndUpdate(
       { agenteId: r.agenteId, year, quarter },
@@ -414,8 +498,8 @@ async function getLeaderboard(year, quarter) {
     const qRev = await getRevenueStats(ag._id, qb.start, qb.end);
     const yRev = await getRevenueStats(ag._id, yb.start, yb.end);
     const capQ = await getCaptureStats(ag._id, qb.start, qb.end, cfg);
-    const loyalty = await CustomerLoyalty.findOne({ agenteId: ag._id, year }).lean();
-    const tierDoc = await SellerTierHistory.findOne({ agenteId: ag._id, year }).lean();
+    const loyalty = await calculateClientLoyalty(ag._id, year, cfg);
+    const tierDoc = await calculateSellerTier(ag._id, year, cfg);
     const latestBadge = await BadgeRecord.findOne({ agenteId: ag._id, badgeType: 'pre_listing' }).sort({ createdAt: -1 }).lean();
 
     board.push({
@@ -423,8 +507,8 @@ async function getLeaderboard(year, quarter) {
       quarterlyRevenue: qRev.total,
       annualRevenue: yRev.total,
       quarterlyCaptures: capQ.count,
-      loyalty: loyalty ? { closedCount: loyalty.closedCount, loyalCount: loyalty.loyalCount, totalCount: loyalty.totalCount, seniority: loyalty.seniority } : null,
-      tier: tierDoc ? { tier: tierDoc.tier, medal: tierDoc.medal } : { tier: 'base', medal: 'none' },
+      loyalty: { closedCount: loyalty.closedCount, loyalCount: loyalty.loyalCount, totalCount: loyalty.totalCount, seniority: loyalty.seniority },
+      tier: { tier: tierDoc.tier, medal: tierDoc.medal },
       preListingActive: latestBadge ? latestBadge.status === 'active' : false,
     });
   }

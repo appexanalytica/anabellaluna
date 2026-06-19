@@ -3,6 +3,20 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-06-18",
+    "title": "Recompensas conectadas a datos reales",
+    "items": [
+      {
+        "type": "arreglo",
+        "text": "Los gráficos, rankings y premios de Recompensas ahora se calculan con operaciones, comisiones y propiedades reales de la base de datos."
+      },
+      {
+        "type": "mejora",
+        "text": "Al cerrar o editar una operación, el sistema completa los datos necesarios para que las recompensas se actualicen correctamente."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-18",
     "title": "Estado no disponible en propiedades",
     "items": [
       {

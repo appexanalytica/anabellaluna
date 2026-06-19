@@ -10,6 +10,37 @@ const { publishEventAsync, metaFromRequest } = require('../utils/redisStreams');
 
 const router = express.Router();
 
+const CLOSED_STATES = ['cerrada', 'completada', 'vendida', 'alquilada', 'finalizada'];
+
+function numberOrZero(value) {
+  const num = Number(value || 0);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function isClosedState(estado) {
+  return CLOSED_STATES.includes(String(estado || '').trim().toLowerCase());
+}
+
+function normalizeRewardsFields(body) {
+  if (!body || typeof body !== 'object') return body;
+  const closed = isClosedState(body.estado);
+  const explicitCommission = numberOrZero(body.comisionMonto);
+  const amount = numberOrZero(body.monto);
+  const pct = numberOrZero(body.comisionPorcentaje);
+
+  if (explicitCommission <= 0 && amount > 0 && pct > 0) {
+    body.comisionMonto = Math.round((amount * pct) / 100);
+  }
+
+  if (closed) {
+    if (body.comisionCobrada === undefined) body.comisionCobrada = true;
+    if (!body.comisionFechaCobro) body.comisionFechaCobro = body.fechaCierre || new Date();
+    if (!body.fechaCierre) body.fechaCierre = body.comisionFechaCobro;
+  }
+
+  return body;
+}
+
 // Helper: enrich metadata with real names from DB
 async function getDefaultInmobiliaria(req) {
   const adminId = req.user?.role === 'admin'
@@ -106,6 +137,7 @@ router.post('/', authenticateTokenOrService, requireCRMUser, async (req, res) =>
     const body = { ...(req.body || {}) };
     if (scopeId) body.agenteId = scopeId;
     body.metadata = await enrichMetadata(body, req);
+    normalizeRewardsFields(body);
     const created = await Operacion.create(body);
 
     publishEventAsync('deal.created', {
@@ -128,6 +160,7 @@ router.put('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) 
     const body = { ...(req.body || {}) };
     if (scopeId) body.agenteId = scopeId;
     body.metadata = await enrichMetadata(body, req);
+    normalizeRewardsFields(body);
     const updated = await Operacion.findOneAndUpdate(filter, body, { new: true, runValidators: true });
     if (!updated) return res.status(404).json({ error: 'Not found' });
 
