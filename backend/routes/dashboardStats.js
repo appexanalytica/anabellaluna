@@ -46,6 +46,12 @@ function getOperationMetricDate(op) {
   return op?.comisionFechaCobro || op?.fechaCierre || op?.updatedAt || op?.createdAt;
 }
 
+function isExternalVisit(cita) {
+  const meta = cita?.metadata || {};
+  return meta.propiedadOrigen === 'externa'
+    || Boolean(meta.propiedadExternaNombre || meta.propiedadExternaDireccion || meta.inmobiliariaColega);
+}
+
 // ============ HELPER: build date ranges ============
 function startOfDay(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
 function endOfDay(d) { const x = new Date(d); x.setHours(23, 59, 59, 999); return x; }
@@ -201,6 +207,7 @@ router.get('/dashboard', authenticateTokenOrService, requireCRMUser, async (req,
     const citasCompletadas = citasSemana.filter(c => c.estado === 'Completada').length;
     const citasProgramadas = citasSemana.filter(c => c.estado === 'Programada').length;
     const citasCanceladas = citasSemana.filter(c => c.estado === 'Cancelada').length;
+    const visitasExternasSemana = citasSemana.filter(isExternalVisit).length;
 
     // Interesados: citas completadas que tienen follow-up activity
     const citasCompletadasIds = citasSemana
@@ -385,6 +392,7 @@ router.get('/dashboard', authenticateTokenOrService, requireCRMUser, async (req,
         interesados,
         reagendar: citasProgramadas,
         noContactados: citasCanceladas,
+        externas: visitasExternasSemana,
       },
       proximasCitas: citasPopulated,
       tareasRapidas: tareasRapidas.map(t => ({
@@ -563,6 +571,8 @@ router.get('/operaciones', authenticateToken, requireCRMUser, async (req, res) =
     // ── Funnel ──
     const totalLeads = allClientes.length;
     const totalVisitas = allCitas.filter(c => c.estado === 'Completada' || c.estado === 'Programada').length;
+    const visitasExternas = allCitas.filter(c => (c.estado === 'Completada' || c.estado === 'Programada') && isExternalVisit(c)).length;
+    const visitasInternas = totalVisitas - visitasExternas;
     const totalOfertas = allOps.filter(o => !isClosedOperation(o)).length + cerradas;
     const funnelConversion = totalLeads > 0 ? ((cerradas / totalLeads) * 100).toFixed(1) : '0';
     const funnelVisitas = totalLeads > 0 ? Math.round((totalVisitas / totalLeads) * 100) : 0;
@@ -632,6 +642,8 @@ router.get('/operaciones', authenticateToken, requireCRMUser, async (req, res) =
       funnel: {
         leads: totalLeads,
         visitas: totalVisitas,
+        visitasInternas,
+        visitasExternas,
         ofertas: totalOfertas,
         cerradas,
         conversion: funnelConversion,

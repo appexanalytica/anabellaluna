@@ -33,6 +33,32 @@ function computeEndDate(start, end) {
   return new Date(s.getTime() + 60 * 60 * 1000);
 }
 
+function normalizeCitaPayload(body) {
+  if (!body || typeof body !== 'object') return body;
+  const meta = { ...(body.metadata || {}) };
+
+  if (body.clienteId && !meta.clienteId) meta.clienteId = body.clienteId;
+  if (body.propiedadId && !meta.propiedadId) meta.propiedadId = body.propiedadId;
+  if (body.agenteId && !meta.agenteId) meta.agenteId = body.agenteId;
+  if (body.agenteNombre && !meta.agenteNombre) meta.agenteNombre = body.agenteNombre;
+
+  const externalName = meta.propiedadExternaNombre || meta.propiedadColegaNombre || '';
+  const externalAddress = meta.propiedadExternaDireccion || meta.propiedadColegaDireccion || '';
+  const colleagueAgency = meta.inmobiliariaColega || meta.inmobiliariaColegaNombre || '';
+  const isExternal = meta.propiedadOrigen === 'externa' || Boolean(externalName || externalAddress || colleagueAgency);
+
+  meta.propiedadOrigen = isExternal ? 'externa' : (meta.propiedadOrigen || 'interna');
+  if (isExternal) {
+    body.propiedadId = '';
+    if (!meta.propiedadExternaNombre && externalName) meta.propiedadExternaNombre = externalName;
+    if (!meta.propiedadExternaDireccion && externalAddress) meta.propiedadExternaDireccion = externalAddress;
+    if (!meta.inmobiliariaColega && colleagueAgency) meta.inmobiliariaColega = colleagueAgency;
+  }
+
+  body.metadata = meta;
+  return body;
+}
+
 router.get('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const { q } = req.query;
@@ -67,6 +93,7 @@ router.post('/', authenticateTokenOrService, requireCRMUser, async (req, res) =>
       requestedAgenteId: body.agenteId || '',
     });
     if (scopeId) body.agenteId = scopeId;
+    normalizeCitaPayload(body);
 
     const created = await Cita.create(body);
     let cita = await confirmPersisted(Cita, created._id, 'cita');
@@ -118,6 +145,9 @@ router.post('/', authenticateTokenOrService, requireCRMUser, async (req, res) =>
       agent_id: String(cita.agenteId || ''),
       client_id: String(cita.clienteId || ''),
       property_id: String(cita.propiedadId || ''),
+      property_origin: String(cita.metadata?.propiedadOrigen || 'interna'),
+      external_property: String(cita.metadata?.propiedadExternaNombre || ''),
+      colleague_agency: String(cita.metadata?.inmobiliariaColega || ''),
       fecha: cita.fecha || '',
     }, metaFromRequest(req));
 
@@ -140,6 +170,7 @@ router.put('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) 
       fields: Object.keys(body),
     });
     if (scopeId) body.agenteId = scopeId;
+    normalizeCitaPayload(body);
 
     const existing = await Cita.findOne(filter).lean();
     if (!existing) return res.status(404).json({ error: 'Not found' });
@@ -216,6 +247,9 @@ router.put('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) 
     publishEventAsync('visit.updated', {
       visit_id: String(cita._id),
       agent_id: String(cita.agenteId || ''),
+      property_origin: String(cita.metadata?.propiedadOrigen || 'interna'),
+      external_property: String(cita.metadata?.propiedadExternaNombre || ''),
+      colleague_agency: String(cita.metadata?.inmobiliariaColega || ''),
       fields: Object.keys(req.body || {}),
     }, metaFromRequest(req));
 

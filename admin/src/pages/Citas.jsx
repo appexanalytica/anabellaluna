@@ -36,6 +36,15 @@ const Citas = () => {
     clienteId: '',
     propiedad: '',
     propiedadId: '',
+    propiedadOrigen: 'interna',
+    propiedadExternaNombre: '',
+    propiedadExternaDireccion: '',
+    inmobiliariaColega: '',
+    inmobiliariaColegaId: '',
+    colega: '',
+    participanteAgenteId: '',
+    participanteAgente: '',
+    agenteId: '',
     agente: '',
     fecha: '',
     horaInicio: '',
@@ -98,7 +107,7 @@ const Citas = () => {
   // Agentes e Inmobiliarias desde DB
   const [agentesLista, setAgentesLista] = useState([]);
   const [inmobiliariasLista, setInmobiliariasLista] = useState([]);
-  const [contactoTipo, setContactoTipo] = useState('cliente'); // 'cliente' | 'inmobiliaria'
+  const [contactoTipo, setContactoTipo] = useState('cliente'); // 'cliente' | 'agente' | 'inmobiliaria'
   const [inmoQuery, setInmoQuery] = useState('');
   const [showInmoDropdown, setShowInmoDropdown] = useState(false);
   const inmoRef = React.useRef(null);
@@ -162,24 +171,31 @@ const Citas = () => {
         Description: c.notas || '',
         IsAllDay: false,
         tipo: c.tipo || '',
-        cliente: contact.fullName || md.clienteNombre || '',
-        agente: '',
+        cliente: contact.fullName || md.clienteNombre || md.participanteAgenteNombre || md.inmobiliariaNombre || '',
+        propiedad: md.propiedadNombre || md.propiedadExternaNombre || '',
+        propiedadOrigen: md.propiedadOrigen || (md.propiedadExternaNombre ? 'externa' : 'interna'),
+        inmobiliariaColega: md.inmobiliariaColega || '',
+        agente: md.agenteNombre || '',
         estado: c.estado || '',
       };
     });
   }, [citasItems]);
 
+  const visitasExternas = citasData.filter(c => c.tipo === 'Visita' && c.propiedadOrigen === 'externa').length;
+  const visitasInternas = citasData.filter(c => c.tipo === 'Visita' && c.propiedadOrigen !== 'externa').length;
+
   // KPIs de Citas
   const kpisCitas = [
     { title: 'Citas Hoy', value: citasData.filter(c => c.StartTime.toDateString() === new Date().toDateString()).length, desc: '2 confirmadas', icon: <FaClock />, color: 'from-blue-500 to-blue-600' },
-    { title: 'Esta Semana', value: citasData.length, desc: '3 visitas programadas', icon: <FaCalendarPlus />, color: 'from-green-500 to-green-600' },
+    { title: 'Esta Semana', value: citasData.length, desc: `${visitasExternas} visitas externas/colega`, icon: <FaCalendarPlus />, color: 'from-green-500 to-green-600' },
     { title: 'Tasa Asistencia', value: '85%', desc: 'Últimos 30 días', icon: <FaCheckCircle />, color: 'from-purple-500 to-purple-600' },
     { title: 'Pendientes', value: citasData.filter(c => c.estado === 'Programada' || c.estado === 'Pendiente').length, desc: 'Por confirmar', icon: <FaBell />, color: 'from-orange-500 to-orange-600' },
   ];
 
   // Datos para gráficos
   const tiposCitasData = [
-    { tipo: 'Visita', cantidad: citasData.filter(c => c.tipo === 'Visita').length, fill: '#3B82F6' },
+    { tipo: 'Visita propia', cantidad: visitasInternas, fill: '#3B82F6' },
+    { tipo: 'Visita colega', cantidad: visitasExternas, fill: '#6366F1' },
     { tipo: 'Reunión', cantidad: citasData.filter(c => c.tipo === 'Reunión').length, fill: '#10B981' },
     { tipo: 'Firma', cantidad: citasData.filter(c => c.tipo === 'Firma').length, fill: '#F59E0B' },
     { tipo: 'Llamada', cantidad: citasData.filter(c => c.tipo === 'Llamada').length, fill: '#8B5CF6' },
@@ -199,8 +215,8 @@ const Citas = () => {
   // ApexCharts - Distribución de Citas (Donut)
   const citasDonutOptions = {
     chart: { type: 'donut', height: 220, background: 'transparent' },
-    labels: ['Visita', 'Reunión', 'Firma', 'Llamada'],
-    colors: ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'],
+    labels: tiposCitasData.map(t => t.tipo),
+    colors: tiposCitasData.map(t => t.fill),
     plotOptions: { pie: { donut: { size: '65%', labels: { show: true, name: { fontSize: '11px', color: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280' }, value: { fontSize: '18px', fontWeight: 700, color: currentMode === 'Dark' ? '#F3F4F6' : '#1F2937' }, total: { show: true, label: 'Total', fontSize: '10px', color: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280', formatter: () => citasData.length || '0' } } } } },
     dataLabels: { enabled: false },
     legend: { show: true, position: 'bottom', fontSize: '10px', labels: { colors: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280' } },
@@ -278,6 +294,9 @@ const Citas = () => {
       const end = endStr ? new Date(endStr) : new Date(start.getTime() + 60 * 60 * 1000);
       if (Number.isNaN(start.getTime())) throw new Error('Fecha inválida');
 
+      const agenteResponsable = agentesLista.find(a => String(a._id || a.id) === String(nuevaCita.agenteId));
+      const participanteAgente = agentesLista.find(a => String(a._id || a.id) === String(nuevaCita.participanteAgenteId));
+
       // If inmobiliaria mode and new name (no ID), auto-create it
       let inmobiliariaId = nuevaCita.inmobiliariaId || null;
       let inmobiliariaNombre = nuevaCita.inmobiliaria || null;
@@ -289,6 +308,16 @@ const Citas = () => {
         } catch (_e) { /* will still save cita with name only */ }
       }
 
+      let inmobiliariaColegaId = nuevaCita.inmobiliariaColegaId || null;
+      let inmobiliariaColega = nuevaCita.inmobiliariaColega || null;
+      if (nuevaCita.propiedadOrigen === 'externa' && inmobiliariaColega && !inmobiliariaColegaId) {
+        try {
+          const created = await crmService.inmobiliarias.create({ nombre: inmobiliariaColega });
+          inmobiliariaColegaId = created._id || created.id || null;
+          setInmobiliariasLista(prev => [...prev, created]);
+        } catch (_e) { /* will still save cita with colleague name only */ }
+      }
+
       await crmService.citas.create({
         fecha: start.toISOString(),
         fechaFin: end.toISOString(),
@@ -297,16 +326,27 @@ const Citas = () => {
         ubicacion: nuevaCita.ubicacion,
         notas: nuevaCita.descripcion,
         estado: 'Programada',
-        agenteNombre: nuevaCita.agente || null,
+        clienteId: contactoTipo === 'cliente' ? (nuevaCita.clienteId || '') : '',
+        propiedadId: nuevaCita.propiedadOrigen === 'interna' ? (nuevaCita.propiedadId || '') : '',
+        agenteId: nuevaCita.agenteId || '',
         metadata: {
           contactoTipo,
           clienteNombre: contactoTipo === 'cliente' ? nuevaCita.cliente : null,
           clienteId: contactoTipo === 'cliente' ? (nuevaCita.clienteId || null) : null,
+          participanteAgenteId: contactoTipo === 'agente' ? (nuevaCita.participanteAgenteId || null) : null,
+          participanteAgenteNombre: contactoTipo === 'agente' ? (participanteAgente?.nombre || nuevaCita.participanteAgente || null) : null,
           inmobiliariaNombre: contactoTipo === 'inmobiliaria' ? inmobiliariaNombre : null,
           inmobiliariaId: contactoTipo === 'inmobiliaria' ? inmobiliariaId : null,
-          propiedadNombre: nuevaCita.propiedad,
-          propiedadId: nuevaCita.propiedadId || null,
-          agenteNombre: nuevaCita.agente || null,
+          propiedadOrigen: nuevaCita.propiedadOrigen,
+          propiedadNombre: nuevaCita.propiedadOrigen === 'interna' ? nuevaCita.propiedad : null,
+          propiedadId: nuevaCita.propiedadOrigen === 'interna' ? (nuevaCita.propiedadId || null) : null,
+          propiedadExternaNombre: nuevaCita.propiedadOrigen === 'externa' ? nuevaCita.propiedadExternaNombre : null,
+          propiedadExternaDireccion: nuevaCita.propiedadOrigen === 'externa' ? nuevaCita.propiedadExternaDireccion : null,
+          inmobiliariaColega: nuevaCita.propiedadOrigen === 'externa' ? inmobiliariaColega : null,
+          inmobiliariaColegaId: nuevaCita.propiedadOrigen === 'externa' ? inmobiliariaColegaId : null,
+          colega: nuevaCita.propiedadOrigen === 'externa' ? nuevaCita.colega : null,
+          agenteId: nuevaCita.agenteId || null,
+          agenteNombre: agenteResponsable?.nombre || nuevaCita.agente || null,
           recordatorio: nuevaCita.recordatorio,
           horaInicio: nuevaCita.horaInicio || null,
           horaFin: nuevaCita.horaFin || null,
@@ -328,6 +368,15 @@ const Citas = () => {
         clienteId: '',
         propiedad: '',
         propiedadId: '',
+        propiedadOrigen: 'interna',
+        propiedadExternaNombre: '',
+        propiedadExternaDireccion: '',
+        inmobiliariaColega: '',
+        inmobiliariaColegaId: '',
+        colega: '',
+        participanteAgenteId: '',
+        participanteAgente: '',
+        agenteId: '',
         agente: '',
         inmobiliaria: '',
         inmobiliariaId: '',
@@ -713,11 +762,15 @@ const Citas = () => {
                     <label className="block text-sm font-medium mb-2 dark:text-gray-200">Contacto *</label>
                     <div className="flex items-center gap-4 mb-3">
                       <label className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg border transition-colors ${contactoTipo === 'cliente' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'border-gray-300 dark:border-gray-600 dark:text-gray-400'}`}>
-                        <input type="radio" name="contactoTipo" value="cliente" checked={contactoTipo === 'cliente'} onChange={() => { setContactoTipo('cliente'); setNuevaCita(prev => ({ ...prev, cliente: '', clienteId: '', inmobiliaria: '', inmobiliariaId: '' })); setClienteQuery(''); setInmoQuery(''); }} className="accent-blue-500" />
-                        Cliente
+                        <input type="radio" name="contactoTipo" value="cliente" checked={contactoTipo === 'cliente'} onChange={() => { setContactoTipo('cliente'); setNuevaCita(prev => ({ ...prev, cliente: '', clienteId: '', inmobiliaria: '', inmobiliariaId: '', participanteAgenteId: '', participanteAgente: '' })); setClienteQuery(''); setInmoQuery(''); }} className="accent-blue-500" />
+                        Comprador / cliente
+                      </label>
+                      <label className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg border transition-colors ${contactoTipo === 'agente' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'border-gray-300 dark:border-gray-600 dark:text-gray-400'}`}>
+                        <input type="radio" name="contactoTipo" value="agente" checked={contactoTipo === 'agente'} onChange={() => { setContactoTipo('agente'); setNuevaCita(prev => ({ ...prev, cliente: '', clienteId: '', inmobiliaria: '', inmobiliariaId: '' })); setClienteQuery(''); setInmoQuery(''); }} className="accent-emerald-500" />
+                        Agente de la inmobiliaria
                       </label>
                       <label className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg border transition-colors ${contactoTipo === 'inmobiliaria' ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 'border-gray-300 dark:border-gray-600 dark:text-gray-400'}`}>
-                        <input type="radio" name="contactoTipo" value="inmobiliaria" checked={contactoTipo === 'inmobiliaria'} onChange={() => { setContactoTipo('inmobiliaria'); setNuevaCita(prev => ({ ...prev, cliente: '', clienteId: '', inmobiliaria: '', inmobiliariaId: '' })); setClienteQuery(''); setInmoQuery(''); }} className="accent-purple-500" />
+                        <input type="radio" name="contactoTipo" value="inmobiliaria" checked={contactoTipo === 'inmobiliaria'} onChange={() => { setContactoTipo('inmobiliaria'); setNuevaCita(prev => ({ ...prev, cliente: '', clienteId: '', inmobiliaria: '', inmobiliariaId: '', participanteAgenteId: '', participanteAgente: '' })); setClienteQuery(''); setInmoQuery(''); }} className="accent-purple-500" />
                         Inmobiliaria
                       </label>
                     </div>
@@ -772,6 +825,29 @@ const Citas = () => {
                         )}
                         {nuevaCita.clienteId && <p className="text-xs text-green-500 mt-1">Vinculado: {nuevaCita.clienteId}</p>}
                       </div>
+                    ) : contactoTipo === 'agente' ? (
+                      <div>
+                        <select
+                          name="participanteAgenteId"
+                          value={nuevaCita.participanteAgenteId}
+                          onChange={(e) => {
+                            const agent = agentesLista.find(a => String(a._id || a.id) === e.target.value);
+                            setNuevaCita(prev => ({
+                              ...prev,
+                              participanteAgenteId: e.target.value,
+                              participanteAgente: agent?.nombre || '',
+                            }));
+                          }}
+                          required
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-gray-800 dark:text-gray-100"
+                        >
+                          <option value="">Seleccionar agente que asiste</option>
+                          {agentesLista.map(a => (
+                            <option key={a._id || a.id} value={a._id || a.id}>{a.nombre}</option>
+                          ))}
+                        </select>
+                        {nuevaCita.participanteAgenteId && <p className="text-xs text-green-500 mt-1">Asiste: {nuevaCita.participanteAgente}</p>}
+                      </div>
                     ) : (
                       <div ref={inmoRef} className="relative">
                         <input
@@ -824,62 +900,105 @@ const Citas = () => {
                       </div>
                     )}
                   </div>
-                  <div ref={propRef} className="relative">
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Propiedad</label>
-                    <input
-                      type="text"
-                      autoComplete="off"
-                      value={propQuery || nuevaCita.propiedad}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setPropQuery(v);
-                        setNuevaCita(prev => ({ ...prev, propiedad: v, propiedadId: '' }));
-                        setShowPropDropdown(true);
-                      }}
-                      onFocus={() => setShowPropDropdown(true)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && filteredProps.length > 0 && showPropDropdown) {
-                          e.preventDefault();
-                          const p = filteredProps[0];
-                          const label = p.title || p.address || 'Sin título';
-                          setNuevaCita(prev => ({ ...prev, propiedad: label, propiedadId: p._id || p.id || '' }));
-                          setPropQuery('');
-                          setShowPropDropdown(false);
-                        }
-                      }}
-                      placeholder="Buscar propiedad..."
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
-                    />
-                    {showPropDropdown && filteredProps.length > 0 && (
-                      <div className={`absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-lg border shadow-lg ${currentMode === 'Dark' ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'}`}>
-                        {filteredProps.map(p => {
-                          const label = p.title || p.address || 'Sin título';
-                          return (
-                            <div
-                              key={p._id || p.id}
-                              onClick={() => {
-                                setNuevaCita(prev => ({ ...prev, propiedad: label, propiedadId: p._id || p.id || '' }));
-                                setPropQuery('');
-                                setShowPropDropdown(false);
-                              }}
-                              className={`px-4 py-2 cursor-pointer text-sm ${currentMode === 'Dark' ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-blue-50 text-gray-800'}`}
-                            >
-                              <span className="font-medium">{label}</span>
-                              {p.address && p.title && <span className="text-xs text-gray-400 ml-2">{p.address}</span>}
-                              {p.metadata?.barrio && <span className="text-xs text-gray-400 ml-1">({p.metadata.barrio})</span>}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {nuevaCita.propiedadId && <p className="text-xs text-green-500 mt-1">Vinculado: {nuevaCita.propiedadId}</p>}
+                  <div className="md:col-span-2 rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+                    <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-200">Propiedad a visitar</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <label className={`flex gap-3 rounded-lg border p-3 text-sm dark:text-gray-200 ${nuevaCita.propiedadOrigen === 'interna' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
+                        <input type="radio" name="propiedadOrigen" value="interna" checked={nuevaCita.propiedadOrigen === 'interna'} onChange={(e) => setNuevaCita(prev => ({ ...prev, propiedadOrigen: e.target.value, propiedadExternaNombre: '', propiedadExternaDireccion: '', inmobiliariaColega: '', inmobiliariaColegaId: '', colega: '' }))} className="mt-1 text-blue-600 focus:ring-blue-500" />
+                        <span><strong>Propiedad propia</strong><br />Casa/departamento cargado en la inmobiliaria.</span>
+                      </label>
+                      <label className={`flex gap-3 rounded-lg border p-3 text-sm dark:text-gray-200 ${nuevaCita.propiedadOrigen === 'externa' ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
+                        <input type="radio" name="propiedadOrigen" value="externa" checked={nuevaCita.propiedadOrigen === 'externa'} onChange={(e) => setNuevaCita(prev => ({ ...prev, propiedadOrigen: e.target.value, propiedad: '', propiedadId: '' }))} className="mt-1 text-purple-600 focus:ring-purple-500" />
+                        <span><strong>Propiedad de colega</strong><br />Casa de una inmobiliaria/colega externo.</span>
+                      </label>
+                    </div>
                   </div>
+                  {nuevaCita.propiedadOrigen === 'interna' ? (
+                    <div ref={propRef} className="relative">
+                      <label className="block text-sm font-medium mb-2 dark:text-gray-200">Propiedad</label>
+                      <input
+                        type="text"
+                        autoComplete="off"
+                        value={propQuery || nuevaCita.propiedad}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setPropQuery(v);
+                          setNuevaCita(prev => ({ ...prev, propiedad: v, propiedadId: '' }));
+                          setShowPropDropdown(true);
+                        }}
+                        onFocus={() => setShowPropDropdown(true)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && filteredProps.length > 0 && showPropDropdown) {
+                            e.preventDefault();
+                            const p = filteredProps[0];
+                            const label = p.title || p.address || 'Sin título';
+                            setNuevaCita(prev => ({ ...prev, propiedad: label, propiedadId: p._id || p.id || '' }));
+                            setPropQuery('');
+                            setShowPropDropdown(false);
+                          }
+                        }}
+                        placeholder="Buscar propiedad..."
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
+                      />
+                      {showPropDropdown && filteredProps.length > 0 && (
+                        <div className={`absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-lg border shadow-lg ${currentMode === 'Dark' ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'}`}>
+                          {filteredProps.map(p => {
+                            const label = p.title || p.address || 'Sin título';
+                            return (
+                              <div
+                                key={p._id || p.id}
+                                onClick={() => {
+                                  setNuevaCita(prev => ({ ...prev, propiedad: label, propiedadId: p._id || p.id || '' }));
+                                  setPropQuery('');
+                                  setShowPropDropdown(false);
+                                }}
+                                className={`px-4 py-2 cursor-pointer text-sm ${currentMode === 'Dark' ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-blue-50 text-gray-800'}`}
+                              >
+                                <span className="font-medium">{label}</span>
+                                {p.address && p.title && <span className="text-xs text-gray-400 ml-2">{p.address}</span>}
+                                {p.metadata?.barrio && <span className="text-xs text-gray-400 ml-1">({p.metadata.barrio})</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {nuevaCita.propiedadId && <p className="text-xs text-green-500 mt-1">Vinculado: {nuevaCita.propiedadId}</p>}
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Casa / propiedad del colega *</label>
+                        <input type="text" name="propiedadExternaNombre" value={nuevaCita.propiedadExternaNombre} onChange={handleCitaChange} required placeholder="Casa 4 amb · Villa Urquiza" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Dirección externa</label>
+                        <input type="text" name="propiedadExternaDireccion" value={nuevaCita.propiedadExternaDireccion} onChange={handleCitaChange} placeholder="Dirección o referencia" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Inmobiliaria colega *</label>
+                        <input type="text" name="inmobiliariaColega" value={nuevaCita.inmobiliariaColega} onChange={handleCitaChange} required placeholder="Nombre de la inmobiliaria" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Colega / contacto</label>
+                        <input type="text" name="colega" value={nuevaCita.colega} onChange={handleCitaChange} placeholder="Nombre del colega" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
+                    </>
+                  )}
                   <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Agente *</label>
-                    <select name="agente" value={nuevaCita.agente} onChange={handleCitaChange} required className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Agente responsable *</label>
+                    <select
+                      name="agenteId"
+                      value={nuevaCita.agenteId}
+                      onChange={(e) => {
+                        const agent = agentesLista.find(a => String(a._id || a.id) === e.target.value);
+                        setNuevaCita(prev => ({ ...prev, agenteId: e.target.value, agente: agent?.nombre || '' }));
+                      }}
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
+                    >
                       <option value="">Seleccionar agente</option>
                       {agentesLista.map(a => (
-                        <option key={a._id || a.id} value={a.nombre}>{a.nombre}</option>
+                        <option key={a._id || a.id} value={a._id || a.id}>{a.nombre}</option>
                       ))}
                     </select>
                   </div>
