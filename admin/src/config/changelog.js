@@ -3,6 +3,16 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-06-21",
+    "title": "Menú del sitio web mejor distribuido",
+    "items": [
+      {
+        "type": "mejora",
+        "text": "Los botones del menú principal del sitio web ahora se reparten de forma pareja a lo ancho de la barra, en lugar de quedar agrupados y descentrados. Se ve más prolijo y equilibrado."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-21",
     "title": "Menú del sitio web más simple",
     "items": [
       {

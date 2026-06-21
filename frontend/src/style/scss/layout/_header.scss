@@ -1132,6 +1132,26 @@ header {
 html.menu-opened body {
     overflow: hidden;
 }
+// Distribuye los items del navbar de forma adaptativa a lo ancho (solo desktop).
+// El wrapper crece para ocupar el espacio entre el logo y los botones de acción,
+// y los items del menú se reparten uniformemente en ese ancho.
+@media (min-width: 992px) {
+    header .header-nav .main-menu-wrapper {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+    header .header-nav .main-menu-wrapper .main-nav {
+        width: 100%;
+        justify-content: space-evenly;
+        > li {
+            margin-right: 0 !important;
+            &:last-child {
+                margin-right: 0 !important;
+            }
+        }
+    }
+}
+
 // Propiedades nav: dropdown centered below the button (margin-left keeps animation identical)
 @media (min-width: 992px) {
     .main-nav > li.propiedades-nav {
