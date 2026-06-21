@@ -16,9 +16,9 @@ const Index = () => {
   return (
     <div>
       <BannerSections />
+      <FeaturesSection />
       <WorkSection />
       <PropertySection />
-      <FeaturesSection />
       <CitiesSection />
       <FeaturesTwoSection />
       <StatSection />

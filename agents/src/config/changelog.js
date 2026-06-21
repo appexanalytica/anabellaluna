@@ -3,6 +3,16 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-06-21",
+    "title": "Propiedades Destacadas al inicio",
+    "items": [
+      {
+        "type": "mejora",
+        "text": "En la página de inicio, las Propiedades Destacadas ahora aparecen primero, antes de las secciones \"Cómo Funciona\" y \"Tipos de Propiedad\"."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-21",
     "title": "Homepage del sitio web actualizado",
     "items": [
       {
