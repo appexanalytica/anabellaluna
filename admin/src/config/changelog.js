@@ -67,6 +67,16 @@ export const CHANGELOG_ENTRIES = [
   },
   {
     "date": "2026-06-19",
+    "title": "Visitas a propiedades de colegas",
+    "items": [
+      {
+        "type": "nuevo",
+        "text": "Al agendar una visita ahora podés indicar que la propiedad es de un colega u otra inmobiliaria: se cargan el nombre y la dirección de la propiedad y la inmobiliaria a cargo, sin necesidad de que esté publicada en el sistema."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-19",
     "title": "Operaciones y comisiones conectadas",
     "items": [
       {
