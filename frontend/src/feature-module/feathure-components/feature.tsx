@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import Header from "../../core/common/header";
 import Footer from "../../core/common/footer";
 import { Outlet, useLocation } from "react-router";
@@ -7,6 +8,12 @@ import NotificationPrompt from "../../components/pwa/NotificationPrompt";
 
 const Feature = () => {
   const location = useLocation();
+
+  // Al navegar a otra página (p. ej. del listado al detalle de una propiedad)
+  // arrancamos siempre desde el inicio en lugar de mantener el scroll anterior.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   const isDetailsHeader =
     location.pathname.startsWith("/buy/") ||

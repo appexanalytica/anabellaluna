@@ -3,6 +3,16 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-06-21",
+    "title": "Detalle de propiedad arranca desde arriba",
+    "items": [
+      {
+        "type": "arreglo",
+        "text": "En el sitio web, al entrar al detalle de una propiedad desde el listado, la página ahora se abre desde el principio. Antes aparecía a la mitad del scroll, manteniendo la posición de la página anterior."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-21",
     "title": "Ocultar agentes del sitio web",
     "items": [
       {
