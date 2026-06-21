@@ -3,6 +3,30 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-06-21",
+    "title": "Fotos más grandes en pantalla completa",
+    "items": [
+      {
+        "type": "mejora",
+        "text": "Al abrir una foto de la propiedad en pantalla completa, ahora la imagen ocupa una porción mucho mayor de la pantalla, para verla con más detalle."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-21",
+    "title": "Footer del sitio web renovado",
+    "items": [
+      {
+        "type": "mejora",
+        "text": "Se rediseñó el pie de página del sitio web: ahora muestra el logo de Anabella Luna, datos de contacto reales (dirección, teléfono y email) y solo las redes sociales que estén configuradas."
+      },
+      {
+        "type": "mejora",
+        "text": "Se quitó la sección que invitaba a descargar una app móvil y los enlaces de ejemplo que venían del diseño original (ciudades y datos ficticios)."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-21",
     "title": "Galería de propiedades sin avance automático",
     "items": [
       {

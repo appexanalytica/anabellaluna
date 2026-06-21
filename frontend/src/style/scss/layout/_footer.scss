@@ -2,6 +2,20 @@
 
 footer {
     position: relative;
+    .footer-logo {
+        display: inline-block;
+        margin-bottom: 20px;
+        img {
+            max-width: 180px;
+            height: auto;
+        }
+    }
+    .footer-tagline {
+        color: var(--light);
+        line-height: 1.7;
+        margin-bottom: 24px;
+        max-width: 340px;
+    }
     &.footer {
         @include rounded(10px 10px 0 0);
         &::before {

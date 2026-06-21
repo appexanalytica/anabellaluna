@@ -898,6 +898,8 @@ const BuyDetails = () => {
           plugins={[Thumbnails]}
           thumbnails={{ border: 2, borderRadius: 4, padding: 2, gap: 8, showToggle: false }}
           animation={{ fade: 300, swipe: 300 }}
+          carousel={{ padding: 0, spacing: 0, imageFit: "contain" }}
+          styles={{ container: { backgroundColor: "rgba(0, 0, 0, 0.95)" } }}
         />
       )}
 
