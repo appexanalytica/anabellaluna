@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { FaUserPlus, FaUser, FaStar, FaUsers, FaDollarSign, FaHome, FaMapMarkerAlt, FaShieldAlt, FaTimes, FaSave, FaArrowLeft, FaThLarge, FaEdit, FaTrash, FaPhone, FaEnvelope, FaCalendar, FaChartLine, FaTrophy, FaBriefcase, FaExclamationTriangle, FaKey, FaCopy } from 'react-icons/fa';
+import { FaUserPlus, FaUser, FaStar, FaUsers, FaDollarSign, FaHome, FaMapMarkerAlt, FaShieldAlt, FaTimes, FaSave, FaArrowLeft, FaThLarge, FaEdit, FaTrash, FaPhone, FaEnvelope, FaCalendar, FaChartLine, FaTrophy, FaBriefcase, FaExclamationTriangle, FaKey, FaCopy, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { Header } from '../components';
 import { useStateContext } from '../contexts/ContextProvider';
 import { api } from '../config/api';
@@ -179,6 +179,8 @@ const Agentes = () => {
         propiedadesVendidas: data.metricas?.propiedadesVendidas || 0,
         color: data.color || '#4ECDC4',
         redesSociales: data.redesSociales || {},
+        // Visibilidad en el sitio web público (por defecto visible)
+        visibleEnSitio: data.visibleEnSitio !== false,
         // Detalle adicional
         detalle: data.detalle || {},
       };
@@ -381,6 +383,27 @@ const Agentes = () => {
   const volverAlDashboard = () => {
     setVistaActual('dashboard');
     setAgenteSeleccionado(null);
+  };
+
+  // Alterna la visibilidad del agente en el sitio web público
+  const [togglingVisibilidad, setTogglingVisibilidad] = useState(false);
+  const handleToggleVisibilidad = async () => {
+    if (!agenteSeleccionado || togglingVisibilidad) return;
+    const id = agenteSeleccionado._id || agenteSeleccionado.id;
+    const nuevoValor = !agenteSeleccionado.visibleEnSitio;
+    setTogglingVisibilidad(true);
+    try {
+      await api.put(`/crm/agentes/${id}`, { visibleEnSitio: nuevoValor });
+      setAgenteSeleccionado((prev) => (prev ? { ...prev, visibleEnSitio: nuevoValor } : prev));
+      toast.success(nuevoValor
+        ? 'El agente ahora está visible en el sitio web.'
+        : 'El agente fue ocultado del sitio web.');
+    } catch (err) {
+      console.error('Error al cambiar visibilidad del agente:', err);
+      toast.error('No se pudo cambiar la visibilidad del agente.');
+    } finally {
+      setTogglingVisibilidad(false);
+    }
   };
 
   // Función para abrir modal de edición
@@ -834,7 +857,22 @@ const Agentes = () => {
                 </div>
               </div>
               <div className="flex gap-3">
-                <button 
+                <button
+                  onClick={handleToggleVisibilidad}
+                  disabled={togglingVisibilidad}
+                  title={agenteSeleccionado.visibleEnSitio
+                    ? 'Visible en el sitio web. Clic para ocultar.'
+                    : 'Oculto del sitio web. Clic para activar.'}
+                  className={`px-4 py-2 rounded-full transition-colors flex items-center gap-2 font-semibold disabled:opacity-60 ${
+                    agenteSeleccionado.visibleEnSitio
+                      ? 'bg-green-500 text-white hover:bg-green-600'
+                      : 'bg-gray-400 text-white hover:bg-gray-500'
+                  }`}
+                >
+                  {agenteSeleccionado.visibleEnSitio ? <FaEye /> : <FaEyeSlash />}
+                  {agenteSeleccionado.visibleEnSitio ? 'Activo' : 'Inactivo'}
+                </button>
+                <button
                   onClick={handleEditAgente}
                   className="px-4 py-2 bg-white text-gray-800 rounded-full hover:bg-opacity-90 transition-colors flex items-center gap-2 font-semibold"
                 >

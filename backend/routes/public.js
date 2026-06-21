@@ -377,7 +377,8 @@ router.get('/property-stats', async (req, res) => {
 // Agents
 router.get('/agents', async (req, res) => {
   try {
-    const agents = await Agente.find({}).sort({ nombre: 1 }).lean();
+    // Solo agentes visibles en el sitio (los ocultados desde el admin no se listan).
+    const agents = await Agente.find({ visibleEnSitio: { $ne: false } }).sort({ nombre: 1 }).lean();
 
     // Count properties per agent
     const agentIds = agents.map((a) => String(a._id));
@@ -413,6 +414,8 @@ router.get('/agents/:id', async (req, res) => {
 
     const agent = await Agente.findById(id).lean();
     if (!agent) return res.status(404).json({ error: 'agent not found' });
+    // Agentes ocultados desde el admin no son accesibles en el sitio público.
+    if (agent.visibleEnSitio === false) return res.status(404).json({ error: 'agent not found' });
 
     // Get agent's properties
     const props = await Propiedad.find({ agentId: String(agent._id), published: { $ne: false } }).sort({ updatedAt: -1 }).limit(50).lean();

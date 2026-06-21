@@ -15,6 +15,8 @@ const AgenteSchema = new mongoose.Schema({
     facebook: { type: String, default: '' },
   },
   role: { type: String, default: 'agent' },
+  // Controla si el agente aparece en el sitio web público (listado y detalle).
+  visibleEnSitio: { type: Boolean, default: true },
   metadata: { type: Object, default: {} }
 }, { timestamps: true });
 

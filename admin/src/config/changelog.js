@@ -3,6 +3,16 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-06-21",
+    "title": "Ocultar agentes del sitio web",
+    "items": [
+      {
+        "type": "nuevo",
+        "text": "En el detalle de cada agente (panel de administración) ahora hay un botón Activo/Inactivo para mostrar u ocultar al agente del sitio web. Los agentes marcados como Inactivos dejan de aparecer en el listado y la página de agentes del sitio público."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-21",
     "title": "Menú del sitio web mejor distribuido",
     "items": [
       {
