@@ -2,6 +2,20 @@
   "$comment": "Changelog visible en el panel de Novedades del sidebar. Redactar en español simple, pensado para el usuario final (no técnico). Tipos válidos: nuevo | mejora | arreglo. Editar este archivo y rebuildear: scripts/write-app-version.js lo convierte en admin/agents src/config/changelog.js.",
   "entries": [
     {
+      "date": "2026-06-21",
+      "title": "Panel de agentes más enfocado",
+      "items": [
+        { "type": "mejora", "text": "Se quitaron los recuadros de Equipo de Agentes, Comisiones y Asignaciones, Roles y Permisos y Distribución por Zonas del panel de agentes. El dashboard queda más limpio y centrado en las métricas y el rendimiento del equipo." }
+      ]
+    },
+    {
+      "date": "2026-06-21",
+      "title": "Panel de clientes más simple",
+      "items": [
+        { "type": "mejora", "text": "Se quitaron los recuadros de Lead Scoring y Comunicación Integrada del panel de clientes. Ahora la Base de Datos de Clientes ocupa todo el ancho para verse más clara." }
+      ]
+    },
+    {
       "date": "2026-06-19",
       "title": "Operaciones y comisiones conectadas",
       "items": [

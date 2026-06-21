@@ -1121,10 +1121,10 @@ const ClientesCRM = () => {
             </div>
           </div>
 
-          {/* Grid de Clientes y Lead Scoring */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+          {/* Base de Datos de Clientes */}
+          <div className="mb-6">
             {/* Grid Principal */}
-            <div className={`xl:col-span-2 ${cardBase}`}>
+            <div className={cardBase}>
               <h3 className="text-lg font-semibold mb-4 dark:text-gray-100">👥 Base de Datos de Clientes</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -1160,91 +1160,6 @@ const ClientesCRM = () => {
                     )}
                   </tbody>
                 </table>
-              </div>
-            </div>
-
-            {/* Panel de Lead Scoring */}
-            <div className={cardBase}>
-              <h3 className="text-lg font-semibold mb-4 dark:text-gray-100">🔥 Lead Scoring</h3>
-              <div className="space-y-4">
-                {clientesEjemplo.map((cliente) => (
-                  <div key={cliente.id} className="border dark:border-gray-700 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-bold dark:text-gray-200 text-sm">{cliente.nombre}</h4>
-                      <span className={`px-3 py-1 rounded-full font-bold text-xs ${
-                        cliente.scoring >= 90 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                          : cliente.scoring >= 80 ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
-                            : cliente.scoring >= 60 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                              : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
-                      }`}
-                      >
-                        {cliente.scoring} pts
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                      <div
-                        className={`h-2 rounded-full ${
-                          cliente.scoring >= 90 ? 'bg-red-500'
-                            : cliente.scoring >= 80 ? 'bg-orange-500'
-                              : cliente.scoring >= 60 ? 'bg-yellow-500' : 'bg-gray-500'
-                        }`}
-                        style={{ width: `${cliente.scoring}%` }}
-                      />
-                    </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      {cliente.scoring >= 90 ? '🔥 Lead súper caliente'
-                        : cliente.scoring >= 80 ? '🔥 Lead caliente'
-                          : cliente.scoring >= 60 ? '⚠️ Lead tibio'
-                            : '❄️ Lead frío'}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Comunicación Integrada */}
-          <div className={cardBase}>
-            <h3 className="text-lg font-semibold mb-4 dark:text-gray-100">📞 Comunicación Integrada</h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="text-center">
-                <div className="p-6 border-2 border-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-800 cursor-pointer transition-colors">
-                  <FaEnvelope className="text-4xl text-blue-500 mx-auto mb-3" />
-                  <h4 className="font-bold dark:text-gray-200">Email Marketing</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Campañas automatizadas</p>
-                  <p className="text-2xl font-bold text-blue-600 mt-2">1,247</p>
-                  <p className="text-xs text-gray-500">Enviados este mes</p>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <div className="p-6 border-2 border-green-500 rounded-lg hover:bg-green-50 dark:hover:bg-gray-800 cursor-pointer transition-colors">
-                  <FaWhatsapp className="text-4xl text-green-500 mx-auto mb-3" />
-                  <h4 className="font-bold dark:text-gray-200">WhatsApp</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Mensajes directos</p>
-                  <p className="text-2xl font-bold text-green-600 mt-2">432</p>
-                  <p className="text-xs text-gray-500">Conversaciones activas</p>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <div className="p-6 border-2 border-purple-500 rounded-lg hover:bg-purple-50 dark:hover:bg-gray-800 cursor-pointer transition-colors">
-                  <FaPhone className="text-4xl text-purple-500 mx-auto mb-3" />
-                  <h4 className="font-bold dark:text-gray-200">Llamadas</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Registro completo</p>
-                  <p className="text-2xl font-bold text-purple-600 mt-2">89</p>
-                  <p className="text-xs text-gray-500">Esta semana</p>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <div className="p-6 border-2 border-orange-500 rounded-lg hover:bg-orange-50 dark:hover:bg-gray-800 cursor-pointer transition-colors">
-                  <FaBell className="text-4xl text-orange-500 mx-auto mb-3" />
-                  <h4 className="font-bold dark:text-gray-200">Recordatorios</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Automáticos</p>
-                  <p className="text-2xl font-bold text-orange-600 mt-2">15</p>
-                  <p className="text-xs text-gray-500">Pendientes hoy</p>
-                </div>
               </div>
             </div>
           </div>

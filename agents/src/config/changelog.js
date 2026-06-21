@@ -2,6 +2,16 @@
 // Do not edit by hand: edit changelog.json instead.
 export const CHANGELOG_ENTRIES = [
   {
+    "date": "2026-06-21",
+    "title": "Panel de clientes más simple",
+    "items": [
+      {
+        "type": "mejora",
+        "text": "Se quitaron los recuadros de Lead Scoring y Comunicación Integrada del panel de clientes. Ahora la Base de Datos de Clientes ocupa todo el ancho para verse más clara."
+      }
+    ]
+  },
+  {
     "date": "2026-06-19",
     "title": "Operaciones y comisiones conectadas",
     "items": [
