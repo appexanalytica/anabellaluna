@@ -2887,6 +2887,7 @@ const Propiedades = () => {
                       lng={propiedadSeleccionada.lng}
                       height={192}
                       isDark={currentMode === 'Dark'}
+                      expandable
                     />
                     <p className="absolute bottom-2 left-2 right-2 text-center text-xs bg-black bg-opacity-60 text-white px-2 py-1 rounded pointer-events-none">Lat: {Number(propiedadSeleccionada.lat).toFixed(6)}, Lng: {Number(propiedadSeleccionada.lng).toFixed(6)}</p>
                   </div>

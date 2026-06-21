@@ -3,6 +3,13 @@
   "entries": [
     {
       "date": "2026-06-21",
+      "title": "Mapa de la propiedad en pantalla completa",
+      "items": [
+        { "type": "nuevo", "text": "En el detalle de la propiedad (sitio web, panel de admin y panel de agentes) ahora podés tocar el botón \"Ampliar\" sobre el mapa para abrirlo en grande, navegar la zona y hacer zoom con comodidad. Se cierra con la X o la tecla Escape." }
+      ]
+    },
+    {
+      "date": "2026-06-21",
       "title": "Fotos más grandes en pantalla completa",
       "items": [
         { "type": "mejora", "text": "Al abrir una foto de la propiedad en pantalla completa, ahora la imagen ocupa una porción mucho mayor de la pantalla, para verla con más detalle." }

@@ -3,6 +3,16 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-06-21",
+    "title": "Mapa de la propiedad en pantalla completa",
+    "items": [
+      {
+        "type": "nuevo",
+        "text": "En el detalle de la propiedad (sitio web, panel de admin y panel de agentes) ahora podés tocar el botón \"Ampliar\" sobre el mapa para abrirlo en grande, navegar la zona y hacer zoom con comodidad. Se cierra con la X o la tecla Escape."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-21",
     "title": "Fotos más grandes en pantalla completa",
     "items": [
       {

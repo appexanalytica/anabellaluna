@@ -588,7 +588,7 @@ const RentDetails = () => {
                     </div>
                   )}
                   <div className="rounded-3 overflow-hidden" style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.1)", height: 320 }}>
-                    <MapboxMap lat={Number(property.location.lat)} lng={Number(property.location.lng)} height="100%" />
+                    <MapboxMap lat={Number(property.location.lat)} lng={Number(property.location.lng)} height="100%" expandable />
                   </div>
                 </div>
               )}

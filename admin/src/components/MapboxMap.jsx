@@ -15,7 +15,8 @@ function parseCoord(value) {
 
 /**
  * Mapa Mapbox con pin. Si `draggable`, el pin se puede arrastrar y notifica
- * la nueva posición vía onMove(lat, lng).
+ * la nueva posición vía onMove(lat, lng). Si `expandable`, al hacer click se
+ * abre un modal a pantalla completa con el mapa interactivo.
  */
 const MapboxMap = ({
   lat,
@@ -26,6 +27,7 @@ const MapboxMap = ({
   draggable = false,
   onMove,
   markerColor = '#ef4444',
+  expandable = false,
 }) => {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -33,12 +35,24 @@ const MapboxMap = ({
   const markerAddedRef = useRef(false);
   const onMoveRef = useRef(onMove);
   const [tokenMissing, setTokenMissing] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => { onMoveRef.current = onMove; }, [onMove]);
 
   const latNum = parseCoord(lat);
   const lngNum = parseCoord(lng);
   const hasCoords = latNum !== null && lngNum !== null;
+
+  // Permitir expandir solo si no es un mapa editable y hay coordenadas
+  const canExpand = expandable && !draggable && hasCoords;
+
+  // Cerrar modal con Escape
+  useEffect(() => {
+    if (!expanded) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setExpanded(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [expanded]);
 
   // Init map (once)
   useEffect(() => {
@@ -113,7 +127,57 @@ const MapboxMap = ({
     );
   }
 
-  return <div ref={containerRef} style={{ width: '100%', height }} />;
+  return (
+    <>
+      <div style={{ width: '100%', height, position: 'relative' }}>
+        <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+        {canExpand && (
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            title="Ver mapa completo"
+            className="absolute top-2 left-2 z-10 flex items-center gap-1 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white shadow hover:bg-black/80 transition-colors"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+            </svg>
+            Ampliar
+          </button>
+        )}
+      </div>
+
+      {expanded && canExpand && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4"
+          onClick={() => setExpanded(false)}
+        >
+          <div
+            className={`relative w-full max-w-6xl h-[85vh] rounded-xl overflow-hidden shadow-2xl ${isDark ? 'bg-gray-900' : 'bg-white'}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              title="Cerrar"
+              className="absolute top-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white shadow hover:bg-black/80 transition-colors"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+            <MapboxMap
+              lat={lat}
+              lng={lng}
+              zoom={16}
+              height="100%"
+              isDark={isDark}
+              markerColor={markerColor}
+            />
+          </div>
+        </div>
+      )}
+    </>
+  );
 };
 
 export default MapboxMap;
