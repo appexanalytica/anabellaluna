@@ -3,6 +3,16 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-06-21",
+    "title": "Panel de agentes más enfocado",
+    "items": [
+      {
+        "type": "mejora",
+        "text": "Se quitaron los recuadros de Equipo de Agentes, Comisiones y Asignaciones, Roles y Permisos y Distribución por Zonas del panel de agentes. El dashboard queda más limpio y centrado en las métricas y el rendimiento del equipo."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-21",
     "title": "Panel de clientes más simple",
     "items": [
       {
