@@ -3,6 +3,16 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-06-21",
+    "title": "Menú del sitio web más simple",
+    "items": [
+      {
+        "type": "mejora",
+        "text": "Se simplificó el menú principal del sitio web: se quitaron los botones Inmobiliarias, Páginas y Blog para dejar la navegación más clara y enfocada en lo importante."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-21",
     "title": "Mapa de la propiedad en pantalla completa",
     "items": [
       {

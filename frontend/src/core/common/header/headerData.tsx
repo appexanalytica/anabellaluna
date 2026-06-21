@@ -66,30 +66,9 @@ export const header = [
     ],
   },
   {
-    tittle: "Inmobiliarias",
-    showAsTab: false,
-    separateRoute: false,
-    directRoute: all_routes.agencyGrid,
-    base: "agency",
-    icon: "expand_more",
-    menu: [
-      {
-        menuValue: "Inmobiliarias en cuadrícula",
-        route: all_routes.agencyGrid,
-        hasSubRoute: false,
-        showSubRoute: false,
-        subMenus: [],
-      },
-      {
-        menuValue: "Detalles de la inmobiliaria",
-        route: all_routes.agencyDetails,
-        hasSubRoute: false,
-        showSubRoute: false,
-        subMenus: [],
-      },
-    ],
-  },
-  {
+    // Oculto en el navbar a pedido del usuario. Se mantienen los datos para
+    // poder reactivar alguna de las variantes (Páginas) en el futuro.
+    hidden: true,
     tittle: "Páginas",
     showAsTab: false,
     separateRoute: false,
@@ -241,37 +220,6 @@ export const header = [
       {
         menuValue: "Próximamente",
         route: all_routes.comingSoon,
-        hasSubRoute: false,
-        showSubRoute: false,
-        subMenus: [],
-      },
-    ],
-  },
-  {
-    tittle: "Blog",
-    showAsTab: false,
-    separateRoute: false,
-    directRoute: all_routes.blogGrid,
-    base: "blog",
-    icon: "expand_more",
-    menu: [
-      {
-        menuValue: "Lista del blog",
-        route: all_routes.blogList,
-        hasSubRoute: false,
-        showSubRoute: false,
-        subMenus: [],
-      },
-      {
-        menuValue: "Blog en cuadrícula",
-        route: all_routes.blogGrid,
-        hasSubRoute: false,
-        showSubRoute: false,
-        subMenus: [],
-      },
-      {
-        menuValue: "Detalles del blog",
-        route: all_routes.blogGrid,
         hasSubRoute: false,
         showSubRoute: false,
         subMenus: [],

@@ -212,7 +212,7 @@ const Header = () => {
                 />
               </div>
               <ul className={`main-nav  navbar-nav`}>
-                {header.map((mainMenus: any, mainIndex) => (
+                {header.filter((mainMenus: any) => !mainMenus.hidden).map((mainMenus: any, mainIndex) => (
                   <React.Fragment key={mainIndex}>
                     {(mainMenus.tittle === "Inicio" || mainMenus.directRoute) ? (
                       <li
