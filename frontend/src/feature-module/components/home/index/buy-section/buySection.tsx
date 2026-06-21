@@ -47,7 +47,7 @@ const BuySection = () => {
                 data-aos-duration={1000}
               >
                 <div className="img-card overflow-hidden text-center">
-                  <Link to={all_routes.rentPropertyGrid}>
+                  <Link to={all_routes.contactUs}>
                     <ImageWithBasePath
                       src="assets/img/home/city/property-img-2.jpg"
                       alt="Property Image"
@@ -56,12 +56,12 @@ const BuySection = () => {
                 </div>
                 <div className="buy-property bg-white d-flex align-items-center justify-content-between">
                   <h6 className="mb-0">
-                    <Link to={all_routes.buyPropertyGrid}>
-                      Comprar
+                    <Link to={all_routes.contactUs}>
+                      Vender
                     </Link>
                   </h6>
                   <Link
-                    to={all_routes.buyPropertyGrid}
+                    to={all_routes.contactUs}
                     className="arrow sell-arrow d-flex align-items-center justify-content-center bg-warning rounded-circle"
                   >
                     <i className="fa-solid fa-arrow-right" />

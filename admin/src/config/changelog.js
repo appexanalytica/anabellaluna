@@ -3,6 +3,28 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-06-21",
+    "title": "Homepage del sitio web actualizado",
+    "items": [
+      {
+        "type": "mejora",
+        "text": "Las tres tarjetas de acceso rápido ahora son Comprar, Vender y Alquilar (antes había dos veces Comprar). La tarjeta Vender lleva a la página de contacto."
+      },
+      {
+        "type": "mejora",
+        "text": "Las Propiedades Destacadas se muestran en una grilla de hasta 9 propiedades, en lugar del carrusel anterior."
+      },
+      {
+        "type": "mejora",
+        "text": "En la sección Conviértete en Agente, el botón ahora abre WhatsApp para contactar directamente, en lugar de ir al registro."
+      },
+      {
+        "type": "mejora",
+        "text": "Se quitaron del inicio las secciones \"Cientos de Socios en Todo el Mundo\" y \"Últimos Artículos\" para una página más enfocada."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-21",
     "title": "Detalle de propiedad arranca desde arriba",
     "items": [
       {

@@ -1,6 +1,5 @@
 import { Link } from "react-router";
 import { useState, useEffect } from "react";
-import Slider from "react-slick";
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
 import { all_routes } from "../../../../routes/all_routes";
 import publicService from "../../../../../services/publicService";
@@ -29,7 +28,8 @@ const FeaturesSection = () => {
         const res = await publicService.getProperties("buy");
         if (!isMounted) return;
         const featured = (res.items || []).filter((p) => p.featured);
-        setProperties(featured.length > 0 ? featured : (res.items || []).slice(0, 6));
+        const list = featured.length > 0 ? featured : (res.items || []);
+        setProperties(list.slice(0, 9));
       } catch {
         if (!isMounted) return;
         setProperties([]);
@@ -50,19 +50,6 @@ const FeaturesSection = () => {
       else next.add(id);
       return next;
     });
-  };
-
-  const settings = {
-    dots: false,
-    infinite: properties.length > 3,
-    speed: 500,
-    slidesToShow: 3,
-    slidesToScroll: 1,
-    arrows: true,
-    responsive: [
-      { breakpoint: 1200, settings: { slidesToShow: 2 } },
-      { breakpoint: 768, settings: { slidesToShow: 1 } },
-    ],
   };
 
   if (isLoading) {
@@ -92,9 +79,8 @@ const FeaturesSection = () => {
           <h2>Propiedades Destacadas</h2>
           <p>Descubrí las mejores propiedades seleccionadas para vos.</p>
         </div>
-        <div className="feature-property-slider">
-          <Slider {...settings}>
-            {properties.map((prop) => {
+        <div className="row">
+          {properties.map((prop) => {
               const isFav = favorites.has(prop.id);
               const detailPath = prop.operation === "rent"
                 ? all_routes.rentDetailsPath(prop.slug)
@@ -102,7 +88,7 @@ const FeaturesSection = () => {
               const coverSrc = prop.media?.coverUrl || "assets/img/buy/buy-grid-img-01.jpg";
 
               return (
-                <div key={prop.id} className="px-2">
+                <div key={prop.id} className="col-lg-4 col-md-6 mb-4">
                   <div className="property-card flex-fill">
                     <div className="property-listing-item p-0 mb-0 shadow-none">
                       <div className="buy-grid-img mb-0 rounded-0">
@@ -202,7 +188,6 @@ const FeaturesSection = () => {
                 </div>
               );
             })}
-          </Slider>
         </div>
         <div className="text-center mt-4">
           <Link

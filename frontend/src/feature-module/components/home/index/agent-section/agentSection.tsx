@@ -1,7 +1,31 @@
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
 import ImageWithBasePath from "../../../../../core/imageWithBasePath";
+import publicService from "../../../../../services/publicService";
 
 const AgentSection = () => {
+  const [whatsapp, setWhatsapp] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const cfg = await publicService.getSiteConfig();
+        if (mounted && cfg?.whatsapp) setWhatsapp(cfg.whatsapp);
+      } catch {
+        /* sin WhatsApp configurado */
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const whatsappUrl = whatsapp
+    ? `https://wa.me/${String(whatsapp).replace(/\D/g, "")}?text=${encodeURIComponent(
+        "Hola, quiero sumarme como agente inmobiliario."
+      )}`
+    : "";
+
   return (
     <>
       {/* start agent section */}
@@ -31,9 +55,17 @@ const AgentSection = () => {
               data-aos-duration={1500}
             >
               <div className="text-lg-end text-center ">
-                <Link to="" className="btn btn-xl btn-primary">
-                  Registrarse
-                </Link>
+                {whatsappUrl && (
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-xl btn-primary"
+                  >
+                    <i className="fa-brands fa-whatsapp me-2" />
+                    Contactar por WhatsApp
+                  </a>
+                )}
               </div>
             </div>
           </div>
