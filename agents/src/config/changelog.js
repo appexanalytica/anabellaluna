@@ -3,6 +3,16 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-06-21",
+    "title": "Galería de propiedades sin avance automático",
+    "items": [
+      {
+        "type": "arreglo",
+        "text": "En el detalle de la propiedad del sitio web, el carrusel de fotos ya no cambia solo. Ahora podés mirar cada imagen con tranquilidad y avanzar manualmente cuando quieras."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-21",
     "title": "Panel de agentes más enfocado",
     "items": [
       {

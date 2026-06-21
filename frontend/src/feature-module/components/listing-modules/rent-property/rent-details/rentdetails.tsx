@@ -221,16 +221,6 @@ const RentDetails = () => {
 
   const showHeroImage = imageStyle !== "hidden" && galleryImages.length > 0;
 
-  // Autoplay for hero slider. Timer resets on every slide change so manual
-  // navigation always gets the full interval before the next auto-advance.
-  useEffect(() => {
-    if (galleryImages.length <= 1) return;
-    const timer = setInterval(() => {
-      setHeroSlideIndex((prev) => (prev + 1) % galleryImages.length);
-    }, 7000);
-    return () => clearInterval(timer);
-  }, [galleryImages.length, heroSlideIndex]);
-
   useEffect(() => {
     if (galleryImages.length > 0 && heroSlideIndex >= galleryImages.length) {
       setHeroSlideIndex(0);
