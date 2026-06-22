@@ -3,6 +3,16 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-06-21",
+    "title": "Menú del sitio con estilo glass",
+    "items": [
+      {
+        "type": "mejora",
+        "text": "Los botones del menú principal (Inicio, Propiedades, Agentes) ahora tienen un sutil efecto de vidrio esmerilado, en línea con los botones de búsqueda, notificaciones y carrito. Se ve más moderno y prolijo, y se adapta al modo claro/oscuro."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-21",
     "title": "Propiedades Destacadas al inicio",
     "items": [
       {

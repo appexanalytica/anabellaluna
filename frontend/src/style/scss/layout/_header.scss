@@ -1170,3 +1170,51 @@ html.menu-opened body {
 .menu-logo-dark {
     display: none;
 }
+
+// Glass sutil para los botones del navbar (Inicio, Propiedades, Agentes)
+// Mismo lenguaje visual que los botones de búsqueda/notificaciones/carrito.
+@include respond-above(lg) {
+    .header .header-nav .main-nav > li > a {
+        padding: 7px 16px;
+        border-radius: 12px;
+        background: rgba(17, 24, 39, 0.04);
+        border: 1px solid rgba(17, 24, 39, 0.06);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        transition: background 0.25s ease, border-color 0.25s ease,
+            color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .header .header-nav .main-nav > li > a:hover,
+    .header .header-nav .main-nav > li.active > a {
+        background: rgba(17, 24, 39, 0.07);
+        border-color: rgba(17, 24, 39, 0.1);
+        box-shadow: 0 4px 14px rgba(17, 24, 39, 0.06);
+    }
+
+    // Sobre el hero translúcido, el glass va en tono claro
+    .header.header-hero:not(.fixed) .header-nav .main-nav > li > a {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+    .header.header-hero:not(.fixed) .header-nav .main-nav > li > a:hover,
+    .header.header-hero:not(.fixed) .header-nav .main-nav > li.active > a {
+        background: rgba(255, 255, 255, 0.22);
+        border-color: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    }
+}
+
+[data-theme="dark"] {
+    @include respond-above(lg) {
+        .header .header-nav .main-nav > li > a {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        .header .header-nav .main-nav > li > a:hover,
+        .header .header-nav .main-nav > li.active > a {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.16);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+        }
+    }
+}
