@@ -12,6 +12,8 @@ const User = require('./models/User');
 
 const Agente = require('./models/Agente');
 
+const { recordLogin } = require('./services/engagementService');
+
 
 
 const router = express.Router();
@@ -293,6 +295,9 @@ router.post('/login', async (req, res) => {
         twoFactorToken,
       });
     }
+
+    // Registrar el login para las métricas de engagement del agente (no bloquea)
+    await recordLogin(user);
 
     const token = signToken(user);
 

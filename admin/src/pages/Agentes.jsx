@@ -1,12 +1,91 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { FaUserPlus, FaUser, FaStar, FaUsers, FaDollarSign, FaHome, FaMapMarkerAlt, FaShieldAlt, FaTimes, FaSave, FaArrowLeft, FaThLarge, FaEdit, FaTrash, FaPhone, FaEnvelope, FaCalendar, FaChartLine, FaTrophy, FaBriefcase, FaExclamationTriangle, FaKey, FaCopy, FaEye, FaEyeSlash } from 'react-icons/fa';
-import { Header } from '../components';
+import { FaUserPlus, FaUser, FaStar, FaUsers, FaDollarSign, FaHome, FaMapMarkerAlt, FaShieldAlt, FaTimes, FaSave, FaArrowLeft, FaThLarge, FaEdit, FaTrash, FaPhone, FaEnvelope, FaCalendar, FaChartLine, FaTrophy, FaBriefcase, FaExclamationTriangle, FaKey, FaCopy, FaEye, FaEyeSlash, FaBolt, FaClock, FaSignInAlt, FaFire, FaClipboardCheck, FaMedal, FaCamera, FaVideo, FaVrCardboard, FaMapPin } from 'react-icons/fa';
 import { useStateContext } from '../contexts/ContextProvider';
 import { api } from '../config/api';
+import Recompensas from './Recompensas';
 
 // ApexCharts for modern visualizations
 import Chart from 'react-apexcharts';
+
+// ── Score de desempeño: categorías, colores y helpers ──
+const SCORE_CATS = [
+  { key: 'captacion', label: 'Captación', color: '#3b82f6' },
+  { key: 'ventas', label: 'Ventas', color: '#8b5cf6' },
+  { key: 'actividad', label: 'Actividad', color: '#06b6d4' },
+  { key: 'calidad', label: 'Calidad carga', color: '#f59e0b' },
+  { key: 'engagement', label: 'Uso app', color: '#10b981' },
+  { key: 'conversion', label: 'Conversión', color: '#ec4899' },
+  { key: 'fidelizacion', label: 'Fidelización', color: '#84cc16' },
+];
+
+const COMPLETENESS_PARTS = [
+  { key: 'fotos', label: 'Fotos', icon: FaCamera },
+  { key: 'descripcion', label: 'Descripción', icon: FaClipboardCheck },
+  { key: 'video', label: 'Video', icon: FaVideo },
+  { key: 'tour', label: 'Tour 360°', icon: FaVrCardboard },
+  { key: 'geo', label: 'Mapa', icon: FaMapPin },
+  { key: 'direccion', label: 'Dirección', icon: FaMapMarkerAlt },
+];
+
+const scoreColor = (s) => {
+  const v = Number(s) || 0;
+  if (v >= 75) return '#10b981';
+  if (v >= 50) return '#f59e0b';
+  if (v >= 30) return '#f97316';
+  return '#ef4444';
+};
+
+const fmtActiveTime = (mins) => {
+  const m = Math.round(Number(mins) || 0);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return r ? `${h}h ${r}m` : `${h}h`;
+};
+
+// Anillo de score (SVG) reutilizable
+const ScoreRing = ({ score = 0, size = 72, stroke = 7, label = 'Score' }) => {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const v = Math.max(0, Math.min(100, Number(score) || 0));
+  const col = scoreColor(v);
+  return (
+    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="currentColor" strokeWidth={stroke} className="text-gray-200 dark:text-gray-700" />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={col} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c - (v / 100) * c} style={{ transition: 'stroke-dashoffset .6s ease' }} />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-lg font-bold" style={{ color: col }}>{Math.round(v)}</span>
+        <span className="text-[9px] text-gray-400 -mt-1">{label}</span>
+      </div>
+    </div>
+  );
+};
+
+// Desglose del score por categoría (barras)
+const ScoreBreakdown = ({ breakdown, isDark }) => {
+  if (!breakdown) return null;
+  return (
+    <div className="space-y-2">
+      {SCORE_CATS.map((cat) => {
+        const v = Math.round(Number(breakdown[cat.key]) || 0);
+        return (
+          <div key={cat.key}>
+            <div className="flex justify-between text-xs mb-0.5">
+              <span className={isDark ? 'text-gray-300' : 'text-gray-600'}>{cat.label}</span>
+              <span className="font-semibold" style={{ color: cat.color }}>{v}</span>
+            </div>
+            <div className={`w-full h-1.5 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+              <div className="h-1.5 rounded-full transition-all duration-500" style={{ width: `${v}%`, backgroundColor: cat.color }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 
 const Agentes = () => {
@@ -119,8 +198,15 @@ const Agentes = () => {
         diasPromCierre: a.metricas?.diasPromCierre || 0,
         ventasMensual: Array.isArray(a.metricas?.ventasMensual) ? a.metricas.ventasMensual : [0, 0, 0, 0, 0, 0],
         metaMensual: a.metricas?.metaMensual || a.metadata?.metaMensual || 0,
-        citas: a.metricas?.actividades || 0,
+        citas: a.metricas?.citas ?? a.metricas?.actividades ?? 0,
         propiedadesVendidas: a.metricas?.propiedadesVendidas || 0,
+        // Score de desempeño + engagement + completitud + recompensas
+        score: a.score ?? a.metricas?.score ?? 0,
+        scoreBreakdown: a.scoreBreakdown || null,
+        engagement: a.engagement || null,
+        formCompleteness: a.formCompleteness ?? a.metricas?.formCompleteness ?? 0,
+        completenessParts: a.completenessParts || null,
+        rewards: a.rewards || null,
         color: a.color || '#4ECDC4',
         online: a.metadata?.online || false,
         redesSociales: a.redesSociales || {},
@@ -175,8 +261,15 @@ const Agentes = () => {
         tasaConversion: data.metricas?.tasaConversion || 0,
         diasPromCierre: data.metricas?.diasPromCierre || 0,
         metaMensual: data.metricas?.metaMensual || data.metadata?.metaMensual || 0,
-        citas: data.metricas?.actividades || 0,
+        citas: data.metricas?.citas ?? data.metricas?.actividades ?? 0,
         propiedadesVendidas: data.metricas?.propiedadesVendidas || 0,
+        // Score de desempeño + engagement + completitud + recompensas
+        score: data.score ?? data.metricas?.score ?? 0,
+        scoreBreakdown: data.scoreBreakdown || null,
+        engagement: data.engagement || null,
+        formCompleteness: data.formCompleteness ?? data.metricas?.formCompleteness ?? 0,
+        completenessParts: data.completenessParts || null,
+        rewards: data.rewards || null,
         color: data.color || '#4ECDC4',
         redesSociales: data.redesSociales || {},
         // Visibilidad en el sitio web público (por defecto visible)
@@ -202,6 +295,13 @@ const Agentes = () => {
   const totalPropiedades = agentes.reduce((sum, a) => sum + a.propiedades, 0);
   const avgRating = agentes.length > 0 ? (agentes.reduce((sum, a) => sum + a.rating, 0) / agentes.length).toFixed(1) : 0;
   const totalVentas = agentes.reduce((sum, a) => sum + a.ventas, 0);
+
+  // Agregados de desempeño y uso de la app
+  const avgScore = agentes.length ? Math.round(agentes.reduce((s, a) => s + (a.score || 0), 0) / agentes.length) : 0;
+  const totalLogins = agentes.reduce((s, a) => s + (a.engagement?.logins || 0), 0);
+  const totalActiveMin = agentes.reduce((s, a) => s + (a.engagement?.activeMinutes || 0), 0);
+  const avgCompleteness = agentes.length ? Math.round(agentes.reduce((s, a) => s + (a.formCompleteness || 0), 0) / agentes.length) : 0;
+  const rankedByScore = [...agentes].sort((a, b) => (b.score || 0) - (a.score || 0));
 
   const kpisEquipo = [
     { title: 'Total Agentes', value: agentes.length, desc: `${agentes.filter(a => a.rol === 'Agente Senior').length} seniors`, icon: <FaUsers />, color: 'from-blue-500 to-blue-600', trend: '+2' },
@@ -596,13 +696,19 @@ const Agentes = () => {
         >
           <FaChartLine /> Métricas de Agentes
         </button>
-        <button 
+        <button
           onClick={() => setVistaActual('lista')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm hover:shadow-md ${vistaActual === 'lista' ? 'bg-emerald-500 text-white' : isDark ? 'border border-gray-600 text-gray-200 hover:bg-gray-700' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
         >
           <FaThLarge /> Ver Todos los Agentes
         </button>
-        <button 
+        <button
+          onClick={() => setVistaActual('recompensas')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm hover:shadow-md ${vistaActual === 'recompensas' ? 'bg-amber-500 text-white' : isDark ? 'border border-gray-600 text-gray-200 hover:bg-gray-700' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+        >
+          <FaTrophy /> Ranking &amp; Recompensas
+        </button>
+        <button
           onClick={() => {
             setShowModal(true);
             setCreateMessage('');
@@ -613,6 +719,11 @@ const Agentes = () => {
           <FaUserPlus /> Crear Cuenta
         </button>
       </div>
+
+      {/* Vista Ranking & Recompensas (módulo fusionado) */}
+      {vistaActual === 'recompensas' && (
+        <Recompensas embedded />
+      )}
 
       {/* Vista Dashboard */}
       {vistaActual === 'dashboard' && (
@@ -650,6 +761,105 @@ const Agentes = () => {
             </div>
           );
         })}
+      </div>
+
+      {/* Banda de Desempeño & Uso de la App */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className={`${cardBase} flex items-center gap-4`} style={{ borderLeft: `4px solid ${scoreColor(avgScore)}` }}>
+          <ScoreRing score={avgScore} label="Equipo" />
+          <div>
+            <p className={`text-sm font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Score Promedio</p>
+            <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Desempeño del equipo</p>
+          </div>
+        </div>
+        <div className={`${cardBase}`} style={{ borderLeft: '4px solid #10b981' }}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center"><FaClock className="text-emerald-500" /></div>
+          </div>
+          <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{fmtActiveTime(totalActiveMin)}</p>
+          <p className={`text-sm font-semibold mt-1 ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Tiempo en la app</p>
+          <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Acumulado (90 días)</p>
+        </div>
+        <div className={`${cardBase}`} style={{ borderLeft: '4px solid #3b82f6' }}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center"><FaSignInAlt className="text-blue-500" /></div>
+          </div>
+          <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{totalLogins}</p>
+          <p className={`text-sm font-semibold mt-1 ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Logins</p>
+          <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Accesos del equipo (90 días)</p>
+        </div>
+        <div className={`${cardBase}`} style={{ borderLeft: '4px solid #f59e0b' }}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center"><FaClipboardCheck className="text-amber-500" /></div>
+          </div>
+          <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{avgCompleteness}%</p>
+          <p className={`text-sm font-semibold mt-1 ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Calidad de carga</p>
+          <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Completitud de propiedades</p>
+        </div>
+      </div>
+
+      {/* Ranking de Desempeño (Score) */}
+      <div className="mb-8">
+        <div className={cardBase}>
+          <div className="flex items-center gap-2 mb-1">
+            <FaMedal className="text-amber-500" />
+            <h3 className="font-semibold dark:text-gray-100">Ranking de Desempeño</h3>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Puntaje compuesto 0-100 por agente · clic para ver el detalle</p>
+          {rankedByScore.length === 0 ? (
+            <p className="text-center py-8 text-gray-400">Sin datos de agentes</p>
+          ) : (
+            <div className="space-y-2">
+              {rankedByScore.map((a, idx) => {
+                const eng = a.engagement || {};
+                return (
+                  <div
+                    key={a.id || a._id}
+                    onClick={() => verDetalle(a)}
+                    className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${isDark ? 'bg-gray-700/30 hover:bg-gray-700/60' : 'bg-gray-50 hover:bg-gray-100'}`}
+                  >
+                    <div className={`w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center font-bold text-white text-sm ${idx === 0 ? 'bg-yellow-500' : idx === 1 ? 'bg-gray-400' : idx === 2 ? 'bg-amber-700' : 'bg-gray-300 dark:bg-gray-600'}`}>{idx + 1}</div>
+                    <div className="w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center text-white font-bold" style={{ backgroundColor: a.color }}>
+                      {a.nombre.charAt(0)}{a.nombre.split(' ')[1]?.charAt(0) || ''}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold truncate dark:text-gray-100">{a.nombre}</p>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <span className="flex items-center gap-1"><FaHome className="text-blue-400" /> {a.propiedades}</span>
+                        <span className="flex items-center gap-1"><FaTrophy className="text-emerald-400" /> {a.ventas}</span>
+                        <span className="flex items-center gap-1"><FaCalendar className="text-indigo-400" /> {a.citas}</span>
+                        <span className="flex items-center gap-1"><FaClipboardCheck className="text-amber-400" /> {a.formCompleteness}%</span>
+                        <span className="flex items-center gap-1"><FaClock className="text-green-400" /> {fmtActiveTime(eng.activeMinutes)}</span>
+                        <span className="flex items-center gap-1"><FaSignInAlt className="text-blue-400" /> {eng.logins || 0}</span>
+                        {eng.streak > 0 && <span className="flex items-center gap-1 text-orange-500"><FaFire /> {eng.streak}d</span>}
+                        {a.rewards?.tier && a.rewards.tier !== 'base' && (
+                          <span className="px-2 py-0.5 rounded-full text-white text-[10px]" style={{ backgroundColor: a.rewards.tier === 'club100' ? '#FFD700' : a.rewards.tier === 'executive' ? '#C0C0C0' : '#CD7F32' }}>{a.rewards.medal}</span>
+                        )}
+                      </div>
+                    </div>
+                    {/* Desglose compacto */}
+                    <div className="hidden xl:flex items-center gap-1.5 w-48">
+                      {SCORE_CATS.map((cat) => {
+                        const v = Math.round(Number(a.scoreBreakdown?.[cat.key]) || 0);
+                        return (
+                          <div key={cat.key} title={`${cat.label}: ${v}`} className="flex-1">
+                            <div className={`w-full h-8 rounded ${isDark ? 'bg-gray-700' : 'bg-gray-200'} flex items-end overflow-hidden`}>
+                              <div className="w-full rounded-t" style={{ height: `${v}%`, backgroundColor: cat.color }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex-shrink-0 text-right w-14">
+                      <p className="text-2xl font-bold leading-none" style={{ color: scoreColor(a.score) }}>{Math.round(a.score || 0)}</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">Score</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Gráficos Principales - ApexCharts */}
@@ -773,6 +983,10 @@ const Agentes = () => {
                     ))}
                     <span className="text-sm font-bold ml-1" style={{ color: currentColor }}>{agente.rating}</span>
                   </div>
+                </div>
+                <div className="flex-shrink-0 text-center" title="Score de desempeño">
+                  <p className="text-2xl font-bold leading-none" style={{ color: scoreColor(agente.score) }}>{Math.round(agente.score || 0)}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Score</p>
                 </div>
               </div>
 
@@ -982,6 +1196,56 @@ const Agentes = () => {
                 </div>
               </div>
 
+              {/* Score de Desempeño */}
+              <div className={cardBase}>
+                <h3 className="text-xl font-bold mb-4 dark:text-gray-100 flex items-center gap-2">
+                  <FaBolt className="text-amber-500" /> Score de Desempeño
+                </h3>
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  <div className="flex flex-col items-center">
+                    <ScoreRing score={agenteSeleccionado.score} size={110} stroke={10} label="Global" />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">Puntaje compuesto 0-100</p>
+                  </div>
+                  <div className="flex-1 w-full">
+                    <ScoreBreakdown breakdown={agenteSeleccionado.scoreBreakdown} isDark={isDark} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Calidad de Carga de Propiedades */}
+              <div className={cardBase}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold dark:text-gray-100 flex items-center gap-2">
+                    <FaClipboardCheck className="text-amber-500" /> Calidad de Carga
+                  </h3>
+                  <span className="text-2xl font-bold" style={{ color: scoreColor(agenteSeleccionado.formCompleteness) }}>
+                    {agenteSeleccionado.formCompleteness || 0}%
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Completitud promedio de las propiedades del agente</p>
+                {agenteSeleccionado.completenessParts ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {COMPLETENESS_PARTS.map((p) => {
+                      const v = Math.round(Number(agenteSeleccionado.completenessParts[p.key]) || 0);
+                      const Icon = p.icon;
+                      return (
+                        <div key={p.key} className={`p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="flex items-center gap-1.5 text-xs font-medium dark:text-gray-300"><Icon style={{ color: scoreColor(v) }} /> {p.label}</span>
+                            <span className="text-xs font-bold" style={{ color: scoreColor(v) }}>{v}%</span>
+                          </div>
+                          <div className={`w-full h-1.5 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                            <div className="h-1.5 rounded-full" style={{ width: `${v}%`, backgroundColor: scoreColor(v) }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400 text-center py-4">El agente todavía no tiene propiedades cargadas.</p>
+                )}
+              </div>
+
               {/* Zonas Asignadas */}
               <div className={cardBase}>
                 <h3 className="text-xl font-bold mb-4 dark:text-gray-100 flex items-center gap-2">
@@ -1065,6 +1329,97 @@ const Agentes = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Uso de la App (Engagement) */}
+              <div className={cardBase}>
+                <h3 className="text-lg font-bold mb-4 dark:text-gray-100 flex items-center gap-2">
+                  <FaBolt className="text-emerald-500" /> Uso de la App
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className={`p-3 rounded-lg text-center ${isDark ? 'bg-gray-800' : 'bg-emerald-50'}`}>
+                    <FaClock className="text-emerald-500 mx-auto mb-1" />
+                    <p className="text-lg font-bold dark:text-gray-100">{fmtActiveTime(agenteSeleccionado.engagement?.activeMinutes)}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">Tiempo activo</p>
+                  </div>
+                  <div className={`p-3 rounded-lg text-center ${isDark ? 'bg-gray-800' : 'bg-blue-50'}`}>
+                    <FaSignInAlt className="text-blue-500 mx-auto mb-1" />
+                    <p className="text-lg font-bold dark:text-gray-100">{agenteSeleccionado.engagement?.logins || 0}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">Logins</p>
+                  </div>
+                  <div className={`p-3 rounded-lg text-center ${isDark ? 'bg-gray-800' : 'bg-indigo-50'}`}>
+                    <FaCalendar className="text-indigo-500 mx-auto mb-1" />
+                    <p className="text-lg font-bold dark:text-gray-100">{agenteSeleccionado.engagement?.activeDays || 0}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">Días activos</p>
+                  </div>
+                  <div className={`p-3 rounded-lg text-center ${isDark ? 'bg-gray-800' : 'bg-orange-50'}`}>
+                    <FaFire className="text-orange-500 mx-auto mb-1" />
+                    <p className="text-lg font-bold dark:text-gray-100">{agenteSeleccionado.engagement?.streak || 0}d</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">Racha</p>
+                  </div>
+                </div>
+                {agenteSeleccionado.engagement?.lastSeenAt && (
+                  <p className="text-[11px] text-gray-400 mt-3 text-center">
+                    Último acceso: {new Date(agenteSeleccionado.engagement.lastSeenAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                )}
+                <p className="text-[10px] text-gray-400 mt-1 text-center">Datos de los últimos 90 días</p>
+              </div>
+
+              {/* Recompensas */}
+              {agenteSeleccionado.rewards && (
+                <div className={cardBase}>
+                  <h3 className="text-lg font-bold mb-4 dark:text-gray-100 flex items-center gap-2">
+                    <FaTrophy className="text-amber-500" /> Recompensas
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-gray-800 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <FaMedal className="text-amber-500" />
+                        <span className="text-sm dark:text-gray-200">Categoría anual</span>
+                      </div>
+                      <span className="font-bold dark:text-gray-100 capitalize">
+                        {agenteSeleccionado.rewards.tier === 'club100' ? '100% Club' : (agenteSeleccionado.rewards.tier === 'base' ? 'Sin categoría' : agenteSeleccionado.rewards.tier)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-gray-800 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <FaHome className="text-blue-500" />
+                        <span className="text-sm dark:text-gray-200">Captaciones (trim.)</span>
+                      </div>
+                      <span className="font-bold dark:text-gray-100">{agenteSeleccionado.rewards.quarterlyCaptures || 0}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-gray-800 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <FaDollarSign className="text-green-500" />
+                        <span className="text-sm dark:text-gray-200">Facturado (trim.)</span>
+                      </div>
+                      <span className="font-bold dark:text-gray-100">${Math.round((agenteSeleccionado.rewards.quarterlyRevenue || 0) / 1000)}K</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-gray-800 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <FaShieldAlt className="text-purple-500" />
+                        <span className="text-sm dark:text-gray-200">Fidelización</span>
+                      </div>
+                      <span className="font-bold dark:text-gray-100 capitalize">{(agenteSeleccionado.rewards.seniority || 'none').replace('_', ' ').replace('none', 'N/A')}</span>
+                    </div>
+                    <div className={`flex items-center justify-between p-3 rounded-lg ${agenteSeleccionado.rewards.preListingActive ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-gray-50 dark:bg-gray-800'}`}>
+                      <div className="flex items-center gap-2">
+                        <FaClipboardCheck className={agenteSeleccionado.rewards.preListingActive ? 'text-emerald-500' : 'text-gray-400'} />
+                        <span className="text-sm dark:text-gray-200">Pre-Listing</span>
+                      </div>
+                      <span className={`font-bold ${agenteSeleccionado.rewards.preListingActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'}`}>
+                        {agenteSeleccionado.rewards.preListingActive ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setVistaActual('recompensas')}
+                    className="w-full mt-4 py-2 text-sm rounded-lg border border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                  >
+                    Ver ranking completo
+                  </button>
+                </div>
+              )}
 
               {/* Ubicación */}
               <div className={cardBase}>

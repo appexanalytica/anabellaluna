@@ -93,7 +93,7 @@ router.get('/config', authenticateToken, requireRole('admin'), async (req, res) 
 
 router.put('/config', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
-    const allowed = ['captureGoals', 'revenueGoals', 'clientLoyalty', 'preListing', 'sellerTiers'];
+    const allowed = ['captureGoals', 'revenueGoals', 'clientLoyalty', 'preListing', 'sellerTiers', 'scoring'];
     const update = {};
     for (const key of allowed) {
       if (req.body[key] !== undefined) update[key] = req.body[key];

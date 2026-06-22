@@ -91,6 +91,10 @@ const App = () => {
         try {
           const { api } = await import('./config/api');
           await api.put('/crm/messages/status/online', { online });
+          // Engagement: acumula tiempo activo del agente para el centro de mando
+          if (online) {
+            try { await api.post('/crm/agentes/heartbeat', { seconds: 60 }); } catch (e) { /* no bloquea */ }
+          }
         } catch (err) {
           if (isApiUnavailableError(err)) return;
           console.error('Error updating online status:', err);

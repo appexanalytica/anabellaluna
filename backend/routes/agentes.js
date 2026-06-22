@@ -12,12 +12,130 @@ const AgentMetrics = require('../models/AgentMetrics');
 
 const Operacion = require('../models/Operacion');
 
+const Propiedad = require('../models/Propiedad');
+
 const { authenticateToken, requireRole, agentScopeId, requireCRMUser } = require('../auth');
 const { authenticateTokenOrService } = require('../middlewares/serviceAuth');
+
+const engagementService = require('../services/engagementService');
+const scoreSvc = require('../services/agentScoreService');
+const rewardsEngine = require('../services/rewardsEngine');
+const RewardConfig = require('../models/RewardConfig');
 
 
 
 const router = express.Router();
+
+/**
+ * Construye la "scorecard" de un agente: citas, completitud de carga,
+ * resumen de recompensas y el puntaje compuesto (0-100) con su desglose.
+ * Reutilizado por /metrics/all y /metrics/:id.
+ */
+async function buildAgentScorecard(agente, deps) {
+  const { cfg, qb, monthStart, engagement, metricas } = deps;
+  const Cita = require('../models/Cita');
+  const Cliente = require('../models/Cliente');
+  const DocumentLink = require('../models/DocumentLink');
+  const VirtualTour = require('../modules/tours/Tour');
+  const SellerTierHistory = require('../models/SellerTierHistory');
+  const CustomerLoyalty = require('../models/CustomerLoyalty');
+  const BadgeRecord = require('../models/BadgeRecord');
+
+  const agenteId = String(agente._id);
+  const year = qb.start.getFullYear();
+  const qcfg = (cfg.scoring && cfg.scoring.quality) || undefined;
+
+  const [citasTotal, citasMes, clientesMes] = await Promise.all([
+    Cita.countDocuments({ agenteId }).catch(() => 0),
+    Cita.countDocuments({ agenteId, fecha: { $gte: monthStart } }).catch(() => 0),
+    Cliente.countDocuments({ agenteId, createdAt: { $gte: monthStart } }).catch(() => 0),
+  ]);
+
+  // ── Completitud de carga de las propiedades del agente ──
+  const props = await Propiedad.find({ agentId: agenteId })
+    .select('title description address metadata').lean().catch(() => []);
+  const propIds = props.map((p) => String(p._id));
+  let formCompleteness = 0;
+  let completenessParts = null;
+  if (propIds.length) {
+    const [links, tours] = await Promise.all([
+      DocumentLink.find({ entity_type: 'propiedad', entity_id: { $in: propIds } })
+        .populate({ path: 'document', select: 'nombre mimetype' }).lean().catch(() => []),
+      VirtualTour.find({ propertyId: { $in: propIds } }).select('propertyId').lean().catch(() => []),
+    ]);
+    const imgCount = {};
+    for (const l of links) {
+      if (l.document && scoreSvc.isImageDoc(l.document)) {
+        imgCount[l.entity_id] = (imgCount[l.entity_id] || 0) + 1;
+      }
+    }
+    const tourSet = new Set(tours.map((t) => String(t.propertyId)));
+    const detailed = props.map((p) => scoreSvc.propertyCompleteness(
+      p,
+      { imageCount: imgCount[String(p._id)] || 0, hasTour: tourSet.has(String(p._id)) },
+      qcfg,
+    ));
+    formCompleteness = scoreSvc.averageCompleteness(detailed.map((d) => d.score));
+    // Promedio de cada parte (para mostrar qué falta a nivel cartera)
+    const acc = { fotos: 0, descripcion: 0, video: 0, tour: 0, geo: 0, direccion: 0 };
+    detailed.forEach((d) => Object.keys(acc).forEach((k) => { acc[k] += d.parts[k]; }));
+    completenessParts = {};
+    Object.keys(acc).forEach((k) => { completenessParts[k] = Math.round(acc[k] / detailed.length); });
+  }
+
+  // ── Resumen de recompensas (lee documentos cacheados + cálculos read-only) ──
+  const [tierDoc, loyaltyDoc, badge, qRev, capQ] = await Promise.all([
+    SellerTierHistory.findOne({ agenteId, year }).lean().catch(() => null),
+    CustomerLoyalty.findOne({ agenteId, year }).lean().catch(() => null),
+    BadgeRecord.findOne({ agenteId, badgeType: 'pre_listing' }).sort({ createdAt: -1 }).lean().catch(() => null),
+    rewardsEngine.getRevenueStats(agenteId, qb.start, qb.end).catch(() => ({ total: 0 })),
+    rewardsEngine.getCaptureStats(agenteId, qb.start, qb.end, cfg).catch(() => ({ count: 0 })),
+  ]);
+  const preListingActive = badge ? badge.status === 'active' : false;
+  const seniority = loyaltyDoc ? loyaltyDoc.seniority : 'none';
+
+  const rewards = {
+    tier: tierDoc ? tierDoc.tier : 'base',
+    medal: tierDoc ? tierDoc.medal : 'none',
+    annualRevenue: tierDoc ? tierDoc.totalRevenue : 0,
+    quarterlyRevenue: qRev.total || 0,
+    quarterlyCaptures: capQ.count || 0,
+    seniority,
+    loyalCount: loyaltyDoc ? loyaltyDoc.totalCount : 0,
+    preListingActive,
+    prize: tierDoc ? tierDoc.prize : '',
+  };
+
+  const eng = engagement || { logins: 0, activeDays: 0, activeHours: 0, activeMinutes: 0, streak: 0, lastSeenAt: null };
+
+  const { score, breakdown } = scoreSvc.computeScore({
+    capturesQuarterly: capQ.count || 0,
+    captureTargetQuarterly: cfg.captureGoals.quarterlyTarget,
+    revenueQuarterly: qRev.total || 0,
+    revenueTargetQuarterly: cfg.revenueGoals.quarterlyTarget,
+    citasMes,
+    clientesMes,
+    interaccionesMes: (metricas && (metricas.interactionsMes || metricas.actividadesMes)) || 0,
+    formCompleteness,
+    engagement: eng,
+    tasaConversion: (metricas && metricas.tasaConversion) || 0,
+    diasPromCierre: (metricas && metricas.diasPromCierre) || 0,
+    seniority,
+    preListingActive,
+  }, cfg);
+
+  return {
+    citas: citasTotal,
+    citasMes,
+    clientesMes,
+    formCompleteness,
+    completenessParts,
+    rewards,
+    engagement: eng,
+    score,
+    scoreBreakdown: breakdown,
+  };
+}
 
 const CLOSED_OPERATION_STATES = ['cerrada', 'completada', 'vendida', 'alquilada', 'finalizada'];
 
@@ -290,6 +408,20 @@ router.delete('/:id', authenticateTokenOrService, requireRole('admin'), async (r
 
 
 
+// Heartbeat: acumula tiempo activo del agente (uso de la app)
+router.post('/heartbeat', authenticateToken, async (req, res) => {
+  try {
+    const agenteId = req.user && req.user.agenteId ? String(req.user.agenteId) : null;
+    // Admins (sin agenteId) o usuarios públicos: no se registra, pero responde OK
+    if (!agenteId) return res.json({ ok: true, tracked: false });
+    const seconds = Number(req.body && req.body.seconds) || 60;
+    await engagementService.recordHeartbeat(agenteId, req.user.sub, seconds);
+    return res.json({ ok: true, tracked: true });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // Get all agents with performance metrics (admin only)
 
 router.get('/metrics/all', authenticateTokenOrService, requireCRMUser, async (req, res) => {
@@ -310,7 +442,14 @@ router.get('/metrics/all', authenticateTokenOrService, requireCRMUser, async (re
     const agenteFilter = scopeId ? { _id: scopeId } : {};
     const agentes = await Agente.find(agenteFilter).lean();
 
-    
+    // Contexto compartido para la scorecard (config, trimestre actual, engagement)
+    const cfg = await RewardConfig.load();
+    const nowQ = new Date();
+    const qb = rewardsEngine.quarterBounds(nowQ.getFullYear(), rewardsEngine.currentQuarter(nowQ));
+    const monthStart = new Date(nowQ.getFullYear(), nowQ.getMonth(), 1, 0, 0, 0, 0);
+    const engagementMap = await engagementService.getEngagementMap({ days: 90 }).catch(() => ({}));
+
+
 
     const agentesConMetricas = await Promise.all(agentes.map(async (agente) => {
 
@@ -436,11 +575,7 @@ router.get('/metrics/all', authenticateTokenOrService, requireCRMUser, async (re
 
       
 
-      return {
-
-        ...agente,
-
-        metricas: {
+      const metricas = {
 
           clientes: clientesCount,
 
@@ -473,7 +608,33 @@ router.get('/metrics/all', authenticateTokenOrService, requireCRMUser, async (re
           ventasMensual,
           metaMensual: Number(agente.metadata?.metaMensual || 0),
 
-        },
+      };
+
+      // Scorecard: citas, completitud de carga, recompensas, engagement y score
+      const scorecard = await buildAgentScorecard(agente, {
+        cfg, qb, monthStart, engagement: engagementMap[agenteId], metricas,
+      }).catch((e) => { console.error('[scorecard] all:', e.message); return null; });
+
+      if (scorecard) {
+        metricas.citas = scorecard.citas;
+        metricas.citasMes = scorecard.citasMes;
+        metricas.clientesMes = scorecard.clientesMes;
+        metricas.formCompleteness = scorecard.formCompleteness;
+        metricas.score = scorecard.score;
+      }
+
+      return {
+
+        ...agente,
+
+        metricas,
+
+        engagement: scorecard ? scorecard.engagement : null,
+        formCompleteness: scorecard ? scorecard.formCompleteness : 0,
+        completenessParts: scorecard ? scorecard.completenessParts : null,
+        rewards: scorecard ? scorecard.rewards : null,
+        score: scorecard ? scorecard.score : 0,
+        scoreBreakdown: scorecard ? scorecard.scoreBreakdown : null,
 
         color: agente.metadata?.color || colors[colorIndex],
 
@@ -637,7 +798,18 @@ router.get('/metrics/:id', authenticateToken, requireCRMUser, async (req, res) =
 
     const satisfaccion = Math.round(avgRating * 20);
 
-    
+    // ── Scorecard del agente (citas, completitud, recompensas, engagement, score) ──
+    const cfg = await RewardConfig.load();
+    const nowQ = new Date();
+    const qb = rewardsEngine.quarterBounds(nowQ.getFullYear(), rewardsEngine.currentQuarter(nowQ));
+    const monthStart = new Date(nowQ.getFullYear(), nowQ.getMonth(), 1, 0, 0, 0, 0);
+    const ClientInteraction = require('../models/ClientInteraction');
+    const interactionsMes = await ClientInteraction.countDocuments({ agenteId, createdAt: { $gte: monthStart } }).catch(() => 0);
+    const engagement = await engagementService.getEngagementSummary(agenteId, { days: 90 }).catch(() => null);
+    const scorecard = await buildAgentScorecard(agente, {
+      cfg, qb, monthStart, engagement,
+      metricas: { tasaConversion, diasPromCierre, interactionsMes },
+    }).catch((e) => { console.error('[scorecard] id:', e.message); return null; });
 
     res.json({
 
@@ -664,8 +836,20 @@ router.get('/metrics/:id', authenticateToken, requireCRMUser, async (req, res) =
         tasaConversion,
         diasPromCierre,
         metaMensual: Number(agente.metadata?.metaMensual || 0),
+        citas: scorecard ? scorecard.citas : 0,
+        citasMes: scorecard ? scorecard.citasMes : 0,
+        clientesMes: scorecard ? scorecard.clientesMes : 0,
+        formCompleteness: scorecard ? scorecard.formCompleteness : 0,
+        score: scorecard ? scorecard.score : 0,
 
       },
+
+      engagement: scorecard ? scorecard.engagement : engagement,
+      formCompleteness: scorecard ? scorecard.formCompleteness : 0,
+      completenessParts: scorecard ? scorecard.completenessParts : null,
+      rewards: scorecard ? scorecard.rewards : null,
+      score: scorecard ? scorecard.score : 0,
+      scoreBreakdown: scorecard ? scorecard.scoreBreakdown : null,
 
       detalle: {
 

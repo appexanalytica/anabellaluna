@@ -5,7 +5,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import { Navbar, Footer, Sidebar, ThemeSettings, OnboardingTutorial } from './components';
-import { Ecommerce, Orders, Calendar, Employees, Stacked, Pyramid, Customers, Kanban, Line, Area, Bar, Pie, Financial, ColorPicker, ColorMapping, Editor, DashboardEjecutivo, Propiedades, ClientesCRM, Agentes, Citas, Ventas, Documentos, Plantillas, Reportes, Integraciones, Consultas, Configuracion, Workflows, Automatizacion, RolesPermisos, Campanas, EmailMarketing, AnalyticsMarketing, MiPerfil, Recompensas, EditorImagenes, Tasaciones, ToursVirtuales } from './pages';
+import { Ecommerce, Orders, Calendar, Employees, Stacked, Pyramid, Customers, Kanban, Line, Area, Bar, Pie, Financial, ColorPicker, ColorMapping, Editor, DashboardEjecutivo, Propiedades, ClientesCRM, Agentes, Citas, Ventas, Documentos, Plantillas, Reportes, Integraciones, Consultas, Configuracion, Workflows, Automatizacion, RolesPermisos, Campanas, EmailMarketing, AnalyticsMarketing, MiPerfil, EditorImagenes, Tasaciones, ToursVirtuales } from './pages';
 import Seguridad from './pages/Seguridad';
 import MarketingAI from './pages/MarketingAI';
 import WhatsAppSesiones from './pages/WhatsAppSesiones';
@@ -17,6 +17,7 @@ import InstallPrompt from './components/pwa/InstallPrompt';
 import NotificationPrompt from './components/pwa/NotificationPrompt';
 import './App.css';
 import { authService } from './services/authService';
+import { api } from './config/api';
 import { useStateContext } from './contexts/ContextProvider';
 
 const App = () => {
@@ -50,6 +51,19 @@ const App = () => {
     if (mode) { setCurrentMode(mode); localStorage.setItem('themeMode', mode); }
     if (color) { setCurrentColor(color); localStorage.setItem('colorMode', color); }
   }, [setCurrentColor, setCurrentMode]);
+
+  // Heartbeat de engagement: acumula el tiempo activo del agente mientras usa el
+  // panel. El backend lo ignora para usuarios sin agente (p. ej. admins).
+  useEffect(() => {
+    if (!authToken) return undefined;
+    const ping = () => {
+      if (typeof document !== 'undefined' && document.visibilityState && document.visibilityState !== 'visible') return;
+      api.post('/crm/agentes/heartbeat', { seconds: 60 }).catch(() => {});
+    };
+    ping(); // primer ping al arrancar la sesión
+    const id = setInterval(ping, 60000);
+    return () => clearInterval(id);
+  }, [authToken]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -415,7 +429,8 @@ const App = () => {
                 <Route path="/configuracion" element={<Configuracion />} />
                 <Route path="/perfil" element={<MiPerfil />} />
                 <Route path="/seguridad" element={<Seguridad />} />
-                <Route path="/recompensas" element={<Recompensas />} />
+                {/* Recompensas fusionado dentro de Agentes (centro de mando) */}
+                <Route path="/recompensas" element={<Navigate to="/agentes" replace />} />
                 <Route path="/whatsapp-sesiones" element={<WhatsAppSesiones />} />
                 <Route path="/mensajeria" element={<Mensajeria />} />
                 <Route path="/tasaciones" element={<Tasaciones />} />

@@ -49,7 +49,21 @@ const TABS = [
   { key: 'config', label: 'Configuracion', icon: FaCog },
 ];
 
-const Recompensas = () => {
+// Defaults del score (espejo de backend) para cuando la config aún no lo trae
+const DEFAULT_SCORING = {
+  weights: { captacion: 20, ventas: 25, actividad: 15, calidad: 15, engagement: 10, conversion: 10, fidelizacion: 5 },
+  activityTargets: { citasMensual: 10, clientesMensual: 8, interaccionesMensual: 30 },
+  engagementTargets: { diasActivos: 40, logins: 40, horasActivas: 40 },
+  quality: { fotosObjetivo: 6, weights: { fotos: 30, descripcion: 15, video: 15, tour: 15, geo: 15, direccion: 10 } },
+  conversion: { diasCierreObjetivo: 60 },
+};
+
+const SCORE_WEIGHT_LABELS = {
+  captacion: 'Captación', ventas: 'Ventas / Facturación', actividad: 'Actividad',
+  calidad: 'Calidad de carga', engagement: 'Uso de la app', conversion: 'Conversión & cierre', fidelizacion: 'Fidelización',
+};
+
+const Recompensas = ({ embedded = false }) => {
   const { currentColor, currentMode } = useStateContext();
   const isDark = currentMode === 'Dark';
   const now = new Date();
@@ -122,11 +136,27 @@ const Recompensas = () => {
     if (!config) return;
     setSavingConfig(true);
     try {
-      const { captureGoals, revenueGoals, clientLoyalty, preListing, sellerTiers } = config;
-      await crmService.rewards.updateConfig({ captureGoals, revenueGoals, clientLoyalty, preListing, sellerTiers });
+      const { captureGoals, revenueGoals, clientLoyalty, preListing, sellerTiers, scoring } = config;
+      await crmService.rewards.updateConfig({ captureGoals, revenueGoals, clientLoyalty, preListing, sellerTiers, scoring });
       await loadConfig();
     } catch (e) { console.error(e); } finally { setSavingConfig(false); }
   };
+
+  // Actualiza un campo anidado de scoring (clona desde defaults si falta)
+  const setScoring = (path, value) => setConfig((prev) => {
+    const base = prev && prev.scoring
+      ? JSON.parse(JSON.stringify(prev.scoring))
+      : JSON.parse(JSON.stringify(DEFAULT_SCORING));
+    let node = base;
+    for (let i = 0; i < path.length - 1; i += 1) {
+      node[path[i]] = node[path[i]] || {};
+      node = node[path[i]];
+    }
+    node[path[path.length - 1]] = value;
+    return { ...prev, scoring: base };
+  });
+  const sc = (config && config.scoring) || DEFAULT_SCORING;
+  const totalWeight = Object.values(sc.weights || DEFAULT_SCORING.weights).reduce((s, v) => s + (Number(v) || 0), 0);
 
   const cardCls = `rounded-2xl p-6 border ${isDark ? 'bg-secondary-dark-bg border-gray-700/50' : 'bg-white border-gray-100 shadow-sm'}`;
   const textCls = isDark ? 'text-gray-100' : 'text-gray-900';
@@ -134,15 +164,17 @@ const Recompensas = () => {
 
   // ── RENDER ──
   return (
-    <div className={`min-h-screen px-6 lg:px-8 pt-4 pb-6 ${isDark ? 'bg-main-dark-bg' : 'bg-gray-50'}`}>
+    <div className={embedded ? '' : `min-h-screen px-6 lg:px-8 pt-4 pb-6 ${isDark ? 'bg-main-dark-bg' : 'bg-gray-50'}`}>
       {/* Header */}
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+        {!embedded && (
         <div>
           <h2 className={`text-xl font-bold flex items-center gap-2 ${textCls}`}>
             <FaTrophy className="text-amber-500" /> Recompensas V2
           </h2>
           <p className={`text-sm mt-1 ${subCls}`}>Sistema de metas, badges, medallas y premios</p>
         </div>
+        )}
         <div className="flex items-center gap-3">
           <select value={year} onChange={e => setYear(+e.target.value)} className={`rounded-lg px-3 py-2 text-sm border ${isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'}`}>
             {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map(y => <option key={y} value={y}>{y}</option>)}
@@ -416,6 +448,90 @@ const Recompensas = () => {
               <div>
                 <label className={`block text-xs font-medium mb-1 ${subCls}`}>Premio por badge</label>
                 <input type="text" value={config.preListing?.badgeReward ?? ''} onChange={e => setConfig(prev => ({ ...prev, preListing: { ...prev.preListing, badgeReward: e.target.value } }))} className={`w-full rounded-lg px-3 py-2 border text-sm ${isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'}`} />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Score de desempeño ── */}
+          <div className={cardCls}>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className={`font-semibold ${textCls}`}>Score de Desempeño — Ponderación</h3>
+              <span className={`text-xs font-semibold px-2 py-1 rounded-full ${totalWeight === 100 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'}`}>
+                Total: {totalWeight}{totalWeight === 100 ? '' : ' (se normaliza)'}
+              </span>
+            </div>
+            <p className={`text-xs mb-4 ${subCls}`}>Peso de cada categoría en el puntaje global 0-100 de cada agente.</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {Object.keys(SCORE_WEIGHT_LABELS).map((k) => (
+                <div key={k}>
+                  <label className={`block text-xs font-medium mb-1 ${subCls}`}>{SCORE_WEIGHT_LABELS[k]}</label>
+                  <input
+                    type="number" min="0"
+                    value={sc.weights?.[k] ?? DEFAULT_SCORING.weights[k]}
+                    onChange={(e) => setScoring(['weights', k], +e.target.value)}
+                    className={`w-full rounded-lg px-3 py-2 border text-sm ${isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <h4 className={`font-semibold text-sm mt-6 mb-3 ${textCls}`}>Metas de Actividad (mensual)</h4>
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { p: ['activityTargets', 'citasMensual'], label: 'Citas / mes' },
+                { p: ['activityTargets', 'clientesMensual'], label: 'Clientes nuevos / mes' },
+                { p: ['activityTargets', 'interaccionesMensual'], label: 'Interacciones / mes' },
+              ].map((f) => (
+                <div key={f.label}>
+                  <label className={`block text-xs font-medium mb-1 ${subCls}`}>{f.label}</label>
+                  <input
+                    type="number" min="0"
+                    value={sc.activityTargets?.[f.p[1]] ?? DEFAULT_SCORING.activityTargets[f.p[1]]}
+                    onChange={(e) => setScoring(f.p, +e.target.value)}
+                    className={`w-full rounded-lg px-3 py-2 border text-sm ${isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <h4 className={`font-semibold text-sm mt-6 mb-3 ${textCls}`}>Metas de Uso de la App (por trimestre)</h4>
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { p: ['engagementTargets', 'diasActivos'], label: 'Días activos' },
+                { p: ['engagementTargets', 'logins'], label: 'Logins' },
+                { p: ['engagementTargets', 'horasActivas'], label: 'Horas activas' },
+              ].map((f) => (
+                <div key={f.label}>
+                  <label className={`block text-xs font-medium mb-1 ${subCls}`}>{f.label}</label>
+                  <input
+                    type="number" min="0"
+                    value={sc.engagementTargets?.[f.p[1]] ?? DEFAULT_SCORING.engagementTargets[f.p[1]]}
+                    onChange={(e) => setScoring(f.p, +e.target.value)}
+                    className={`w-full rounded-lg px-3 py-2 border text-sm ${isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <h4 className={`font-semibold text-sm mt-6 mb-3 ${textCls}`}>Calidad de Carga & Cierre</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <label className={`block text-xs font-medium mb-1 ${subCls}`}>Fotos objetivo / propiedad</label>
+                <input
+                  type="number" min="1"
+                  value={sc.quality?.fotosObjetivo ?? DEFAULT_SCORING.quality.fotosObjetivo}
+                  onChange={(e) => setScoring(['quality', 'fotosObjetivo'], +e.target.value)}
+                  className={`w-full rounded-lg px-3 py-2 border text-sm ${isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
+                />
+              </div>
+              <div>
+                <label className={`block text-xs font-medium mb-1 ${subCls}`}>Días de cierre objetivo</label>
+                <input
+                  type="number" min="1"
+                  value={sc.conversion?.diasCierreObjetivo ?? DEFAULT_SCORING.conversion.diasCierreObjetivo}
+                  onChange={(e) => setScoring(['conversion', 'diasCierreObjetivo'], +e.target.value)}
+                  className={`w-full rounded-lg px-3 py-2 border text-sm ${isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
+                />
               </div>
             </div>
           </div>

@@ -19,6 +19,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const twoFactor = require('../services/twoFactorService');
 const { authenticateToken } = require('../auth');
+const { recordLogin } = require('../services/engagementService');
 
 const router = express.Router();
 
@@ -246,6 +247,8 @@ router.post('/verify-login', async (req, res) => {
       userAgent: getUA(req),
     });
 
+    await recordLogin(user);
+
     const token = signFullToken(user);
     return res.json({ token });
   } catch (err) {
@@ -313,6 +316,8 @@ router.post('/recovery/use', async (req, res) => {
       userAgent: getUA(req),
       metadata: { remainingCodes: remaining },
     });
+
+    await recordLogin(user);
 
     const token = signFullToken(user);
     return res.json({ token, recoveryCodesRemaining: remaining });

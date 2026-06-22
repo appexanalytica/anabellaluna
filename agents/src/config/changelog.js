@@ -3,6 +3,40 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-06-21",
+    "title": "Agentes: centro de mando con Score de Desempeño",
+    "items": [
+      {
+        "type": "nuevo",
+        "text": "El panel de Agentes ahora es el centro de mando del equipo: incorpora un Score de Desempeño (0-100) por agente que combina captaciones, ventas, actividad, calidad de carga de propiedades, uso de la app, conversión y fidelización."
+      },
+      {
+        "type": "nuevo",
+        "text": "Nuevo Ranking de Desempeño que ordena a los agentes por su Score, con el desglose por categoría y atajo al detalle de cada uno."
+      },
+      {
+        "type": "nuevo",
+        "text": "Se mide el uso de la app: tiempo activo, cantidad de logins, días activos y racha de cada agente, visibles en el panel y en su ficha."
+      },
+      {
+        "type": "nuevo",
+        "text": "Nueva métrica de Calidad de Carga: mide qué tan completas están las publicaciones (fotos, descripción, video, tour 360°, ubicación en el mapa y dirección)."
+      },
+      {
+        "type": "mejora",
+        "text": "Recompensas se fusionó dentro de Agentes (pestaña \"Ranking & Recompensas\"). El ranking, tiers, premios y la configuración ahora viven en un solo lugar; se quitó la entrada \"Recompensas\" del menú."
+      },
+      {
+        "type": "mejora",
+        "text": "La ficha de cada agente ahora muestra su Score con desglose, su uso de la app y un resumen de recompensas (categoría anual, captaciones, facturación, fidelización y pre-listing)."
+      },
+      {
+        "type": "nuevo",
+        "text": "Desde Configuración se puede ajustar la ponderación de cada categoría del Score y sus metas, para adaptarlo a las prioridades del equipo."
+      }
+    ]
+  },
+  {
+    "date": "2026-06-21",
     "title": "Menú del sitio con estilo glass",
     "items": [
       {
