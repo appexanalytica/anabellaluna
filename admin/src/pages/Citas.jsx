@@ -294,7 +294,8 @@ const Citas = () => {
       const end = endStr ? new Date(endStr) : new Date(start.getTime() + 60 * 60 * 1000);
       if (Number.isNaN(start.getTime())) throw new Error('Fecha inválida');
 
-      const agenteResponsable = agentesLista.find(a => String(a._id || a.id) === String(nuevaCita.agenteId));
+      const isOficina = nuevaCita.agenteId === '__oficina__';
+      const agenteResponsable = isOficina ? null : agentesLista.find(a => String(a._id || a.id) === String(nuevaCita.agenteId));
       const participanteAgente = agentesLista.find(a => String(a._id || a.id) === String(nuevaCita.participanteAgenteId));
 
       // If inmobiliaria mode and new name (no ID), auto-create it
@@ -328,7 +329,7 @@ const Citas = () => {
         estado: 'Programada',
         clienteId: contactoTipo === 'cliente' ? (nuevaCita.clienteId || '') : '',
         propiedadId: nuevaCita.propiedadOrigen === 'interna' ? (nuevaCita.propiedadId || '') : '',
-        agenteId: nuevaCita.agenteId || '',
+        agenteId: isOficina ? '' : (nuevaCita.agenteId || ''),
         metadata: {
           contactoTipo,
           clienteNombre: contactoTipo === 'cliente' ? nuevaCita.cliente : null,
@@ -345,8 +346,8 @@ const Citas = () => {
           inmobiliariaColega: nuevaCita.propiedadOrigen === 'externa' ? inmobiliariaColega : null,
           inmobiliariaColegaId: nuevaCita.propiedadOrigen === 'externa' ? inmobiliariaColegaId : null,
           colega: nuevaCita.propiedadOrigen === 'externa' ? nuevaCita.colega : null,
-          agenteId: nuevaCita.agenteId || null,
-          agenteNombre: agenteResponsable?.nombre || nuevaCita.agente || null,
+          agenteId: isOficina ? null : (nuevaCita.agenteId || null),
+          agenteNombre: isOficina ? 'OFICINA' : (agenteResponsable?.nombre || nuevaCita.agente || null),
           recordatorio: nuevaCita.recordatorio,
           horaInicio: nuevaCita.horaInicio || null,
           horaFin: nuevaCita.horaFin || null,
@@ -990,13 +991,18 @@ const Citas = () => {
                       name="agenteId"
                       value={nuevaCita.agenteId}
                       onChange={(e) => {
-                        const agent = agentesLista.find(a => String(a._id || a.id) === e.target.value);
-                        setNuevaCita(prev => ({ ...prev, agenteId: e.target.value, agente: agent?.nombre || '' }));
+                        if (e.target.value === '__oficina__') {
+                          setNuevaCita(prev => ({ ...prev, agenteId: '__oficina__', agente: 'OFICINA' }));
+                        } else {
+                          const agent = agentesLista.find(a => String(a._id || a.id) === e.target.value);
+                          setNuevaCita(prev => ({ ...prev, agenteId: e.target.value, agente: agent?.nombre || '' }));
+                        }
                       }}
                       required
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                     >
                       <option value="">Seleccionar agente</option>
+                      <option value="__oficina__">OFICINA</option>
                       {agentesLista.map(a => (
                         <option key={a._id || a.id} value={a._id || a.id}>{a.nombre}</option>
                       ))}
