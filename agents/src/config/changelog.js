@@ -2,6 +2,16 @@
 // Do not edit by hand: edit changelog.json instead.
 export const CHANGELOG_ENTRIES = [
   {
+    "date": "2026-07-02",
+    "title": "Arreglo: pantalla en blanco al traducir la página",
+    "items": [
+      {
+        "type": "arreglo",
+        "text": "Solucionamos un error que hacía que la app se cerrara o quedara en blanco cuando el navegador (Chrome/Edge) traducía la página automáticamente. Ahora el sitio se identifica correctamente en español y se evita esa traducción, que era la causa del problema."
+      }
+    ]
+  },
+  {
     "date": "2026-06-21",
     "title": "Agentes: centro de mando con Score de Desempeño",
     "items": [
