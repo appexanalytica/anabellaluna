@@ -23,3 +23,16 @@ Los archivos generados son:
 - `agents/src/config/appVersion.js`
 
 No editarlos a mano; para un cambio mayor, editar solo `app-version.json`.
+
+## Novedades
+
+El panel de **Novedades** del sidebar se alimenta desde `changelog.json`.
+
+- Todo cambio visible para usuarios finales debe agregarse a `changelog.json` antes de commit/push.
+- El texto debe estar en español simple, pensado para usuarios finales.
+- Los tipos validos son `nuevo`, `mejora` y `arreglo`.
+- Despues de editar `changelog.json`, ejecutar `node scripts/write-app-version.js` o correr los builds para regenerar:
+  - `admin/src/config/changelog.js`
+  - `agents/src/config/changelog.js`
+
+No cerrar ni pushear una mejora visible si no quedo reflejada en **Novedades**.

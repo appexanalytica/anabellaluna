@@ -38,6 +38,14 @@ Innovación: Siempre busca soluciones modernas y mejores prácticas. No te quede
 - `npm start` y `npm run build` en `admin/` o `agents/` regeneran automaticamente `admin/src/config/appVersion.js` y `agents/src/config/appVersion.js`.
 - Si se necesita regenerar manualmente antes de commitear, ejecutar `node scripts/write-app-version.js` desde la raiz del repo.
 
+### 0.1. Novedades obligatorias
+
+- Todo cambio visible para usuarios finales en `admin/`, `agents/` o el sitio publico debe tener una entrada en `changelog.json` antes del commit/push.
+- Redactar las novedades en español simple, orientado al usuario final y sin tecnicismos internos.
+- Usar solo los tipos permitidos por el changelog: `nuevo`, `mejora` o `arreglo`.
+- Despues de editar `changelog.json`, ejecutar `node scripts/write-app-version.js` o correr los builds para regenerar `admin/src/config/changelog.js` y `agents/src/config/changelog.js`.
+- No pushear una funcionalidad visible si no aparece reflejada en el panel de **Novedades** del sidebar.
+
 ### 1. ESLint — Errores comunes a evitar
 
 - **`quote-props`**: No usar comillas en propiedades de objetos a menos que sea estrictamente necesario (ej: `baños: value` en vez de `'baños': value`).
