@@ -8,6 +8,8 @@ import ClienteFunnel from './ClienteFunnel';
 
 import Chart from 'react-apexcharts';
 
+const COMPANY_CLIENTS_FILTER = '__company_clients__';
+
 const createEmptyInteractionForm = () => ({
   tipo: 'nota',
   descripcion: '',
@@ -140,6 +142,33 @@ const ClientesCRM = () => {
     if (!inmobiliariaResponsable) return agentes;
     return [inmobiliariaResponsable, ...agentes.filter((item) => String(item._id) !== String(inmobiliariaResponsable._id))];
   }, [agentesOptions, inmobiliariaResponsable]);
+
+  const isClienteDeInmobiliaria = useCallback((cliente) => {
+    const agenteId = String(cliente?.agenteId || '').trim();
+    const adminId = String(inmobiliariaResponsable?._id || '').trim();
+    const responsableTipo = String(cliente?.metadata?.responsableTipo || '').toLowerCase();
+
+    return !agenteId
+      || responsableTipo === 'inmobiliaria'
+      || (adminId && agenteId === adminId);
+  }, [inmobiliariaResponsable?._id]);
+
+  const agenteFilterOptions = useMemo(() => {
+    const agentes = Object.values(agentesMap)
+      .filter((a) => a && (a._id || a.id))
+      .sort((a, b) => String(a.nombre || '').localeCompare(String(b.nombre || '')));
+
+    if (!inmobiliariaResponsable) return agentes;
+
+    return [
+      {
+        _id: COMPANY_CLIENTS_FILTER,
+        nombre: `${inmobiliariaResponsable.nombre || 'Inmobiliaria'} (sin agente)`,
+        tipo: 'inmobiliaria',
+      },
+      ...agentes,
+    ];
+  }, [agentesMap, inmobiliariaResponsable]);
 
   const normalizeCliente = useCallback((item) => {
     const md = (item && item.metadata) ? item.metadata : {};
@@ -453,14 +482,18 @@ const ClientesCRM = () => {
       list = list.filter(c => c.tipo === key);
     }
     if (filtroAgente) {
-      list = list.filter(c => c.agenteId === filtroAgente);
+      if (filtroAgente === COMPANY_CLIENTS_FILTER) {
+        list = list.filter(isClienteDeInmobiliaria);
+      } else {
+        list = list.filter(c => String(c.agenteId || '') === String(filtroAgente));
+      }
     }
     if (searchCliente.trim()) {
       const q = searchCliente.toLowerCase();
       list = list.filter(c => (c.nombre || '').toLowerCase().includes(q) || (c.email || '').toLowerCase().includes(q) || (c.telefono || '').includes(q));
     }
     return list;
-  }, [clientesEjemplo, filtroTipo, filtroAgente, searchCliente]);
+  }, [clientesEjemplo, filtroTipo, filtroAgente, searchCliente, isClienteDeInmobiliaria]);
 
   useEffect(() => {
     if (showModal) {
@@ -975,8 +1008,8 @@ const ClientesCRM = () => {
                   onChange={(e) => setFiltroAgente(e.target.value)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${isDark ? 'bg-gray-800 border-gray-600 text-gray-100' : 'bg-white border-gray-200 text-gray-700'}`}
                 >
-                  <option value="">Todos los agentes</option>
-                  {Object.values(agentesMap).map((a) => (
+                  <option value="">Todos los responsables</option>
+                  {agenteFilterOptions.map((a) => (
                     <option key={a._id || a.id} value={a._id || a.id}>{a.nombre}</option>
                   ))}
                 </select>
@@ -997,9 +1030,10 @@ const ClientesCRM = () => {
                 const lbPct = lb?.percentage ?? 100;
                 const agente = agentesMap[cliente.agenteId];
                 const assignedBy = cliente.assignedBy || {};
+                const isCompanyClient = isClienteDeInmobiliaria(cliente);
                 const displayAvatar = agente?.avatar || assignedBy.avatar || '';
-                const displayName = agente?.nombre || cliente.agente || assignedBy.nombre || '?';
-                const isAdmin = assignedBy.role === 'admin' && !agente;
+                const displayName = agente?.nombre || cliente.agente || assignedBy.nombre || (isCompanyClient ? inmobiliariaResponsable?.nombre || 'Inmobiliaria' : '?');
+                const isAdmin = isCompanyClient && !agente;
                 return (
                   <div key={cliente.id}
                     onClick={() => verDetalle(cliente)}
@@ -1629,9 +1663,10 @@ const ClientesCRM = () => {
                       {(() => {
                         const ab = clienteSeleccionado.assignedBy || {};
                         const ag = agentesMap[clienteSeleccionado.agenteId];
+                        const companyClient = isClienteDeInmobiliaria(clienteSeleccionado);
                         const avt = ag?.avatar || ab.avatar || '';
-                        const nm = ag?.nombre || clienteSeleccionado.agente || ab.nombre || 'Sin asignar';
-                        const adm = ab.role === 'admin' && !ag;
+                        const nm = ag?.nombre || clienteSeleccionado.agente || ab.nombre || (companyClient ? inmobiliariaResponsable?.nombre || 'Inmobiliaria' : 'Sin asignar');
+                        const adm = companyClient && !ag;
                         return (
                           <>
                             {avt ? (
