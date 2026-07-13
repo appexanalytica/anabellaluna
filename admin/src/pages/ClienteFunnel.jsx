@@ -11,6 +11,7 @@ export const FUNNEL_STAGES = [
   { id: 'Calificado',     label: 'Calificado',      color: '#F59E0B', emoji: '⭐', desc: 'Perfil confirmado' },
   { id: 'En Negociación', label: 'En Negociación',  color: '#F97316', emoji: '🤝', desc: 'Negociando' },
   { id: 'Propuesta',      label: 'Propuesta',       color: '#EC4899', emoji: '📋', desc: 'Propuesta enviada' },
+  { id: 'Congelado',      label: 'Congelado',       color: '#64748B', emoji: '⏸️', desc: 'En stand by' },
   { id: 'Convertido',     label: 'Ganado',          color: '#10B981', emoji: '✅', desc: 'Operación cerrada' },
   { id: 'Perdido',        label: 'Perdido',         color: '#EF4444', emoji: '❌', desc: 'Oportunidad perdida' },
 ];

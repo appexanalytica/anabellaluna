@@ -484,6 +484,7 @@ const ClientesCRM = () => {
     { etapa: 'Calificado', cantidad: clientesEjemplo.filter((c) => c.estado === 'Calificado').length, fill: '#F59E0B' },
     { etapa: 'En Negociación', cantidad: clientesEjemplo.filter((c) => c.estado === 'En Negociación').length, fill: '#F97316' },
     { etapa: 'Propuesta', cantidad: clientesEjemplo.filter((c) => c.estado === 'Propuesta').length, fill: '#EC4899' },
+    { etapa: 'Congelado', cantidad: clientesEjemplo.filter((c) => c.estado === 'Congelado').length, fill: '#64748B' },
     { etapa: 'Convertido', cantidad: clientesEjemplo.filter((c) => c.estado === 'Convertido').length, fill: '#10B981' },
     { etapa: 'Perdido', cantidad: clientesEjemplo.filter((c) => c.estado === 'Perdido').length, fill: '#EF4444' },
   ];
@@ -497,8 +498,8 @@ const ClientesCRM = () => {
   // ApexCharts - Ciclo de Vida del Lead (Pie Chart)
   const cicloVidaPieOptions = {
     chart: { type: 'pie', height: 280, background: 'transparent' },
-    labels: ['Lead', 'Contactado', 'Calificado', 'En Negociación', 'Propuesta', 'Convertido', 'Perdido'],
-    colors: ['#3B82F6', '#8B5CF6', '#F59E0B', '#F97316', '#EC4899', '#10B981', '#EF4444'],
+    labels: ['Lead', 'Contactado', 'Calificado', 'En Negociación', 'Propuesta', 'Congelado', 'Convertido', 'Perdido'],
+    colors: ['#3B82F6', '#8B5CF6', '#F59E0B', '#F97316', '#EC4899', '#64748B', '#10B981', '#EF4444'],
     plotOptions: { pie: { expandOnClick: true, donut: { size: '0%' } } },
     dataLabels: { enabled: true, style: { fontSize: '11px', fontWeight: 600, colors: ['#fff'] }, dropShadow: { enabled: false } },
     legend: { show: true, position: 'bottom', fontSize: '11px', labels: { colors: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280' }, markers: { width: 10, height: 10, radius: 2 } },
@@ -534,9 +535,9 @@ const ClientesCRM = () => {
   const funnelOptions = {
     chart: { type: 'bar', height: 180, background: 'transparent', toolbar: { show: false } },
     plotOptions: { bar: { borderRadius: 4, horizontal: true, distributed: true, barHeight: '70%' } },
-    colors: ['#F59E0B', '#3B82F6', '#8B5CF6', '#F97316', '#10B981'],
+    colors: ['#F59E0B', '#3B82F6', '#8B5CF6', '#F97316', '#EC4899', '#64748B', '#10B981', '#EF4444'],
     dataLabels: { enabled: true, textAnchor: 'start', style: { colors: ['#fff'], fontSize: '10px', fontWeight: 600 }, formatter: (val) => val, offsetX: 5 },
-    xaxis: { categories: ['Lead', 'Contactado', 'Calificado', 'En Negociación', 'Propuesta', 'Convertido', 'Perdido'], labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
+    xaxis: { categories: ['Lead', 'Contactado', 'Calificado', 'En Negociación', 'Propuesta', 'Congelado', 'Convertido', 'Perdido'], labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
     yaxis: { labels: { style: { colors: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280', fontSize: '10px' } } },
     grid: { show: false },
     legend: { show: false },
@@ -994,7 +995,7 @@ const ClientesCRM = () => {
               <Chart options={funnelOptions} series={funnelSeries} type="bar" height={160} />
               <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t dark:border-gray-700">
                 <div className="bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded text-center">
-                  <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{cicloVidaData[4]?.cantidad || 0}</p>
+                  <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{cicloVidaData[6]?.cantidad || 0}</p>
                   <p className="text-xs text-gray-500">Cerrados</p>
                 </div>
                 <div className="bg-orange-50 dark:bg-orange-900/20 p-2 rounded text-center">
@@ -1236,6 +1237,7 @@ const ClientesCRM = () => {
                               : cliente.estado === 'Calificado' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
                                 : cliente.estado === 'En Negociación' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
                                   : cliente.estado === 'Propuesta' ? 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300'
+                                    : cliente.estado === 'Congelado' ? 'bg-slate-100 text-slate-800 dark:bg-slate-800/60 dark:text-slate-300'
                                     : cliente.estado === 'Convertido' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
                                       : cliente.estado === 'Perdido' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
                                         : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
@@ -1324,6 +1326,7 @@ const ClientesCRM = () => {
                       : clienteSeleccionado.estado === 'Calificado' ? 'bg-yellow-500 text-white'
                         : clienteSeleccionado.estado === 'En Negociación' ? 'bg-orange-500 text-white'
                           : clienteSeleccionado.estado === 'Propuesta' ? 'bg-pink-500 text-white'
+                            : clienteSeleccionado.estado === 'Congelado' ? 'bg-slate-500 text-white'
                             : clienteSeleccionado.estado === 'Convertido' ? 'bg-emerald-500 text-white'
                               : clienteSeleccionado.estado === 'Perdido' ? 'bg-red-500 text-white'
                                 : 'bg-gray-500 text-white'
@@ -2519,6 +2522,7 @@ const ClientesCRM = () => {
                         <option value="Calificado">Calificado</option>
                         <option value="En Negociación">En Negociación</option>
                         <option value="Propuesta">Propuesta</option>
+                        <option value="Congelado">Congelado</option>
                         <option value="Convertido">Convertido</option>
                         <option value="Perdido">Perdido</option>
                       </select>
@@ -2931,6 +2935,7 @@ const ClientesCRM = () => {
                             : cliente.estado === 'Calificado' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
                               : cliente.estado === 'En Negociación' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
                                 : cliente.estado === 'Propuesta' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300'
+                                  : cliente.estado === 'Congelado' ? 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300'
                                   : cliente.estado === 'Convertido' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
                                     : cliente.estado === 'Perdido' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
                                       : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
@@ -3159,6 +3164,7 @@ const ClientesCRM = () => {
                     { estado: 'Calificado', count: clientesEjemplo.filter((c) => c.estado === 'Calificado').length, color: 'yellow', width: '65%' },
                     { estado: 'En Negociación', count: clientesEjemplo.filter((c) => c.estado === 'En Negociación').length, color: 'orange', width: '50%' },
                     { estado: 'Propuesta', count: clientesEjemplo.filter((c) => c.estado === 'Propuesta').length, color: 'pink', width: '35%' },
+                    { estado: 'Congelado', count: clientesEjemplo.filter((c) => c.estado === 'Congelado').length, color: 'gray', width: '28%' },
                     { estado: 'Convertido', count: clientesEjemplo.filter((c) => c.estado === 'Convertido').length, color: 'green', width: '22%' },
                   ].map((etapa) => (
                     <div key={etapa.estado} className="relative">
@@ -3223,6 +3229,7 @@ const ClientesCRM = () => {
                   { estado: 'Calificado', color: 'yellow', icon: '⭐' },
                   { estado: 'En Negociación', color: 'orange', icon: '🤝' },
                   { estado: 'Propuesta', color: 'pink', icon: '📋' },
+                  { estado: 'Congelado', color: 'gray', icon: '⏸️' },
                   { estado: 'Convertido', color: 'green', icon: '✅' },
                   { estado: 'Perdido', color: 'red', icon: '❌' },
                 ].map((item) => (

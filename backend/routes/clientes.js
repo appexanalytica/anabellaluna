@@ -310,7 +310,7 @@ router.put('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) 
 router.patch('/:id/stage', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const { stage } = req.body;
-    const VALID_STAGES = ['Lead', 'Contactado', 'Calificado', 'En Negociación', 'Propuesta', 'Convertido', 'Perdido'];
+    const VALID_STAGES = ['Lead', 'Contactado', 'Calificado', 'En Negociación', 'Propuesta', 'Congelado', 'Convertido', 'Perdido'];
     if (!stage || !VALID_STAGES.includes(stage)) {
       return res.status(400).json({ error: 'Etapa inválida' });
     }

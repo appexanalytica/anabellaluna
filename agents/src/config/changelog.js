@@ -2,6 +2,16 @@
 // Do not edit by hand: edit changelog.json instead.
 export const CHANGELOG_ENTRIES = [
   {
+    "date": "2026-07-12",
+    "title": "Clientes en stand by dentro del funnel",
+    "items": [
+      {
+        "type": "nuevo",
+        "text": "El funnel de clientes ahora incluye la columna Congelado para separar los casos que quedan en stand by sin marcarlos como perdidos ni ganados."
+      }
+    ]
+  },
+  {
     "date": "2026-07-02",
     "title": "Arreglo: pantalla en blanco al traducir la página",
     "items": [

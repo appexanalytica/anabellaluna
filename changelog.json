@@ -2,6 +2,13 @@
   "$comment": "Changelog visible en el panel de Novedades del sidebar. Redactar en español simple, pensado para el usuario final (no técnico). Tipos válidos: nuevo | mejora | arreglo. Editar este archivo y rebuildear: scripts/write-app-version.js lo convierte en admin/agents src/config/changelog.js.",
   "entries": [
     {
+      "date": "2026-07-12",
+      "title": "Clientes en stand by dentro del funnel",
+      "items": [
+        { "type": "nuevo", "text": "El funnel de clientes ahora incluye la columna Congelado para separar los casos que quedan en stand by sin marcarlos como perdidos ni ganados." }
+      ]
+    },
+    {
       "date": "2026-07-02",
       "title": "Arreglo: pantalla en blanco al traducir la página",
       "items": [
