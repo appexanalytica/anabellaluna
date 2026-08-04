@@ -900,7 +900,7 @@ router.post('/:clienteId', authenticateToken, requireCRMUser, async (req, res) =
         const prop = await Propiedad.findById(propiedadId).select('title').lean().catch(() => null);
         tituloCita = prop?.title ? `Visita - ${prop.title}` : 'Visita';
       }
-      await Cita.create({
+      const cita = await Cita.create({
         fecha: fechaInicio,
         fechaFin,
         titulo: tituloCita,
@@ -912,6 +912,11 @@ router.post('/:clienteId', authenticateToken, requireCRMUser, async (req, res) =
         estado: 'Programada',
         metadata: { origen: 'interaccion', interactionId: String(created._id) },
       }).catch((err) => console.error('[Cita] Error al crear cita desde interacción:', err.message));
+      if (cita && cita._id) {
+        await ClientInteraction.findByIdAndUpdate(created._id, {
+          $set: { metadata: { ...(created.metadata || {}), citaId: String(cita._id), origen: 'interaccion' } },
+        }).catch(() => {});
+      }
     }
 
     // 3) Update cliente: ultimaActividad + preferences tracking
@@ -933,6 +938,59 @@ router.post('/:clienteId', authenticateToken, requireCRMUser, async (req, res) =
 
     res.status(201).json(created);
   } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+// ── PUT /crm/client-interactions/:clienteId/:interactionId — update linked interaction ──
+router.put('/:clienteId/:interactionId', authenticateToken, requireCRMUser, async (req, res) => {
+  try {
+    const scopeId = agentScopeId(req);
+    const { clienteId, interactionId } = req.params;
+
+    const cliente = await Cliente.findById(clienteId).lean();
+    if (!cliente) return res.status(404).json({ error: 'Cliente no encontrado' });
+    if (scopeId && String(cliente.agenteId || '') !== scopeId) {
+      return res.status(403).json({ error: 'No tenés acceso a este cliente' });
+    }
+
+    const allowed = [
+      'agenteId',
+      'propiedadId',
+      'tipo',
+      'medioContacto',
+      'fechaContacto',
+      'visitaFecha',
+      'visitaAsistio',
+      'nivelInteres',
+      'opcionPago',
+      'preferencias',
+      'descripcion',
+      'metadata',
+    ];
+    const update = {};
+    allowed.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(req.body || {}, field)) update[field] = req.body[field];
+    });
+    if (scopeId) update.agenteId = scopeId;
+    if (Object.prototype.hasOwnProperty.call(update, 'propiedadId') && !update.propiedadId) update.propiedadId = null;
+
+    const filter = { _id: interactionId, clienteId };
+    if (scopeId) filter.agenteId = scopeId;
+
+    const updated = await ClientInteraction.findOneAndUpdate(
+      filter,
+      { $set: update },
+      { new: true, runValidators: true }
+    ).lean();
+    if (!updated) return res.status(404).json({ error: 'Interacción no encontrada' });
+
+    await Cliente.findByIdAndUpdate(clienteId, {
+      $set: { 'metadata.ultimaActividad': new Date().toISOString() },
+    }).catch(() => {});
+
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // ── GET /crm/client-interactions/:clienteId/lifebar — lifebar data ──

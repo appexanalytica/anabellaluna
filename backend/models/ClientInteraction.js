@@ -59,6 +59,7 @@ const ClientInteractionSchema = new mongoose.Schema({
   // Immutability: once created, agents cannot edit or delete
   // Admin can still manage via separate endpoint
   inmutable: { type: Boolean, default: true },
+  metadata: { type: Object, default: {} },
 
 }, { timestamps: true });
 

@@ -17,6 +17,7 @@ const Citas = () => {
 
   // Estados para modales
   const [showModalCita, setShowModalCita] = useState(false);
+  const [editingCitaId, setEditingCitaId] = useState(null);
 
   // Sección activa: agenda o tareas
   const [activeSection, setActiveSection] = useState('agenda');
@@ -42,6 +43,8 @@ const Citas = () => {
     inmobiliariaColega: '',
     inmobiliariaColegaId: '',
     colega: '',
+    inmobiliaria: '',
+    inmobiliariaId: '',
     participanteAgenteId: '',
     participanteAgente: '',
     agenteId: '',
@@ -52,6 +55,7 @@ const Citas = () => {
     ubicacion: '',
     descripcion: '',
     recordatorio: '24h',
+    interactionId: '',
   });
 
   // Autocomplete: clients & properties from DB
@@ -92,6 +96,50 @@ const Citas = () => {
         return text.toLowerCase().includes(propQuery.toLowerCase());
       }).slice(0, 8)
     : propiedadesLista.slice(0, 8);
+
+  const createEmptyCitaForm = () => ({
+    tipo: 'Visita',
+    titulo: '',
+    cliente: '',
+    clienteId: '',
+    propiedad: '',
+    propiedadId: '',
+    propiedadOrigen: 'interna',
+    propiedadExternaNombre: '',
+    propiedadExternaDireccion: '',
+    inmobiliariaColega: '',
+    inmobiliariaColegaId: '',
+    colega: '',
+    inmobiliaria: '',
+    inmobiliariaId: '',
+    participanteAgenteId: '',
+    participanteAgente: '',
+    agenteId: '',
+    agente: '',
+    fecha: '',
+    horaInicio: '',
+    horaFin: '',
+    ubicacion: '',
+    descripcion: '',
+    estado: 'Programada',
+    recordatorio: '24h',
+    interactionId: '',
+  });
+
+  const formatDateInput = (value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const formatTimeInput = (value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  };
   
 
   // Cargar estadísticas de tareas para las KPIs
@@ -165,6 +213,7 @@ const Citas = () => {
       const end = c.fechaFin ? new Date(c.fechaFin) : new Date(start.getTime() + 60 * 60 * 1000);
       return {
         Id: c._id || c.id,
+        raw: c,
         Subject: c.titulo || c.tipo || 'Cita',
         StartTime: start,
         EndTime: end,
@@ -177,6 +226,9 @@ const Citas = () => {
         inmobiliariaColega: md.inmobiliariaColega || '',
         agente: md.agenteNombre || '',
         estado: c.estado || '',
+        clienteId: c.clienteId || md.clienteId || '',
+        propiedadId: c.propiedadId || md.propiedadId || '',
+        metadata: md,
       };
     });
   }, [citasItems]);
@@ -276,6 +328,65 @@ const Citas = () => {
   const isDark = currentMode === 'Dark';
   const cardBase = `rounded-2xl p-6 border transition-shadow ${isDark ? 'bg-secondary-dark-bg border-gray-700/50 hover:border-indigo-500/30' : 'bg-white border-gray-100 shadow-md hover:shadow-lg'}`;
 
+  const resetCitaModal = () => {
+    setEditingCitaId(null);
+    setNuevaCita(createEmptyCitaForm());
+    setClienteQuery('');
+    setPropQuery('');
+    setInmoQuery('');
+    setContactoTipo('cliente');
+  };
+
+  const openCreateCitaModal = () => {
+    resetCitaModal();
+    setShowModalCita(true);
+  };
+
+  const openEditCitaModal = (citaItem) => {
+    const raw = citaItem?.raw || citaItem || {};
+    const md = raw.metadata || citaItem?.metadata || {};
+    const start = raw.fecha || citaItem?.StartTime;
+    const end = raw.fechaFin || citaItem?.EndTime;
+    const contactType = md.contactoTipo || (raw.clienteId || md.clienteId ? 'cliente' : md.participanteAgenteId ? 'agente' : md.inmobiliariaId || md.inmobiliariaNombre ? 'inmobiliaria' : 'cliente');
+    const isOffice = !raw.agenteId && md.agenteNombre === 'OFICINA';
+
+    setEditingCitaId(raw._id || raw.id || citaItem?.Id || null);
+    setContactoTipo(contactType);
+    setNuevaCita({
+      ...createEmptyCitaForm(),
+      tipo: raw.tipo || citaItem?.tipo || 'Visita',
+      titulo: raw.titulo || citaItem?.Subject || '',
+      cliente: md.clienteNombre || citaItem?.cliente || '',
+      clienteId: raw.clienteId || md.clienteId || '',
+      propiedad: md.propiedadNombre || citaItem?.propiedad || '',
+      propiedadId: raw.propiedadId || md.propiedadId || '',
+      propiedadOrigen: md.propiedadOrigen || (md.propiedadExternaNombre ? 'externa' : 'interna'),
+      propiedadExternaNombre: md.propiedadExternaNombre || '',
+      propiedadExternaDireccion: md.propiedadExternaDireccion || '',
+      inmobiliariaColega: md.inmobiliariaColega || '',
+      inmobiliariaColegaId: md.inmobiliariaColegaId || '',
+      colega: md.colega || '',
+      inmobiliaria: md.inmobiliariaNombre || '',
+      inmobiliariaId: md.inmobiliariaId || '',
+      participanteAgenteId: md.participanteAgenteId || '',
+      participanteAgente: md.participanteAgenteNombre || '',
+      agenteId: isOffice ? '__oficina__' : (raw.agenteId || md.agenteId || ''),
+      agente: md.agenteNombre || citaItem?.agente || '',
+      fecha: formatDateInput(start),
+      horaInicio: md.horaInicio || formatTimeInput(start),
+      horaFin: md.horaFin || formatTimeInput(end),
+      ubicacion: raw.ubicacion || '',
+      descripcion: raw.notas || citaItem?.Description || '',
+      estado: raw.estado || citaItem?.estado || 'Programada',
+      recordatorio: md.recordatorio || '24h',
+      interactionId: md.interactionId || '',
+    });
+    setClienteQuery('');
+    setPropQuery('');
+    setInmoQuery('');
+    setShowModalCita(true);
+  };
+
   // Funciones de manejo para Cita
   const handleCitaChange = (e) => {
     const { name, value } = e.target;
@@ -319,14 +430,14 @@ const Citas = () => {
         } catch (_e) { /* will still save cita with colleague name only */ }
       }
 
-      await crmService.citas.create({
+      const citaPayload = {
         fecha: start.toISOString(),
         fechaFin: end.toISOString(),
         titulo: nuevaCita.titulo,
         tipo: nuevaCita.tipo,
         ubicacion: nuevaCita.ubicacion,
         notas: nuevaCita.descripcion,
-        estado: 'Programada',
+        estado: nuevaCita.estado || 'Programada',
         clienteId: contactoTipo === 'cliente' ? (nuevaCita.clienteId || '') : '',
         propiedadId: nuevaCita.propiedadOrigen === 'interna' ? (nuevaCita.propiedadId || '') : '',
         agenteId: isOficina ? '' : (nuevaCita.agenteId || ''),
@@ -351,43 +462,21 @@ const Citas = () => {
           recordatorio: nuevaCita.recordatorio,
           horaInicio: nuevaCita.horaInicio || null,
           horaFin: nuevaCita.horaFin || null,
-          source: 'admin_manual',
+          interactionId: nuevaCita.interactionId || null,
+          source: editingCitaId ? 'admin_calendar_edit' : 'admin_manual',
         },
-      });
+      };
+
+      if (editingCitaId) {
+        await crmService.citas.update(editingCitaId, citaPayload);
+      } else {
+        await crmService.citas.create(citaPayload);
+      }
 
       await reloadCitas();
-      toast.success('¡Cita agendada exitosamente!');
+      toast.success(editingCitaId ? 'Cita actualizada correctamente.' : '¡Cita agendada exitosamente!');
       setShowModalCita(false);
-      setClienteQuery('');
-      setPropQuery('');
-      setInmoQuery('');
-      setContactoTipo('cliente');
-      setNuevaCita({
-        tipo: 'Visita',
-        titulo: '',
-        cliente: '',
-        clienteId: '',
-        propiedad: '',
-        propiedadId: '',
-        propiedadOrigen: 'interna',
-        propiedadExternaNombre: '',
-        propiedadExternaDireccion: '',
-        inmobiliariaColega: '',
-        inmobiliariaColegaId: '',
-        colega: '',
-        participanteAgenteId: '',
-        participanteAgente: '',
-        agenteId: '',
-        agente: '',
-        inmobiliaria: '',
-        inmobiliariaId: '',
-        fecha: '',
-        horaInicio: '',
-        horaFin: '',
-        ubicacion: '',
-        descripcion: '',
-        recordatorio: '24h',
-      });
+      resetCitaModal();
     } catch (err) {
       setCitasError(err?.message || 'No se pudo agendar la cita');
     }
@@ -414,7 +503,7 @@ const Citas = () => {
           </button>
         </div>
         {activeSection === 'agenda' && (
-          <button onClick={() => setShowModalCita(true)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-blue-500 hover:bg-blue-600 transition-all shadow-sm hover:shadow-md">
+          <button onClick={openCreateCitaModal} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-blue-500 hover:bg-blue-600 transition-all shadow-sm hover:shadow-md">
             <FaCalendarPlus /> Nueva Cita
           </button>
         )}
@@ -622,7 +711,12 @@ const Citas = () => {
                       ) : (
                         <div className="space-y-2">
                           {sel.map((c, i) => (
-                            <div key={i} className={`flex items-center gap-3 p-2 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-white'} border ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
+                            <button
+                              key={c.Id || i}
+                              type="button"
+                              onClick={() => openEditCitaModal(c)}
+                              className={`w-full text-left flex items-center gap-3 p-2 rounded-lg ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-white hover:bg-blue-50'} border ${isDark ? 'border-gray-600' : 'border-gray-200'} transition-colors`}
+                            >
                               <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: typeColor[c.tipo] || '#6B7280' }} />
                               <div className="flex-1 min-w-0">
                                 <p className={`text-sm font-medium truncate ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{c.Subject}</p>
@@ -633,7 +727,7 @@ const Citas = () => {
                                 : c.estado === 'Pendiente' ? 'bg-amber-100 text-amber-700'
                                 : 'bg-blue-100 text-blue-700'
                               }`}>{c.estado || 'Programada'}</span>
-                            </div>
+                            </button>
                           ))}
                         </div>
                       )}
@@ -656,7 +750,12 @@ const Citas = () => {
               .sort((a, b) => a.StartTime - b.StartTime)
               .slice(0, 10)
               .map((cita, i) => (
-              <div key={cita.Id || i} className={`p-3 rounded-lg border ${currentMode === 'Dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} hover:shadow-md transition-shadow`}>
+              <button
+                key={cita.Id || i}
+                type="button"
+                onClick={() => openEditCitaModal(cita)}
+                className={`w-full text-left p-3 rounded-lg border ${currentMode === 'Dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-gray-50 border-gray-200 hover:bg-blue-50'} hover:shadow-md transition-all`}
+              >
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold ${
                     cita.tipo === 'Visita' ? 'bg-blue-500' :
@@ -671,7 +770,7 @@ const Citas = () => {
                   </div>
                   <span className="text-gray-400 flex-shrink-0 text-xs">{cita.StartTime.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })}</span>
                 </div>
-              </div>
+              </button>
             ))}
             {citasData.length === 0 && (
               <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-4">Sin citas próximas</p>
@@ -696,7 +795,7 @@ const Citas = () => {
               </thead>
               <tbody>
                 {citasData.slice(0, 10).map((cita, idx) => (
-                  <tr key={idx} className={`border-b ${isDark ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-100 hover:bg-gray-50'}`}>
+                  <tr key={cita.Id || idx} onClick={() => openEditCitaModal(cita)} className={`border-b cursor-pointer ${isDark ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-100 hover:bg-blue-50'}`}>
                     <td className="py-2.5 px-3 dark:text-gray-200">{cita.Subject}</td>
                     <td className="py-2.5 px-3 dark:text-gray-300">{cita.tipo}</td>
                     <td className="py-2.5 px-3 dark:text-gray-300">{cita.cliente}</td>
@@ -721,18 +820,18 @@ const Citas = () => {
       </>)}
       {/* END AGENDA SECTION */}
 
-      {/* Modal de Nueva Cita */}
+      {/* Modal de Cita */}
       {showModalCita && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className={`${currentMode === 'Dark' ? 'bg-gray-900' : 'bg-white'} rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col`}>
             <div className="sticky top-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-t-2xl flex justify-between items-center">
               <div>
                 <h2 className="text-2xl font-bold flex items-center gap-3">
-                  <FaCalendarPlus /> Nueva Cita
+                  <FaCalendarPlus /> {editingCitaId ? 'Editar Cita' : 'Nueva Cita'}
                 </h2>
-                <p className="text-blue-100 text-sm mt-1">Agendar una nueva cita o reunión</p>
+                <p className="text-blue-100 text-sm mt-1">{editingCitaId ? 'Actualizar cita e interacción vinculada del CRM' : 'Agendar una nueva cita o reunión'}</p>
               </div>
-              <button onClick={() => setShowModalCita(false)} className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors">
+              <button onClick={() => { setShowModalCita(false); resetCitaModal(); }} className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors">
                 <FaTimes className="text-2xl" />
               </button>
             </div>
@@ -1034,6 +1133,14 @@ const Citas = () => {
                       <option value="30m">30 minutos antes</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">Estado</label>
+                    <select name="estado" value={nuevaCita.estado || 'Programada'} onChange={handleCitaChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                      <option value="Programada">Programada</option>
+                      <option value="Completada">Completada</option>
+                      <option value="Cancelada">Cancelada</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -1043,11 +1150,11 @@ const Citas = () => {
               </div>
 
               <div className="flex gap-3 justify-end pt-4 border-t dark:border-gray-700">
-                <button type="button" onClick={() => setShowModalCita(false)} className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 transition-colors font-medium">
+                <button type="button" onClick={() => { setShowModalCita(false); resetCitaModal(); }} className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 transition-colors font-medium">
                   Cancelar
                 </button>
                 <button type="submit" className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium flex items-center gap-2">
-                  <FaSave /> Agendar Cita
+                  <FaSave /> {editingCitaId ? 'Guardar Cambios' : 'Agendar Cita'}
                 </button>
               </div>              </form>
             </div>

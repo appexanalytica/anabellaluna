@@ -2,6 +2,28 @@
   "$comment": "Changelog visible en el panel de Novedades del sidebar. Redactar en español simple, pensado para el usuario final (no técnico). Tipos válidos: nuevo | mejora | arreglo. Editar este archivo y rebuildear: scripts/write-app-version.js lo convierte en admin/agents src/config/changelog.js.",
   "entries": [
     {
+      "date": "2026-08-04",
+      "title": "Agenda CRM más inteligente y conectada con clientes",
+      "items": [
+        {
+          "type": "nuevo",
+          "text": "La agenda del CRM ahora permite abrir y editar cada cita directamente desde el calendario, sin cambiar de pantalla. Al seleccionar un día y hacer clic sobre una cita, se abre un recuadro de edición integrado al diseño actual para actualizar fecha, horario, cliente, propiedad, responsable, estado, ubicación y detalles de la reunión o visita."
+        },
+        {
+          "type": "mejora",
+          "text": "El calendario y el historial de cada cliente ahora trabajan conectados. Cuando se agenda una visita o reunión para un cliente, esa actividad queda reflejada en su registro de interacciones; y cuando se registra una visita agendada desde la ficha del cliente, la cita aparece automáticamente en la agenda."
+        },
+        {
+          "type": "mejora",
+          "text": "Esta mejora ayuda a que el equipo comercial tenga una visión más clara y confiable de cada seguimiento: la agenda muestra qué hay que hacer, mientras que la ficha del cliente conserva el historial completo de lo ocurrido."
+        },
+        {
+          "type": "mejora",
+          "text": "Al editar una cita vinculada a un cliente, el CRM mantiene la información alineada entre agenda e interacciones, reduciendo tareas duplicadas y evitando diferencias entre lo planificado y lo registrado."
+        }
+      ]
+    },
+    {
       "date": "2026-07-12",
       "title": "Clientes en stand by dentro del funnel",
       "items": [

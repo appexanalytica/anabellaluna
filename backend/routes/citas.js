@@ -1,7 +1,9 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const Cita = require('../models/Cita');
 const Agente = require('../models/Agente');
-const { authenticateToken, agentScopeId, requireCRMUser } = require('../auth');
+const ClientInteraction = require('../models/ClientInteraction');
+const { authenticateToken, agentScopeId, getUserId, requireCRMUser } = require('../auth');
 const { authenticateTokenOrService } = require('../middlewares/serviceAuth');
 const googleCalendar = require('../services/googleCalendar');
 const { publishEventAsync, metaFromRequest } = require('../utils/redisStreams');
@@ -57,6 +59,87 @@ function normalizeCitaPayload(body) {
 
   body.metadata = meta;
   return body;
+}
+
+function isClientAppointment(cita) {
+  return Boolean(cita && (cita.clienteId || cita.metadata?.clienteId));
+}
+
+function interactionTypeFromCita(cita) {
+  const tipo = String(cita?.tipo || '').toLowerCase();
+  if (tipo === 'visita') return 'visita_agendada';
+  return 'recontacto';
+}
+
+function contactMediumFromCita(cita) {
+  const tipo = String(cita?.tipo || '').toLowerCase();
+  if (tipo === 'llamada') return 'llamada';
+  if (tipo === 'videollamada') return 'videollamada';
+  if (tipo === 'reunión' || tipo === 'reunion' || tipo === 'firma') return 'presencial';
+  return '';
+}
+
+function normalizeInteractionPropertyId(value) {
+  const id = String(value || '').trim();
+  return mongoose.Types.ObjectId.isValid(id) ? id : null;
+}
+
+async function syncClientInteractionFromCita(cita, req) {
+  if (!isClientAppointment(cita)) return cita;
+
+  const clienteId = String(cita.clienteId || cita.metadata?.clienteId || '').trim();
+  const defaultAdminId = req?.user?.role === 'admin' ? String(getUserId(req) || '').trim() : '';
+  const agenteId = String(cita.agenteId || cita.metadata?.agenteId || defaultAdminId || '').trim();
+  if (!clienteId || !agenteId) return cita;
+
+  const tipo = interactionTypeFromCita(cita);
+  const metadata = { ...(cita.metadata || {}) };
+  const interactionId = String(metadata.interactionId || '').trim();
+  const base = {
+    clienteId,
+    agenteId,
+    propiedadId: normalizeInteractionPropertyId(cita.propiedadId || metadata.propiedadId),
+    tipo,
+    descripcion: cita.notas || cita.titulo || '',
+    visitaFecha: tipo === 'visita_agendada' ? cita.fecha : null,
+    fechaContacto: tipo === 'recontacto' ? cita.fecha : null,
+    medioContacto: tipo === 'recontacto' ? contactMediumFromCita(cita) : '',
+    metadata: {
+      citaId: String(cita._id),
+      origen: metadata.origen || metadata.source || 'agenda',
+      citaTipo: cita.tipo || '',
+      citaEstado: cita.estado || '',
+    },
+  };
+
+  let interaction = null;
+  if (interactionId) {
+    interaction = await ClientInteraction.findOneAndUpdate(
+      { _id: interactionId, clienteId },
+      { $set: base },
+      { new: true, runValidators: true }
+    ).lean().catch(() => null);
+  }
+
+  if (!interaction) {
+    interaction = await ClientInteraction.findOneAndUpdate(
+      { 'metadata.citaId': String(cita._id), clienteId },
+      { $set: base },
+      { new: true, runValidators: true }
+    ).lean().catch(() => null);
+  }
+
+  if (!interaction) {
+    interaction = await ClientInteraction.create(base);
+  }
+
+  if (String(metadata.interactionId || '') !== String(interaction._id)) {
+    metadata.interactionId = String(interaction._id);
+    metadata.origen = metadata.origen || metadata.source || 'agenda';
+    return Cita.findByIdAndUpdate(cita._id, { $set: { metadata } }, { new: true }).lean();
+  }
+
+  return cita;
 }
 
 router.get('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
@@ -139,6 +222,8 @@ router.post('/', authenticateTokenOrService, requireCRMUser, async (req, res) =>
         }
       }
     }
+
+    cita = await syncClientInteractionFromCita(cita, req);
 
     publishEventAsync('visit.scheduled', {
       visit_id: String(cita._id),
@@ -243,6 +328,8 @@ router.put('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) 
         }
       }
     }
+
+    cita = await syncClientInteractionFromCita(cita, req);
 
     publishEventAsync('visit.updated', {
       visit_id: String(cita._id),

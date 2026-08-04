@@ -54,6 +54,7 @@ export const crmService = {
   clientInteractions: {
     list: (clienteId) => api.get(`/crm/client-interactions/${clienteId}`),
     create: (clienteId, data) => api.post(`/crm/client-interactions/${clienteId}`, data),
+    update: (clienteId, interactionId, data) => api.put(`/crm/client-interactions/${clienteId}/${interactionId}`, data),
     lifebar: (clienteId) => api.get(`/crm/client-interactions/${clienteId}/lifebar`),
     bulkLifebars: () => api.get('/crm/client-interactions/bulk/lifebars'),
     bulkCounts: () => api.get('/crm/client-interactions/bulk-counts'),
