@@ -3,6 +3,32 @@
   "entries": [
     {
       "date": "2026-08-04",
+      "title": "Clientes mejor clasificados según su perfil comercial",
+      "items": [
+        {
+          "type": "mejora",
+          "text": "El alta y edición de clientes ahora se adapta al tipo de cliente seleccionado. Compradores, propietarios, inversores e inquilinos tienen campos específicos para registrar la información que realmente necesita el equipo comercial."
+        },
+        {
+          "type": "mejora",
+          "text": "La sección que antes era siempre \"Preferencias de búsqueda\" ahora cambia según el perfil: preferencias de compra para compradores, datos de la propiedad para propietarios, perfil de inversión para inversores y preferencias de alquiler para inquilinos."
+        },
+        {
+          "type": "nuevo",
+          "text": "Para propietarios se pueden cargar datos propios de la propiedad, como operación esperada, valor pretendido, estado, documentación, superficies y antigüedad. Para inversores se suman objetivo, rentabilidad esperada, horizonte y tolerancia al riesgo. Para inquilinos se agregan datos como presupuesto mensual, garantía, fecha de mudanza, mascotas, amoblado y expensas máximas."
+        },
+        {
+          "type": "nuevo",
+          "text": "Cuando el tipo de propiedad es Lote, el CRM ahora permite indicar el tipo de lote: unifamiliar, comercial, multifamiliar, artesanal, administrativo, hotelero o residenciales multifamiliares, además de superficie, frente, fondo, zonificación y servicios."
+        },
+        {
+          "type": "mejora",
+          "text": "Las fichas de clientes también muestran la información comercial con títulos y datos acordes al perfil, para que administradores y agentes trabajen con registros más claros, completos y útiles."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-04",
       "title": "Agenda CRM más inteligente y conectada con clientes",
       "items": [
         {

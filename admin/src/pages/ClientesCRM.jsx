@@ -112,10 +112,33 @@ const ClientesCRM = () => {
     moneda: 'USD',
     zonaInteres: '',
     tipoPropiedad: 'Departamento',
+    tipoLote: '',
     ambientes: '',
     dormitorios: '',
     baños: '',
     caracteristicas: [],
+    operacionPropietario: '',
+    valorPretendido: '',
+    estadoPropiedad: '',
+    documentacion: '',
+    superficieCubierta: '',
+    superficieTotal: '',
+    antiguedad: '',
+    frente: '',
+    fondo: '',
+    zonificacion: '',
+    serviciosLote: [],
+    objetivoInversion: '',
+    rentabilidadEsperada: '',
+    horizonteInversion: '',
+    toleranciaRiesgo: '',
+    estadoPreferidoInversion: '',
+    fechaMudanza: '',
+    duracionContrato: '',
+    garantia: '',
+    mascotas: '',
+    amoblado: '',
+    expensasMaximas: '',
     origen: 'Web',
     agente: '',
     scoring: 50,
@@ -205,10 +228,33 @@ const ClientesCRM = () => {
       ciudad: md.ciudad || 'Buenos Aires',
       provincia: md.provincia || 'Buenos Aires',
       tipoPropiedad: md.tipoPropiedad || 'Departamento',
+      tipoLote: md.tipoLote || '',
       ambientes: md.ambientes || '',
       dormitorios: md.dormitorios || '',
       baños: bañosVal,
       caracteristicas: Array.isArray(md.caracteristicas) ? md.caracteristicas : [],
+      operacionPropietario: md.operacionPropietario || '',
+      valorPretendido: md.valorPretendido || '',
+      estadoPropiedad: md.estadoPropiedad || '',
+      documentacion: md.documentacion || '',
+      superficieCubierta: md.superficieCubierta || '',
+      superficieTotal: md.superficieTotal || '',
+      antiguedad: md.antiguedad || '',
+      frente: md.frente || '',
+      fondo: md.fondo || '',
+      zonificacion: md.zonificacion || '',
+      serviciosLote: Array.isArray(md.serviciosLote) ? md.serviciosLote : [],
+      objetivoInversion: md.objetivoInversion || '',
+      rentabilidadEsperada: md.rentabilidadEsperada || '',
+      horizonteInversion: md.horizonteInversion || '',
+      toleranciaRiesgo: md.toleranciaRiesgo || '',
+      estadoPreferidoInversion: md.estadoPreferidoInversion || '',
+      fechaMudanza: md.fechaMudanza || '',
+      duracionContrato: md.duracionContrato || '',
+      garantia: md.garantia || '',
+      mascotas: md.mascotas || '',
+      amoblado: md.amoblado || '',
+      expensasMaximas: md.expensasMaximas || '',
       notas: item?.notas || md.notas || '',
       interacciones: typeof md.interacciones === 'number' ? md.interacciones : Number(md.interacciones || 0),
       propiedadesVistas: typeof md.propiedadesVistas === 'number' ? md.propiedadesVistas : Number(md.propiedadesVistas || 0),
@@ -241,10 +287,33 @@ const ClientesCRM = () => {
       moneda: cliente?.moneda || base.moneda,
       zonaInteres: cliente?.zonaInteres || cliente?.zona || '',
       tipoPropiedad: cliente?.tipoPropiedad || base.tipoPropiedad,
+      tipoLote: cliente?.tipoLote || '',
       ambientes: cliente?.ambientes || '',
       dormitorios: cliente?.dormitorios || '',
       baños: cliente?.baños || '',
       caracteristicas: Array.isArray(cliente?.caracteristicas) ? cliente.caracteristicas : [],
+      operacionPropietario: cliente?.operacionPropietario || '',
+      valorPretendido: cliente?.valorPretendido || '',
+      estadoPropiedad: cliente?.estadoPropiedad || '',
+      documentacion: cliente?.documentacion || '',
+      superficieCubierta: cliente?.superficieCubierta || '',
+      superficieTotal: cliente?.superficieTotal || '',
+      antiguedad: cliente?.antiguedad || '',
+      frente: cliente?.frente || '',
+      fondo: cliente?.fondo || '',
+      zonificacion: cliente?.zonificacion || '',
+      serviciosLote: Array.isArray(cliente?.serviciosLote) ? cliente.serviciosLote : [],
+      objetivoInversion: cliente?.objetivoInversion || '',
+      rentabilidadEsperada: cliente?.rentabilidadEsperada || '',
+      horizonteInversion: cliente?.horizonteInversion || '',
+      toleranciaRiesgo: cliente?.toleranciaRiesgo || '',
+      estadoPreferidoInversion: cliente?.estadoPreferidoInversion || '',
+      fechaMudanza: cliente?.fechaMudanza || '',
+      duracionContrato: cliente?.duracionContrato || '',
+      garantia: cliente?.garantia || '',
+      mascotas: cliente?.mascotas || '',
+      amoblado: cliente?.amoblado || '',
+      expensasMaximas: cliente?.expensasMaximas || '',
       origen: cliente?.origen || base.origen,
       agente: cliente?.agente || '',
       scoring: typeof cliente?.scoring === 'number' ? cliente.scoring : Number(cliente?.scoring || base.scoring),
@@ -279,10 +348,33 @@ const ClientesCRM = () => {
         moneda: form?.moneda || 'USD',
         zonaInteres: form?.zonaInteres || '',
         tipoPropiedad: form?.tipoPropiedad || 'Departamento',
+        tipoLote: form?.tipoLote || '',
         ambientes: form?.ambientes || '',
         dormitorios: form?.dormitorios || '',
         'baños': form?.baños || '',
         caracteristicas: Array.isArray(form?.caracteristicas) ? form.caracteristicas : [],
+        operacionPropietario: form?.operacionPropietario || '',
+        valorPretendido: form?.valorPretendido || '',
+        estadoPropiedad: form?.estadoPropiedad || '',
+        documentacion: form?.documentacion || '',
+        superficieCubierta: form?.superficieCubierta || '',
+        superficieTotal: form?.superficieTotal || '',
+        antiguedad: form?.antiguedad || '',
+        frente: form?.frente || '',
+        fondo: form?.fondo || '',
+        zonificacion: form?.zonificacion || '',
+        serviciosLote: Array.isArray(form?.serviciosLote) ? form.serviciosLote : [],
+        objetivoInversion: form?.objetivoInversion || '',
+        rentabilidadEsperada: form?.rentabilidadEsperada || '',
+        horizonteInversion: form?.horizonteInversion || '',
+        toleranciaRiesgo: form?.toleranciaRiesgo || '',
+        estadoPreferidoInversion: form?.estadoPreferidoInversion || '',
+        fechaMudanza: form?.fechaMudanza || '',
+        duracionContrato: form?.duracionContrato || '',
+        garantia: form?.garantia || '',
+        mascotas: form?.mascotas || '',
+        amoblado: form?.amoblado || '',
+        expensasMaximas: form?.expensasMaximas || '',
         origen: form?.origen || 'Web',
         scoring: Number(form?.scoring || 50),
         ciudad: form?.ciudad || 'Buenos Aires',
@@ -658,6 +750,37 @@ const ClientesCRM = () => {
   const isDark = currentMode === 'Dark';
   const cardBase = `rounded-2xl p-6 border transition-shadow ${isDark ? 'bg-secondary-dark-bg border-gray-700/50 hover:border-indigo-500/30' : 'bg-white border-gray-100 shadow-md hover:shadow-lg'}`;
 
+  const tipoLoteOptions = ['Unifamiliar', 'Comercial', 'Multifamiliar', 'Artesanal', 'Administrativo', 'Hotelero', 'Residenciales multifamiliares'];
+  const serviciosLoteOptions = ['Luz', 'Gas', 'Agua', 'Cloaca', 'Pavimento'];
+  const propertyTypeOptions = ['Departamento', 'Casa', 'Duplex', 'PH', 'Oficina', 'Local', 'Terreno', 'Lote'];
+  const preferenceTitleByType = {
+    Comprador: 'Preferencias de compra',
+    Propietario: 'Datos de la propiedad',
+    Inversor: 'Perfil de inversión',
+    Inquilino: 'Preferencias de alquiler',
+  };
+  const caracteristicasByType = {
+    Comprador: ['Balcón', 'Terraza', 'Jardín', 'Pileta', 'Gimnasio', 'Parrilla', 'Cochera', 'Seguridad 24hs', 'Aire Acondicionado', 'Calefacción'],
+    Propietario: ['Escritura', 'Apto crédito', 'Reciclado', 'Luminoso', 'Buen estado', 'A refaccionar', 'Con renta', 'Desocupado', 'Con cochera'],
+    Inversor: ['Alta renta', 'Baja expensa', 'Pozo', 'Oportunidad', 'Apto temporario', 'Apto profesional', 'Zona en crecimiento', 'Reciclaje rentable'],
+    Inquilino: ['Balcón', 'Terraza', 'Jardín', 'Pileta', 'Cochera', 'Seguridad 24hs', 'Mascotas permitidas', 'Amoblado', 'Bajas expensas', 'Cerca de transporte'],
+    Lote: ['Esquina', 'Salida a dos calles', 'Servicios', 'Subdivisible', 'Apto desarrollo', 'Lote propio', 'Zonificación favorable'],
+  };
+
+  const caracteristicasDisponibles = nuevoCliente.tipoPropiedad === 'Lote'
+    ? caracteristicasByType.Lote
+    : (caracteristicasByType[nuevoCliente.tipoCliente] || caracteristicasByType.Comprador);
+
+  const toggleArrayValue = (field, value) => {
+    setNuevoCliente(prev => {
+      const list = Array.isArray(prev[field]) ? prev[field] : [];
+      return {
+        ...prev,
+        [field]: list.includes(value) ? list.filter(item => item !== value) : [...list, value],
+      };
+    });
+  };
+
   // clientesFiltrados is now filteredClientes (useMemo above)
 
   // Función para manejar cambios en el formulario
@@ -665,7 +788,9 @@ const ClientesCRM = () => {
     const { name, value } = e.target;
     setNuevoCliente(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
+      ...(name === 'tipoCliente' ? { caracteristicas: [] } : {}),
+      ...(name === 'tipoPropiedad' && value !== 'Lote' ? { tipoLote: '', serviciosLote: [], frente: '', fondo: '', zonificacion: '' } : {}),
     }));
   };
 
@@ -710,12 +835,6 @@ const ClientesCRM = () => {
       setClientesError(err?.message || 'Error al guardar cliente');
     }
   };
-
-  // Características disponibles
-  const caracteristicasDisponibles = [
-    'Balcón', 'Terraza', 'Jardín', 'Pileta', 'Gimnasio', 'Parrilla',
-    'Cochera', 'Seguridad 24hs', 'Aire Acondicionado', 'Calefacción'
-  ];
 
   // Función para ver detalle de cliente
   const verDetalle = (cliente) => {
@@ -1234,18 +1353,18 @@ const ClientesCRM = () => {
                 </div>
               </div>
 
-              {/* Preferencias de Búsqueda */}
-              {clienteSeleccionado.presupuesto > 0 && (
+              {/* Datos comerciales por tipo de cliente */}
+              {(clienteSeleccionado.presupuesto > 0 || clienteSeleccionado.valorPretendido || clienteSeleccionado.tipoPropiedad || clienteSeleccionado.tipoLote) && (
                 <div className={cardBase}>
                   <h3 className="text-xl font-bold mb-4 dark:text-gray-100 flex items-center gap-2">
-                    <FaHome className="text-green-500" /> Preferencias de Búsqueda
+                    <FaHome className="text-green-500" /> {preferenceTitleByType[clienteSeleccionado.tipoCliente] || 'Datos comerciales'}
                   </h3>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-gray-800 rounded-lg">
                       <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Presupuesto</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{clienteSeleccionado.tipoCliente === 'Propietario' ? 'Valor pretendido' : clienteSeleccionado.tipoCliente === 'Inquilino' ? 'Presupuesto mensual' : clienteSeleccionado.tipoCliente === 'Inversor' ? 'Presupuesto de inversión' : 'Presupuesto'}</p>
                         <p className="text-3xl font-bold" style={{ color: currentColor }}>
-                          {clienteSeleccionado.moneda} ${clienteSeleccionado.presupuesto.toLocaleString()}
+                          {clienteSeleccionado.moneda} ${Number(clienteSeleccionado.tipoCliente === 'Propietario' ? clienteSeleccionado.valorPretendido || 0 : clienteSeleccionado.presupuesto || 0).toLocaleString()}
                         </p>
                       </div>
                       <FaDollarSign className="text-4xl text-green-500 opacity-20" />
@@ -1258,8 +1377,8 @@ const ClientesCRM = () => {
                       </div>
                       <div className="text-center p-3 border dark:border-gray-700 rounded-lg">
                         <FaHome className="text-2xl text-green-500 mx-auto mb-2" />
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Ambientes</p>
-                        <p className="font-bold dark:text-gray-100">{clienteSeleccionado.ambientes || 'N/A'}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{clienteSeleccionado.tipoPropiedad === 'Lote' ? 'Tipo de lote' : 'Ambientes'}</p>
+                        <p className="font-bold dark:text-gray-100">{clienteSeleccionado.tipoPropiedad === 'Lote' ? clienteSeleccionado.tipoLote || 'N/A' : clienteSeleccionado.ambientes || 'N/A'}</p>
                       </div>
                       <div className="text-center p-3 border dark:border-gray-700 rounded-lg">
                         <FaMapMarkerAlt className="text-2xl text-red-500 mx-auto mb-2" />
@@ -1272,9 +1391,17 @@ const ClientesCRM = () => {
                         <p className="font-bold dark:text-gray-100">{clienteSeleccionado.scoring}</p>
                       </div>
                     </div>
+                    {(clienteSeleccionado.objetivoInversion || clienteSeleccionado.operacionPropietario || clienteSeleccionado.garantia || clienteSeleccionado.zonificacion) && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        {clienteSeleccionado.operacionPropietario && <p className="dark:text-gray-200"><span className="text-gray-500">Operación:</span> {clienteSeleccionado.operacionPropietario}</p>}
+                        {clienteSeleccionado.objetivoInversion && <p className="dark:text-gray-200"><span className="text-gray-500">Objetivo:</span> {clienteSeleccionado.objetivoInversion}</p>}
+                        {clienteSeleccionado.garantia && <p className="dark:text-gray-200"><span className="text-gray-500">Garantía:</span> {clienteSeleccionado.garantia}</p>}
+                        {clienteSeleccionado.zonificacion && <p className="dark:text-gray-200"><span className="text-gray-500">Zonificación:</span> {clienteSeleccionado.zonificacion}</p>}
+                      </div>
+                    )}
                     {clienteSeleccionado.caracteristicas.length > 0 && (
                       <div>
-                        <p className="text-sm font-medium mb-3 dark:text-gray-200">Características Deseadas:</p>
+                        <p className="text-sm font-medium mb-3 dark:text-gray-200">{clienteSeleccionado.tipoPropiedad === 'Lote' ? 'Características del lote:' : clienteSeleccionado.tipoCliente === 'Propietario' ? 'Características de la propiedad:' : 'Características deseadas:'}</p>
                         <div className="flex flex-wrap gap-2">
                           {clienteSeleccionado.caracteristicas.map((car, idx) => (
                             <span key={idx} className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm">
@@ -2005,47 +2132,56 @@ const ClientesCRM = () => {
                 </div>
               </div>
 
-              {/* Preferencias de Búsqueda */}
+              {/* Preferencias dinámicas por tipo de cliente */}
               <div>
                 <h3 className="text-lg font-semibold mb-4 dark:text-gray-100 flex items-center gap-2">
-                  <FaHome className="text-green-500" /> Preferencias de Búsqueda
+                  <FaHome className="text-green-500" /> {preferenceTitleByType[nuevoCliente.tipoCliente] || 'Preferencias comerciales'}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">
-                      Presupuesto
-                    </label>
-                    <div className="flex gap-2">
-                      <select
-                        name="moneda"
-                        value={nuevoCliente.moneda}
-                        onChange={handleInputChange}
-                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
-                      >
-                        <option value="USD">USD</option>
-                        <option value="ARS">ARS</option>
-                      </select>
-                      <input
-                        type="number"
-                        name="presupuesto"
-                        value={nuevoCliente.presupuesto}
-                        onChange={handleInputChange}
-                        placeholder="150000"
-                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
-                      />
+                  {nuevoCliente.tipoCliente === 'Propietario' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Operación esperada</label>
+                        <select name="operacionPropietario" value={nuevoCliente.operacionPropietario} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                          <option value="">Seleccionar operación</option>
+                          <option value="Venta">Venta</option>
+                          <option value="Alquiler">Alquiler</option>
+                          <option value="Tasación">Tasación</option>
+                          <option value="Venta o alquiler">Venta o alquiler</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Valor pretendido</label>
+                        <div className="flex gap-2">
+                          <select name="moneda" value={nuevoCliente.moneda} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"><option value="USD">USD</option><option value="ARS">ARS</option></select>
+                          <input type="number" name="valorPretendido" value={nuevoCliente.valorPretendido} onChange={handleInputChange} placeholder="180000" className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {(nuevoCliente.tipoCliente === 'Comprador' || nuevoCliente.tipoCliente === 'Inversor' || nuevoCliente.tipoCliente === 'Inquilino') && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2 dark:text-gray-200">
+                        {nuevoCliente.tipoCliente === 'Inquilino' ? 'Presupuesto mensual' : nuevoCliente.tipoCliente === 'Inversor' ? 'Presupuesto de inversión' : 'Presupuesto'}
+                      </label>
+                      <div className="flex gap-2">
+                        <select name="moneda" value={nuevoCliente.moneda} onChange={handleInputChange} className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"><option value="USD">USD</option><option value="ARS">ARS</option></select>
+                        <input type="number" name="presupuesto" value={nuevoCliente.presupuesto} onChange={handleInputChange} placeholder={nuevoCliente.tipoCliente === 'Inquilino' ? '450000' : '150000'} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium mb-2 dark:text-gray-200">
-                      Zona de Interés
+                      {nuevoCliente.tipoCliente === 'Propietario' ? 'Ubicación de la propiedad' : 'Zona de Interés'}
                     </label>
                     <input
                       type="text"
                       name="zonaInteres"
                       value={nuevoCliente.zonaInteres}
                       onChange={handleInputChange}
-                      placeholder="Palermo, Belgrano, Recoleta"
+                      placeholder={nuevoCliente.tipoCliente === 'Propietario' ? 'Dirección o barrio de la propiedad' : 'Palermo, Belgrano, Recoleta'}
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                     />
                   </div>
@@ -2060,65 +2196,154 @@ const ClientesCRM = () => {
                       onChange={handleInputChange}
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                     >
-                      <option value="Departamento">Departamento</option>
-                      <option value="Casa">Casa</option>
-                      <option value="Duplex">Duplex</option>
-                      <option value="PH">PH</option>
-                      <option value="Oficina">Oficina</option>
-                      <option value="Local">Local Comercial</option>
-                      <option value="Terreno">Terreno</option>
-                      <option value="Lote">Lote</option>
+                      {propertyTypeOptions.map((type) => (
+                        <option key={type} value={type}>{type === 'Local' ? 'Local Comercial' : type}</option>
+                      ))}
                     </select>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">
-                      Ambientes
-                    </label>
-                    <input
-                      type="number"
-                      name="ambientes"
-                      value={nuevoCliente.ambientes}
-                      onChange={handleInputChange}
-                      placeholder="2"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
-                    />
-                  </div>
+                  {nuevoCliente.tipoPropiedad === 'Lote' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Tipo de lote</label>
+                        <select name="tipoLote" value={nuevoCliente.tipoLote} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                          <option value="">Seleccionar tipo de lote</option>
+                          {tipoLoteOptions.map((type) => <option key={type} value={type}>{type}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Superficie total</label>
+                        <input type="number" name="superficieTotal" value={nuevoCliente.superficieTotal} onChange={handleInputChange} placeholder="300" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Frente</label>
+                        <input type="number" name="frente" value={nuevoCliente.frente} onChange={handleInputChange} placeholder="10" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Fondo</label>
+                        <input type="number" name="fondo" value={nuevoCliente.fondo} onChange={handleInputChange} placeholder="30" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Zonificación / uso esperado</label>
+                        <input type="text" name="zonificacion" value={nuevoCliente.zonificacion} onChange={handleInputChange} placeholder="Residencial, comercial, mixto..." className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
+                    </>
+                  )}
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">
-                      Dormitorios
-                    </label>
-                    <input
-                      type="number"
-                      name="dormitorios"
-                      value={nuevoCliente.dormitorios}
-                      onChange={handleInputChange}
-                      placeholder="1"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
-                    />
-                  </div>
+                  {nuevoCliente.tipoPropiedad !== 'Lote' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Ambientes</label>
+                        <input type="number" name="ambientes" value={nuevoCliente.ambientes} onChange={handleInputChange} placeholder="2" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-200">
-                      Baños
-                    </label>
-                    <input
-                      type="number"
-                      name="baños"
-                      value={nuevoCliente.baños}
-                      onChange={handleInputChange}
-                      placeholder="1"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
-                    />
-                  </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Dormitorios</label>
+                        <input type="number" name="dormitorios" value={nuevoCliente.dormitorios} onChange={handleInputChange} placeholder="1" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Baños</label>
+                        <input type="number" name="baños" value={nuevoCliente.baños} onChange={handleInputChange} placeholder="1" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
+                    </>
+                  )}
+
+                  {nuevoCliente.tipoCliente === 'Propietario' && nuevoCliente.tipoPropiedad !== 'Lote' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Superficie cubierta</label>
+                        <input type="number" name="superficieCubierta" value={nuevoCliente.superficieCubierta} onChange={handleInputChange} placeholder="75" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Estado de conservación</label>
+                        <select name="estadoPropiedad" value={nuevoCliente.estadoPropiedad} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"><option value="">Seleccionar estado</option><option value="Excelente">Excelente</option><option value="Muy bueno">Muy bueno</option><option value="Bueno">Bueno</option><option value="A refaccionar">A refaccionar</option></select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Documentación</label>
+                        <select name="documentacion" value={nuevoCliente.documentacion} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"><option value="">Seleccionar documentación</option><option value="Lista">Lista</option><option value="En trámite">En trámite</option><option value="A revisar">A revisar</option></select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Antigüedad</label>
+                        <input type="text" name="antiguedad" value={nuevoCliente.antiguedad} onChange={handleInputChange} placeholder="10 años" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
+                    </>
+                  )}
+
+                  {nuevoCliente.tipoCliente === 'Inversor' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Objetivo de inversión</label>
+                        <select name="objetivoInversion" value={nuevoCliente.objetivoInversion} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"><option value="">Seleccionar objetivo</option><option value="Renta">Renta</option><option value="Reventa">Reventa</option><option value="Desarrollo">Desarrollo</option><option value="Preservación de capital">Preservación de capital</option><option value="Mixto">Mixto</option></select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Rentabilidad esperada</label>
+                        <input type="text" name="rentabilidadEsperada" value={nuevoCliente.rentabilidadEsperada} onChange={handleInputChange} placeholder="6% anual" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Horizonte de inversión</label>
+                        <select name="horizonteInversion" value={nuevoCliente.horizonteInversion} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"><option value="">Seleccionar horizonte</option><option value="Corto">Corto</option><option value="Mediano">Mediano</option><option value="Largo plazo">Largo plazo</option></select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Tolerancia al riesgo</label>
+                        <select name="toleranciaRiesgo" value={nuevoCliente.toleranciaRiesgo} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"><option value="">Seleccionar riesgo</option><option value="Baja">Baja</option><option value="Media">Media</option><option value="Alta">Alta</option></select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Estado preferido</label>
+                        <select name="estadoPreferidoInversion" value={nuevoCliente.estadoPreferidoInversion} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"><option value="">Seleccionar estado</option><option value="A estrenar">A estrenar</option><option value="Usado">Usado</option><option value="A reciclar">A reciclar</option><option value="Pozo">Pozo</option><option value="En obra">En obra</option></select>
+                      </div>
+                    </>
+                  )}
+
+                  {nuevoCliente.tipoCliente === 'Inquilino' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Fecha estimada de mudanza</label>
+                        <input type="date" name="fechaMudanza" value={nuevoCliente.fechaMudanza} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Duración del contrato</label>
+                        <input type="text" name="duracionContrato" value={nuevoCliente.duracionContrato} onChange={handleInputChange} placeholder="24 meses" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Garantía disponible</label>
+                        <select name="garantia" value={nuevoCliente.garantia} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"><option value="">Seleccionar garantía</option><option value="Propietaria">Propietaria</option><option value="Seguro de caución">Seguro de caución</option><option value="Recibo de sueldo">Recibo de sueldo</option><option value="Otro">Otro</option></select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Expensas máximas</label>
+                        <input type="number" name="expensasMaximas" value={nuevoCliente.expensasMaximas} onChange={handleInputChange} placeholder="120000" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Mascotas</label>
+                        <select name="mascotas" value={nuevoCliente.mascotas} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"><option value="">Indistinto</option><option value="Sí">Sí</option><option value="No">No</option></select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Amoblado</label>
+                        <select name="amoblado" value={nuevoCliente.amoblado} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"><option value="">Indistinto</option><option value="Sí">Sí</option><option value="No">No</option></select>
+                      </div>
+                    </>
+                  )}
+
+                  {nuevoCliente.tipoPropiedad === 'Lote' && (
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium mb-2 dark:text-gray-200">Servicios disponibles / necesarios</label>
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                        {serviciosLoteOptions.map((service) => (
+                          <label key={service} className="flex items-center gap-2 text-sm cursor-pointer dark:text-gray-200">
+                            <input type="checkbox" checked={(nuevoCliente.serviciosLote || []).includes(service)} onChange={() => toggleArrayValue('serviciosLote', service)} className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500" />
+                            {service}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Características Deseadas */}
               <div>
                 <h3 className="text-lg font-semibold mb-4 dark:text-gray-100">
-                  Características Deseadas
+                  {nuevoCliente.tipoPropiedad === 'Lote' ? 'Características del lote' : nuevoCliente.tipoCliente === 'Propietario' ? 'Características de la propiedad' : 'Características deseadas'}
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                   {caracteristicasDisponibles.map((caracteristica) => (
@@ -2126,19 +2351,7 @@ const ClientesCRM = () => {
                       <input
                         type="checkbox"
                         checked={nuevoCliente.caracteristicas.includes(caracteristica)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setNuevoCliente(prev => ({
-                              ...prev,
-                              caracteristicas: [...prev.caracteristicas, caracteristica]
-                            }));
-                          } else {
-                            setNuevoCliente(prev => ({
-                              ...prev,
-                              caracteristicas: prev.caracteristicas.filter(c => c !== caracteristica)
-                            }));
-                          }
-                        }}
+                        onChange={() => toggleArrayValue('caracteristicas', caracteristica)}
                         className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                       />
                       <span className="dark:text-gray-200">{caracteristica}</span>
