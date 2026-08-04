@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 
 import { Link, NavLink } from 'react-router-dom';
 import { MdSpaceDashboard, MdOutlineCancel } from 'react-icons/md';
-import { FaUsers, FaRegCalendarAlt, FaDollarSign, FaChartBar, FaPlug, FaEnvelope, FaTrophy, FaBuilding, FaRobot, FaFileAlt, FaMagic, FaImage, FaBalanceScale, FaVrCardboard } from 'react-icons/fa';
-
-const WhatsAppIcon = () => (
-  <img src="/whatsapp.svg" width="18" height="18" alt="WhatsApp" />
-);
+import { FaUsers, FaRegCalendarAlt, FaDollarSign, FaChartBar, FaPlug, FaEnvelope, FaTrophy, FaBuilding, FaRobot, FaFileAlt, FaMagic, FaImage, FaBalanceScale, FaVrCardboard, FaComments, FaGift } from 'react-icons/fa';
 
 import { useStateContext } from '../contexts/ContextProvider';
 import { APP_COMMIT_COUNT, APP_VERSION } from '../config/appVersion';
+import ChangelogPanel from './ChangelogPanel';
+
+const CHANGELOG_SEEN_KEY = 'changelogSeenVersion';
 
 const menuItems = [
   { name: 'Dashboard', path: '/crm', icon: <MdSpaceDashboard />, end: true },
@@ -18,7 +17,7 @@ const menuItems = [
   { name: 'Operaciones', path: '/crm/operaciones', icon: <FaDollarSign /> },
   { name: 'Agenda', path: '/crm/citas', icon: <FaRegCalendarAlt /> },
   { name: 'Consultas', path: '/crm/consultas', icon: <FaEnvelope /> },
-  { name: 'Bandeja WA', path: '/crm/mensajeria', icon: <img src="/whatsapp.svg" width="18" height="18" alt="WhatsApp" /> },
+  { name: 'Mensajería', path: '/crm/mensajeria', icon: <FaComments /> },
   { name: 'Automatización', path: '/crm/automatizacion', icon: <FaRobot /> },
   { name: 'Recompensas', path: '/crm/recompensas', icon: <FaTrophy /> },
   { name: 'Integraciones', path: '/crm/integraciones', icon: <FaPlug /> },
@@ -34,6 +33,16 @@ const menuItems = [
 const Sidebar = () => {
   const { currentColor, activeMenu, setActiveMenu, screenSize } = useStateContext();
   const [isHovered, setIsHovered] = useState(false);
+  const [showChangelog, setShowChangelog] = useState(false);
+  const [hasUnseenChanges, setHasUnseenChanges] = useState(
+    () => localStorage.getItem(CHANGELOG_SEEN_KEY) !== APP_VERSION,
+  );
+
+  const openChangelog = () => {
+    localStorage.setItem(CHANGELOG_SEEN_KEY, APP_VERSION);
+    setHasUnseenChanges(false);
+    setShowChangelog(true);
+  };
 
   const handleCloseSideBar = () => {
     if (screenSize <= 900) {
@@ -146,14 +155,34 @@ const Sidebar = () => {
 
         {/* Footer */}
         <div className="p-3 border-t border-gray-700 transition-all duration-300">
-          <p
-            className={`text-xs text-gray-500 text-center whitespace-nowrap transition-all duration-300 ${isExpanded ? 'opacity-100' : 'opacity-100 scale-90'}`}
+          <button
+            type="button"
+            onClick={openChangelog}
             title={`Version generada con ${APP_COMMIT_COUNT} commits`}
+            className={`
+              w-full flex items-center gap-3 rounded-lg p-2
+              text-gray-400 hover:text-white hover:bg-gray-800 transition-all duration-200
+              ${!isExpanded ? 'justify-center' : ''}
+            `}
           >
-            {isExpanded ? `CRM ${APP_VERSION}` : APP_VERSION}
-          </p>
+            <span className="relative flex-shrink-0 text-lg" style={{ color: currentColor }}>
+              <FaGift />
+              {hasUnseenChanges && (
+                <span className="absolute -top-1 -right-1 flex w-2.5 h-2.5">
+                  <span className="absolute inline-flex w-full h-full rounded-full bg-rose-500 opacity-75 animate-ping" />
+                  <span className="relative inline-flex w-2.5 h-2.5 rounded-full bg-rose-500" />
+                </span>
+              )}
+            </span>
+            <span className={`flex flex-col items-start whitespace-nowrap transition-all duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}>
+              <span className="text-sm font-medium leading-tight">Novedades</span>
+              <span className="text-[11px] text-gray-500 leading-tight">{`CRM ${APP_VERSION}`}</span>
+            </span>
+          </button>
         </div>
       </div>
+
+      {showChangelog && <ChangelogPanel onClose={() => setShowChangelog(false)} />}
 
       {/* Spacer para el contenido principal en desktop */}
       {!isMobile && (

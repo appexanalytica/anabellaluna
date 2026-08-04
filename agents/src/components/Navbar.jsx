@@ -1,11 +1,11 @@
 import React, { useEffect, useCallback, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { MdDarkMode, MdLightMode, MdSpaceDashboard } from 'react-icons/md';
-import { FaBars, FaBuilding, FaTasks, FaBell, FaComments, FaTrophy, FaGift } from 'react-icons/fa';
+import { FaBars, FaBuilding, FaTasks, FaBell, FaComments, FaTrophy } from 'react-icons/fa';
 import { TooltipComponent } from '@syncfusion/ej2-react-popups';
 
 import avatar from '../data/avatar.png';
-import { Propiedades, Tareas, Alertas, ChatInterno, RewardsPanel, triggerTestCelebration } from '.';
+import { Propiedades, Tareas, Alertas, ChatInterno, RewardsPanel } from '.';
 import { useStateContext } from '../contexts/ContextProvider';
 import { crmService } from '../services/crmService';
 import { authService } from '../services/authService';
@@ -195,7 +195,7 @@ const Navbar = () => {
   const bottomNavItems = [
     { icon: <MdSpaceDashboard size={22} />, label: 'Inicio', action: () => navigate('/crm'), active: location.pathname === '/crm', badge: 0 },
     { icon: <FaTasks size={20} />, label: 'Tareas', action: () => handleClick('tareas'), active: isClicked.tareas, badge: navbarStats.tareas.total },
-    { icon: <FaComments size={20} />, label: 'Chat', action: () => { setIsClicked(initialState); navigate('/crm/consultas'); }, active: location.pathname === '/crm/consultas', badge: navbarStats.mensajes.total },
+    { icon: <FaComments size={20} />, label: 'Chat', action: () => { setIsClicked(initialState); navigate('/crm/mensajeria'); }, active: location.pathname === '/crm/mensajeria', badge: navbarStats.mensajes.total },
     { icon: <FaBell size={20} />, label: 'Alertas', action: () => { handleClick('alertas'); setNavbarStats(prev => ({ ...prev, notificaciones: { ...prev.notificaciones, noLeidas: 0 } })); }, active: isClicked.alertas, badge: navbarStats.notificaciones.noLeidas },
     { icon: null, label: 'Perfil', action: () => { setIsClicked(initialState); navigate('/crm/perfil'); }, active: location.pathname === '/crm/perfil', isProfile: true, badge: 0 },
   ];
@@ -249,7 +249,7 @@ const Navbar = () => {
             />
             <NavButton
               title={`Mensajes (${navbarStats.mensajes.total} sin leer)`}
-              customFunc={() => { setIsClicked(initialState); navigate('/crm/consultas'); }}
+              customFunc={() => { setIsClicked(initialState); navigate('/crm/mensajeria'); }}
               color={currentColor}
               icon={<FaComments />}
               badgeCount={navbarStats.mensajes.total}
@@ -270,7 +270,6 @@ const Navbar = () => {
               icon={<FaTrophy />}
               isActive={isClicked.rewards}
             />
-            <NavButton title="Probar Celebración" customFunc={() => triggerTestCelebration()} color={currentColor} icon={<FaGift />} />
             <div className="w-px h-8 bg-gray-200 dark:bg-gray-600 mx-1" />
             {themeToggle}
             <button

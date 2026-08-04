@@ -3,6 +3,32 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-08-04",
+    "title": "Mensajería más clara para admin y agentes",
+    "items": [
+      {
+        "type": "mejora",
+        "text": "El menú lateral ahora muestra Mensajería como bandeja central de conversaciones, sin separar la experiencia como una ventana exclusiva de WhatsApp."
+      },
+      {
+        "type": "mejora",
+        "text": "Las notificaciones de mensajes en el panel de agentes ahora llevan directamente a la bandeja de Mensajería, para responder desde el lugar correcto."
+      },
+      {
+        "type": "nuevo",
+        "text": "El panel de agentes ahora también muestra el botón de Novedades, con el mismo historial de cambios visible para administración."
+      },
+      {
+        "type": "mejora",
+        "text": "Se quitó el botón manual de prueba de celebración del panel de agentes, manteniendo las celebraciones reales de logros y recompensas."
+      },
+      {
+        "type": "nuevo",
+        "text": "En la bandeja de Mensajería de administración ahora hay una acción visible para eliminar conversaciones desde el chat seleccionado."
+      }
+    ]
+  },
+  {
+    "date": "2026-08-04",
     "title": "Clientes mejor clasificados según su perfil comercial",
     "items": [
       {

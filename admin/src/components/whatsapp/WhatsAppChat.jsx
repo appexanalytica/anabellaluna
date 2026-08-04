@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FiLoader, FiAlertTriangle } from 'react-icons/fi';
+import { FiLoader, FiAlertTriangle, FiTrash2 } from 'react-icons/fi';
 import { FaComments } from 'react-icons/fa';
 import MessageBubble from './MessageBubble';
 import WhatsAppInputBar from './WhatsAppInputBar';
@@ -65,7 +65,7 @@ const WindowBanner = ({ windowExpiresAt }) => {
   );
 };
 
-const WhatsAppChat = ({ conversation, messages = [], onSendMessage, loading, templates = [] }) => {
+const WhatsAppChat = ({ conversation, messages = [], onSendMessage, loading, templates = [], onDeleteConversation }) => {
   const messagesEndRef = useRef(null);
   const prevMessagesLen = useRef(0);
 
@@ -135,6 +135,17 @@ const WhatsAppChat = ({ conversation, messages = [], onSendMessage, loading, tem
             )}
           </p>
         </div>
+        {onDeleteConversation && (
+          <button
+            type="button"
+            onClick={() => onDeleteConversation(conversation._id)}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
+            title="Eliminar conversación"
+          >
+            <FiTrash2 size={14} />
+            Eliminar
+          </button>
+        )}
       </div>
 
       {/* Window banner */}

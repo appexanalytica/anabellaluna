@@ -178,6 +178,7 @@ const Mensajeria = () => {
         conversation={selectedConversation}
         messages={messages}
         onSendMessage={handleSendMessage}
+        onDeleteConversation={handleDeleteConversation}
         loading={loading}
         templates={templates}
       />
