@@ -18,6 +18,7 @@ import AOS from 'aos';
 import '../node_modules/aos/dist/aos.css';
 import "../src/index.scss"; 
 import DynamicTitle from './feature-module/routes/dynamicTitle.js'
+import ScrollToTop from './feature-module/routes/ScrollToTop'
 
 // Initialize AOS once when app loads
 AOS.init({
@@ -30,6 +31,7 @@ createRoot(document.getElementById('root')!).render(
     <Provider store={store}>
       <BrowserRouter basename={base_path}>
         <DynamicTitle />
+        <ScrollToTop />
         <ALLRoutes />
       </BrowserRouter>
     </Provider>

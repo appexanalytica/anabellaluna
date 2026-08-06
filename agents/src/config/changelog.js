@@ -2,6 +2,16 @@
 // Do not edit by hand: edit changelog.json instead.
 export const CHANGELOG_ENTRIES = [
   {
+    "date": "2026-08-06",
+    "title": "Detalle de propiedades abre desde arriba",
+    "items": [
+      {
+        "type": "arreglo",
+        "text": "Al abrir una propiedad desde la grilla, la página de detalle ahora comienza arriba correctamente en lugar de conservar el scroll del listado."
+      }
+    ]
+  },
+  {
     "date": "2026-08-04",
     "title": "Mensajería más clara para admin y agentes",
     "items": [

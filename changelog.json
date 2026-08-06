@@ -2,6 +2,16 @@
   "$comment": "Changelog visible en el panel de Novedades del sidebar. Redactar en español simple, pensado para el usuario final (no técnico). Tipos válidos: nuevo | mejora | arreglo. Editar este archivo y rebuildear: scripts/write-app-version.js lo convierte en admin/agents src/config/changelog.js.",
   "entries": [
     {
+      "date": "2026-08-06",
+      "title": "Detalle de propiedades abre desde arriba",
+      "items": [
+        {
+          "type": "arreglo",
+          "text": "Al abrir una propiedad desde la grilla, la página de detalle ahora comienza arriba correctamente en lugar de conservar el scroll del listado."
+        }
+      ]
+    },
+    {
       "date": "2026-08-04",
       "title": "Mensajería más clara para admin y agentes",
       "items": [
