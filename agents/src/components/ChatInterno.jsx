@@ -580,11 +580,11 @@ const ChatInterno = () => {
               <FaUsers className="text-xs" /> Chat Interno
             </a>
             <a
-              href="/crm/consultas"
+              href="/crm/mensajeria"
               className="py-2 px-3 rounded-lg font-medium transition-colors text-sm text-center border flex items-center justify-center gap-1"
               style={{ borderColor: currentColor, color: currentColor }}
             >
-              <FaGlobe className="text-xs" /> Consultas Web
+              <FaGlobe className="text-xs" /> Mensajeria
             </a>
           </div>
         </div>

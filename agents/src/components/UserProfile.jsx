@@ -57,10 +57,10 @@ const UserProfile = () => {
     {
       icon: <FaEnvelope />,
       title: 'Mis Mensajes',
-      desc: 'Consultas y mensajes',
+      desc: 'Bandeja de mensajeria',
       iconColor: 'rgb(0, 194, 146)',
       iconBg: 'rgb(235, 250, 242)',
-      action: () => handleNavigate('/crm/consultas'),
+      action: () => handleNavigate('/crm/mensajeria'),
     },
     {
       icon: <FaTasks />,

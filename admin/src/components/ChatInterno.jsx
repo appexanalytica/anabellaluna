@@ -428,7 +428,7 @@ const ChatInterno = () => {
         <div className="p-3 border-t dark:border-gray-600">
           <button className="w-full py-2 rounded-lg font-medium transition-colors text-sm"
             style={{ backgroundColor: currentColor, color: 'white' }}
-            onClick={() => { setIsClicked(initialState); window.location.href = '/chat'; }}>
+            onClick={() => { setIsClicked(initialState); window.location.href = '/mensajeria'; }}>
             Ver Todos los Mensajes →
           </button>
         </div>
