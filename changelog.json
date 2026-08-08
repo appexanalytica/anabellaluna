@@ -3,31 +3,35 @@
   "entries": [
     {
       "date": "2026-08-08",
-      "title": "Mensajería muestra los mensajes que antes no se veían",
+      "title": "Consultas del sitio en un solo lugar",
       "items": [
         {
+          "type": "nuevo",
+          "text": "La burbuja de mensajes de la barra superior ahora abre un desplegable con el adelanto de las últimas consultas, igual que el resto de los iconos de notificaciones. Desde ahí se abre cada una o se marcan todas como leídas."
+        },
+        {
+          "type": "nuevo",
+          "text": "Los mensajes del formulario de contacto de la web ahora aparecen en Consultas, junto a las consultas de propiedades y las solicitudes de visita. Antes se guardaban pero no se mostraban en ningún lado."
+        },
+        {
+          "type": "nuevo",
+          "text": "Cada consulta se puede marcar como leída o sin leer, de a una o todas juntas, y las pendientes quedan resaltadas."
+        },
+        {
+          "type": "mejora",
+          "text": "Se quitó la sección Mensajería del menú lateral. Todo lo que llega del sitio se atiende desde Consultas, que ahora también permite filtrar por origen y ver solo las pendientes."
+        },
+        {
           "type": "arreglo",
-          "text": "El botón de mensajes de la barra superior marcaba conversaciones sin leer que después no se podían encontrar: llevaba siempre a la ventana de WhatsApp, aunque los mensajes pendientes fueran chats con agentes o consultas del sitio."
-        },
-        {
-          "type": "nuevo",
-          "text": "Mensajería ahora tiene dos bandejas en una sola pantalla: chat con agentes y consultas del sitio, cada una con su propio contador de mensajes sin leer."
-        },
-        {
-          "type": "nuevo",
-          "text": "Los mensajes del formulario de contacto de la web ya se pueden leer y responder desde el panel. Antes se guardaban pero no se mostraban en ningún lado."
-        },
-        {
-          "type": "nuevo",
-          "text": "Las consultas del sitio se pueden marcar como leídas, de a una o todas juntas, así el contador rojo deja de mostrar mensajes ya atendidos."
+          "text": "El contador rojo de la burbuja marcaba mensajes que después no se podían encontrar, porque llevaba a la ventana de WhatsApp. Ahora el número coincide siempre con lo que se ve en el desplegable."
         },
         {
           "type": "mejora",
-          "text": "Al entrar desde la barra superior, Mensajería abre directamente la bandeja que tiene mensajes pendientes."
+          "text": "Se quitó la ventana de WhatsApp, que no se estaba usando. Las conversaciones quedan guardadas por si más adelante se vuelve a activar."
         },
         {
           "type": "mejora",
-          "text": "Se ocultó la ventana de WhatsApp, que no se estaba usando. Las conversaciones quedan guardadas y se pueden volver a mostrar cuando haga falta."
+          "text": "Se eliminó el chat interno entre agentes, que no se estaba usando."
         }
       ]
     },

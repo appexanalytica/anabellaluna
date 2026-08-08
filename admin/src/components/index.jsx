@@ -10,7 +10,7 @@ export { default as Notification } from './Notification';
 export { default as Propiedades } from './Propiedades';
 export { default as Tareas } from './Tareas';
 export { default as Alertas } from './Alertas';
-export { default as ChatInterno } from './ChatInterno';
+export { default as ConsultasDropdown } from './ConsultasDropdown';
 export { default as UserProfile } from './UserProfile';
 export { default as SparkLine } from './Charts/SparkLine';
 export { default as LineChart } from './Charts/LineChart';

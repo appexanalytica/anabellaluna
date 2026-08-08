@@ -7,10 +7,9 @@ const Cita = require('../models/Cita');
 const Tarea = require('../models/Tarea');
 const Agente = require('../models/Agente');
 const Activity = require('../models/Activity');
-const Message = require('../models/Message');
 const User = require('../models/User');
 const ContactMessage = require('../models/ContactMessage');
-const { authenticateToken, requireRole, getUserId } = require('../auth');
+const { authenticateToken, requireRole } = require('../auth');
 
 const router = express.Router();
 const ADMIN_AGENT_ID = '__admin__';
@@ -73,9 +72,6 @@ router.get('/navbar-summary', authenticateToken, requireRole('admin'), async (re
     const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
     const todayEnd = new Date(now); todayEnd.setHours(23, 59, 59, 999);
 
-    // Get admin user ID for message count
-    const adminUserId = getUserId(req);
-
     const [
       propiedadesTotal,
       propiedadesDisponibles,
@@ -85,7 +81,6 @@ router.get('/navbar-summary', authenticateToken, requireRole('admin'), async (re
       citasHoy,
       consultasNoLeidas,
       notifFilter,
-      mensajesNoLeidos,
       contactosNoLeidos,
     ] = await Promise.all([
       Propiedad.countDocuments({}),
@@ -103,13 +98,6 @@ router.get('/navbar-summary', authenticateToken, requireRole('admin'), async (re
         applyVisibilityFilter(f);
         return Notification.countDocuments(f);
       })(),
-      (async () => {
-        if (!adminUserId) return 0;
-        try {
-          const mongoose = require('mongoose');
-          return Message.countDocuments({ receiverId: new mongoose.Types.ObjectId(adminUserId), read: false });
-        } catch { return 0; }
-      })(),
       ContactMessage.countDocuments({ leido: { $ne: true } }),
     ]);
 
@@ -121,10 +109,10 @@ router.get('/navbar-summary', authenticateToken, requireRole('admin'), async (re
       tareas: { pendientes: tareasPendientes, hoy: tareasHoy, citas: citasPendientes, citasHoy, total: tareasPendientes + citasPendientes },
       consultas: { noLeidas: consultasWebTotal },
       mensajes: {
-        internosNoLeidos: mensajesNoLeidos,
         consultasNoLeidas: consultasWebTotal,
         contactosNoLeidos,
-        total: consultasWebTotal + mensajesNoLeidos,
+        propiedadesNoLeidas: consultasNoLeidas,
+        total: consultasWebTotal,
       },
       notificaciones: { noLeidas: notifFilter },
     });

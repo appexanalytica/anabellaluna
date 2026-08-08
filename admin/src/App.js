@@ -9,7 +9,6 @@ import { Ecommerce, Orders, Calendar, Employees, Stacked, Pyramid, Customers, Ka
 import Seguridad from './pages/Seguridad';
 import MarketingAI from './pages/MarketingAI';
 import WhatsAppSesiones from './pages/WhatsAppSesiones';
-import Mensajeria from './pages/Mensajeria';
 import AIProviders from './pages/AIProviders';
 import AIObservability from './pages/AIObservability';
 import AIFloatingOrb from './components/ai/AIFloatingOrb';
@@ -432,7 +431,8 @@ const App = () => {
                 {/* Recompensas fusionado dentro de Agentes (centro de mando) */}
                 <Route path="/recompensas" element={<Navigate to="/agentes" replace />} />
                 <Route path="/whatsapp-sesiones" element={<WhatsAppSesiones />} />
-                <Route path="/mensajeria" element={<Mensajeria />} />
+                {/* Mensajería se fusionó en Consultas */}
+                <Route path="/mensajeria" element={<Navigate to="/consultas" replace />} />
                 <Route path="/tasaciones" element={<Tasaciones />} />
                 <Route path="/tours-virtuales" element={<ToursVirtuales />} />
 

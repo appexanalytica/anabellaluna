@@ -13,7 +13,7 @@ const initialState = {
   propiedades: false,
   tareas: false,
   alertas: false,
-  chatInterno: false,
+  consultas: false,
 };
 
 export const ContextProvider = ({ children }) => {
