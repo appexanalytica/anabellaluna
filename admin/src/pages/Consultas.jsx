@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { FaEnvelope, FaCalendarCheck, FaPhone, FaHome, FaSync, FaUser, FaClock, FaSearch, FaInbox, FaCheck, FaEnvelopeOpenText } from 'react-icons/fa';
+import { FaEnvelope, FaCalendarCheck, FaPhone, FaHome, FaSync, FaUser, FaClock, FaSearch, FaInbox, FaCheck, FaEnvelopeOpenText, FaTrash } from 'react-icons/fa';
 
 import { useStateContext } from '../contexts/ContextProvider';
 import { crmService } from '../services/crmService';
@@ -17,6 +17,7 @@ const Consultas = () => {
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [soloSinLeer, setSoloSinLeer] = useState(false);
+  const [deletingKey, setDeletingKey] = useState('');
   const rowRefs = useRef({});
 
   // Consulta puntual abierta desde el dropdown del navbar
@@ -148,6 +149,26 @@ const Consultas = () => {
     if (pending.length === 0) return;
     await Promise.all(pending.map((r) => markReadApi(r, true).catch(() => {})));
     setItems((prev) => prev.map((r) => ({ ...r, leida: true })));
+  };
+
+  // Borrado definitivo en la base: no hay papelera ni forma de recuperarlo
+  const deleteRow = async (row) => {
+    const quien = row.contact.fullName || 'esta consulta';
+    if (!window.confirm(`¿Eliminar la consulta de ${quien}?\n\nSe borra de la base de datos y no se puede recuperar.`)) return;
+    setDeletingKey(row.key);
+    setError('');
+    try {
+      if (row.origen === 'contacto') {
+        await crmService.contactMessages.delete(row.id);
+      } else {
+        await crmService.activities.delete(row.id);
+      }
+      setItems((prev) => prev.filter((r) => r.key !== row.key));
+    } catch (e) {
+      setError(e?.message || 'No se pudo eliminar la consulta');
+    } finally {
+      setDeletingKey('');
+    }
   };
 
   const formatDate = (dateStr) => {
@@ -330,6 +351,17 @@ const Consultas = () => {
                     className="text-xs px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-white/60 dark:hover:bg-gray-700 transition-colors"
                   >
                     {row.leida ? 'Marcar sin leer' : 'Marcar leída'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteRow(row)}
+                    disabled={deletingKey === row.key}
+                    title="Eliminar de la base de datos"
+                    className="text-xs p-1.5 rounded-full border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-red-600 hover:border-red-400 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+                  >
+                    {deletingKey === row.key
+                      ? <FaSync className="animate-spin text-[11px]" />
+                      : <FaTrash className="text-[11px]" />}
                   </button>
                 </div>
               </div>

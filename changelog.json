@@ -18,6 +18,10 @@
           "text": "Cada consulta se puede marcar como leída o sin leer, de a una o todas juntas, y las pendientes quedan resaltadas."
         },
         {
+          "type": "nuevo",
+          "text": "Ahora se pueden eliminar consultas con el botón del tacho. El borrado es definitivo: la consulta se saca de la base de datos y no se puede recuperar, por eso pide confirmación antes."
+        },
+        {
           "type": "mejora",
           "text": "Se quitó la sección Mensajería del menú lateral. Todo lo que llega del sitio se atiende desde Consultas, que ahora también permite filtrar por origen y ver solo las pendientes."
         },

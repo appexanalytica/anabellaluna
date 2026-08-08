@@ -140,6 +140,7 @@ export const crmService = {
       return api.get(`/crm/activities${qs ? `?${qs}` : ''}`);
     },
     markRead: (id, read = true) => api.patch(`/crm/activities/${id}/read`, { read }),
+    delete: (id) => api.delete(`/crm/activities/${id}`),
   },
 
   // ============ MENSAJES DEL FORMULARIO DE CONTACTO DEL SITIO ============
