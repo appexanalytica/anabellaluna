@@ -7,6 +7,7 @@ const contactMessageSchema = new mongoose.Schema(
     telefono: { type: String, default: '' },
     asunto: { type: String, default: '' },
     mensaje: { type: String, required: true },
+    leido: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );

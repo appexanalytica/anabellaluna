@@ -139,6 +139,17 @@ export const crmService = {
       const qs = new URLSearchParams(params).toString();
       return api.get(`/crm/activities${qs ? `?${qs}` : ''}`);
     },
+    markRead: (id, read = true) => api.patch(`/crm/activities/${id}/read`, { read }),
+  },
+
+  // ============ MENSAJES DEL FORMULARIO DE CONTACTO DEL SITIO ============
+  contactMessages: {
+    getAll: (params = {}) => {
+      const qs = new URLSearchParams(params).toString();
+      return api.get(`/admin/contact-messages${qs ? `?${qs}` : ''}`);
+    },
+    markRead: (id, read = true) => api.patch(`/admin/contact-messages/${id}/read`, { read }),
+    delete: (id) => api.delete(`/admin/contact-messages/${id}`),
   },
 
   // ============ ESTADÍSTICAS ============

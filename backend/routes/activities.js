@@ -39,6 +39,26 @@ router.get('/:id', authenticateToken, requireCRMUser, async (req, res) => {
   }
 });
 
+// Marca una consulta web (enquiry / visit_scheduled) como leída desde Mensajería
+router.patch('/:id/read', authenticateToken, requireCRMUser, async (req, res) => {
+  try {
+    const scopeId = agentScopeId(req);
+    const filter = { _id: req.params.id };
+    if (scopeId) filter.agenteId = scopeId;
+
+    const read = req.body && req.body.read === false ? false : true;
+    const updated = await Activity.findOneAndUpdate(
+      filter,
+      { $set: { 'metadata.read': read } },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ error: 'Not found' });
+    return res.json(updated);
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+});
+
 router.post('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);

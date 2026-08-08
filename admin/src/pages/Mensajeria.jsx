@@ -1,13 +1,36 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { FaUsers, FaGlobe } from 'react-icons/fa';
 import { useStateContext } from '../contexts/ContextProvider';
 import whatsappService from '../services/whatsappService';
+import notificationService from '../services/notificationService';
 import WhatsAppSidebar from '../components/whatsapp/WhatsAppSidebar';
 import WhatsAppChat from '../components/whatsapp/WhatsAppChat';
 import WhatsAppContactInfo from '../components/whatsapp/WhatsAppContactInfo';
+import ChatAgentesPanel from '../components/mensajeria/ChatAgentesPanel';
+import ConsultasWebPanel from '../components/mensajeria/ConsultasWebPanel';
+
+// WhatsApp está oculto: la integración sigue instalada y los datos intactos,
+// pero no se está usando. Para volver a habilitarlo, poner WHATSAPP_ENABLED en true.
+const WHATSAPP_ENABLED = false;
+
+const WhatsAppLogo = ({ size = 22 }) => (
+  <img src="/whatsapp.svg" width={size} height={size} alt="WhatsApp" />
+);
+
+const CHANNELS = [
+  ...(WHATSAPP_ENABLED ? [{ key: 'whatsapp', label: 'WhatsApp', icon: <WhatsAppLogo size={22} /> }] : []),
+  { key: 'agentes', label: 'Agentes', icon: <FaUsers size={20} /> },
+  { key: 'web', label: 'Consultas', icon: <FaGlobe size={20} /> },
+];
+
+const VALID_CHANNELS = CHANNELS.map((c) => c.key);
+const DEFAULT_CHANNEL = CHANNELS[0].key;
 
 const Mensajeria = () => {
-  const { currentMode } = useStateContext();
+  const { currentMode, currentColor } = useStateContext();
+  const location = useLocation();
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -15,10 +38,46 @@ const Mensajeria = () => {
   const [loading, setLoading] = useState(false);
   const socketRef = useRef(null);
 
+  // Canal activo: whatsapp | agentes | web
+  const requestedChannel = useMemo(() => {
+    const fromState = location.state?.canal;
+    const fromQuery = new URLSearchParams(location.search).get('canal');
+    const candidate = fromState || fromQuery;
+    return VALID_CHANNELS.includes(candidate) ? candidate : null;
+  }, [location.state, location.search]);
+
+  const [channel, setChannel] = useState(requestedChannel || DEFAULT_CHANNEL);
+  const [agentesUnread, setAgentesUnread] = useState(0);
+  const [webUnread, setWebUnread] = useState(0);
+  const autoSelected = useRef(!!requestedChannel);
+
   const isDark = currentMode === 'Dark';
+
+  // Si vienen desde el navbar sin canal explícito, abrir el que tenga pendientes
+  useEffect(() => {
+    if (requestedChannel) {
+      setChannel(requestedChannel);
+      autoSelected.current = true;
+      return;
+    }
+    if (autoSelected.current) return;
+    let cancelled = false;
+    notificationService.getNavbarSummary()
+      .then((summary) => {
+        if (cancelled || autoSelected.current || !summary) return;
+        autoSelected.current = true;
+        const internos = summary.mensajes?.internosNoLeidos || 0;
+        const consultas = summary.mensajes?.consultasNoLeidas ?? summary.consultas?.noLeidas ?? 0;
+        if (internos > 0) setChannel('agentes');
+        else if (consultas > 0) setChannel('web');
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [requestedChannel]);
 
   // Load initial data
   useEffect(() => {
+    if (!WHATSAPP_ENABLED) return;
     const load = async () => {
       setLoading(true);
       try {
@@ -39,6 +98,7 @@ const Mensajeria = () => {
 
   // Socket.IO subscription
   useEffect(() => {
+    if (!WHATSAPP_ENABLED) return undefined;
     let socket = null;
     try {
       // eslint-disable-next-line global-require
@@ -166,27 +226,70 @@ const Mensajeria = () => {
     toast.info('Funcionalidad de vinculación CRM próximamente');
   };
 
+  const whatsappUnread = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+  const channelBadges = { whatsapp: whatsappUnread, agentes: agentesUnread, web: webUnread };
+
   return (
     <div className={`flex ${isDark ? 'bg-main-dark-bg' : 'bg-gray-50'}`} style={{ height: 'calc(100vh - 64px)' }}>
-      <WhatsAppSidebar
-        conversations={conversations}
-        selectedId={selectedConversation?._id}
-        onSelect={setSelectedConversation}
-        onDelete={handleDeleteConversation}
-      />
-      <WhatsAppChat
-        conversation={selectedConversation}
-        messages={messages}
-        onSendMessage={handleSendMessage}
-        onDeleteConversation={handleDeleteConversation}
-        loading={loading}
-        templates={templates}
-      />
-      <WhatsAppContactInfo
-        conversation={selectedConversation}
-        contact={selectedConversation?.contact}
-        onLinkCliente={handleLinkCliente}
-      />
+      {/* Selector de canal */}
+      <div className="flex flex-col items-center gap-2 py-3 px-2 flex-shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+        {CHANNELS.map((c) => {
+          const active = channel === c.key;
+          const badge = channelBadges[c.key] || 0;
+          return (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => setChannel(c.key)}
+              title={c.label}
+              className={`relative w-14 py-2 rounded-xl flex flex-col items-center gap-1 transition-colors ${
+                active ? 'bg-gray-100 dark:bg-gray-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+              }`}
+              style={active ? { color: currentColor } : { color: '#6b7280' }}
+            >
+              {badge > 0 && (
+                <span className="absolute top-0.5 right-1 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center">
+                  {badge > 99 ? '99+' : badge}
+                </span>
+              )}
+              {c.icon}
+              <span className="text-[10px] font-semibold leading-none">{c.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {channel === 'whatsapp' && (
+        <>
+          <WhatsAppSidebar
+            conversations={conversations}
+            selectedId={selectedConversation?._id}
+            onSelect={setSelectedConversation}
+            onDelete={handleDeleteConversation}
+          />
+          <WhatsAppChat
+            conversation={selectedConversation}
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            onDeleteConversation={handleDeleteConversation}
+            loading={loading}
+            templates={templates}
+          />
+          <WhatsAppContactInfo
+            conversation={selectedConversation}
+            contact={selectedConversation?.contact}
+            onLinkCliente={handleLinkCliente}
+          />
+        </>
+      )}
+
+      {/* Los paneles quedan montados para mantener los contadores al día */}
+      <div className={`flex-1 min-w-0 ${channel === 'agentes' ? 'flex' : 'hidden'}`}>
+        <ChatAgentesPanel onUnreadChange={setAgentesUnread} />
+      </div>
+      <div className={`flex-1 min-w-0 ${channel === 'web' ? 'flex' : 'hidden'}`}>
+        <ConsultasWebPanel onUnreadChange={setWebUnread} />
+      </div>
     </div>
   );
 };

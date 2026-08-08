@@ -9,6 +9,7 @@ const Agente = require('../models/Agente');
 const Activity = require('../models/Activity');
 const Message = require('../models/Message');
 const User = require('../models/User');
+const ContactMessage = require('../models/ContactMessage');
 const { authenticateToken, requireRole, getUserId } = require('../auth');
 
 const router = express.Router();
@@ -85,6 +86,7 @@ router.get('/navbar-summary', authenticateToken, requireRole('admin'), async (re
       consultasNoLeidas,
       notifFilter,
       mensajesNoLeidos,
+      contactosNoLeidos,
     ] = await Promise.all([
       Propiedad.countDocuments({}),
       Propiedad.countDocuments({ status: 'Disponible' }),
@@ -108,13 +110,22 @@ router.get('/navbar-summary', authenticateToken, requireRole('admin'), async (re
           return Message.countDocuments({ receiverId: new mongoose.Types.ObjectId(adminUserId), read: false });
         } catch { return 0; }
       })(),
+      ContactMessage.countDocuments({ leido: { $ne: true } }),
     ]);
+
+    // Las consultas del sitio agrupan formulario de contacto + enquiries de propiedades
+    const consultasWebTotal = consultasNoLeidas + contactosNoLeidos;
 
     res.json({
       propiedades: { total: propiedadesTotal, disponibles: propiedadesDisponibles },
       tareas: { pendientes: tareasPendientes, hoy: tareasHoy, citas: citasPendientes, citasHoy, total: tareasPendientes + citasPendientes },
-      consultas: { noLeidas: consultasNoLeidas },
-      mensajes: { internosNoLeidos: mensajesNoLeidos, total: consultasNoLeidas + mensajesNoLeidos },
+      consultas: { noLeidas: consultasWebTotal },
+      mensajes: {
+        internosNoLeidos: mensajesNoLeidos,
+        consultasNoLeidas: consultasWebTotal,
+        contactosNoLeidos,
+        total: consultasWebTotal + mensajesNoLeidos,
+      },
       notificaciones: { noLeidas: notifFilter },
     });
   } catch (err) {

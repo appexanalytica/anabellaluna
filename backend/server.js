@@ -119,6 +119,7 @@ const marketingAIRoutes = require('./routes/marketing-ai/index');
 const aiChatRoutes = require('./routes/ai-chat');
 const aiGatewayRoutes = require('./routes/ai-gateway');
 const adminAIConfigRoutes = require('./routes/admin/ai-config');
+const adminContactMessagesRoutes = require('./routes/admin/contactMessages');
 const virtualToursRoutes = require('./modules/tours/routes');
 const bookingsRoutes = require('./routes/bookings');
 const whatsappRoutes = require('./routes/whatsapp');
@@ -298,6 +299,7 @@ app.use('/admin/ml', mercadoLibreRoutes);
 
 app.use('/admin/portales', portalesRoutes.adminRouter);
 app.use('/admin/config/ai', adminAIConfigRoutes);
+app.use('/admin/contact-messages', adminContactMessagesRoutes);
 
 // Admin KPI: reservadas count (operaciones tipo Reserva + contratos de reserva generados)
 app.get('/admin/propiedades/reservadas-count', authenticateToken, async (req, res) => {

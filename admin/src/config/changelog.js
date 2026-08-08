@@ -2,6 +2,36 @@
 // Do not edit by hand: edit changelog.json instead.
 export const CHANGELOG_ENTRIES = [
   {
+    "date": "2026-08-08",
+    "title": "Mensajería muestra los mensajes que antes no se veían",
+    "items": [
+      {
+        "type": "arreglo",
+        "text": "El botón de mensajes de la barra superior marcaba conversaciones sin leer que después no se podían encontrar: llevaba siempre a la ventana de WhatsApp, aunque los mensajes pendientes fueran chats con agentes o consultas del sitio."
+      },
+      {
+        "type": "nuevo",
+        "text": "Mensajería ahora tiene dos bandejas en una sola pantalla: chat con agentes y consultas del sitio, cada una con su propio contador de mensajes sin leer."
+      },
+      {
+        "type": "nuevo",
+        "text": "Los mensajes del formulario de contacto de la web ya se pueden leer y responder desde el panel. Antes se guardaban pero no se mostraban en ningún lado."
+      },
+      {
+        "type": "nuevo",
+        "text": "Las consultas del sitio se pueden marcar como leídas, de a una o todas juntas, así el contador rojo deja de mostrar mensajes ya atendidos."
+      },
+      {
+        "type": "mejora",
+        "text": "Al entrar desde la barra superior, Mensajería abre directamente la bandeja que tiene mensajes pendientes."
+      },
+      {
+        "type": "mejora",
+        "text": "Se ocultó la ventana de WhatsApp, que no se estaba usando. Las conversaciones quedan guardadas y se pueden volver a mostrar cuando haga falta."
+      }
+    ]
+  },
+  {
     "date": "2026-08-06",
     "title": "Detalle de propiedades abre desde arriba",
     "items": [
