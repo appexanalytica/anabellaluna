@@ -5,7 +5,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import { Navbar, Footer, Sidebar, ThemeSettings, OnboardingTutorial } from './components';
-import { Ecommerce, Orders, Calendar, Employees, Stacked, Pyramid, Customers, Kanban, Line, Area, Bar, Pie, Financial, ColorPicker, ColorMapping, Editor, DashboardEjecutivo, Propiedades, ClientesCRM, Agentes, Citas, Ventas, Documentos, Plantillas, Reportes, Integraciones, Consultas, Configuracion, Workflows, Automatizacion, RolesPermisos, Campanas, EmailMarketing, AnalyticsMarketing, MiPerfil, EditorImagenes, Tasaciones, ToursVirtuales } from './pages';
+import { DashboardEjecutivo, Propiedades, ClientesCRM, Agentes, Citas, Ventas, Documentos, Plantillas, Reportes, Integraciones, Consultas, Automatizacion, MiPerfil, EditorImagenes, Tasaciones, ToursVirtuales } from './pages';
 import Seguridad from './pages/Seguridad';
 import MarketingAI from './pages/MarketingAI';
 import WhatsAppSesiones from './pages/WhatsAppSesiones';
@@ -408,7 +408,6 @@ const App = () => {
               <Routes>
                 {/* dashboard  */}
                 <Route path="/" element={(<DashboardEjecutivo />)} />
-                <Route path="/ecommerce" element={(<Ecommerce />)} />
 
                 {/* CRM Inmobiliario - 8 Módulos Principales */}
                 <Route path="/propiedades" element={<Propiedades />} />
@@ -425,7 +424,8 @@ const App = () => {
                 <Route path="/tareas" element={<Navigate to="/citas" replace />} />
                 <Route path="/consultas" element={<Consultas />} />
                 <Route path="/integraciones" element={<Integraciones />} />
-                <Route path="/configuracion" element={<Configuracion />} />
+                {/* La configuración del usuario vive en Mi Perfil y Seguridad */}
+                <Route path="/configuracion" element={<Navigate to="/perfil" replace />} />
                 <Route path="/perfil" element={<MiPerfil />} />
                 <Route path="/seguridad" element={<Seguridad />} />
                 {/* Recompensas fusionado dentro de Agentes (centro de mando) */}
@@ -436,62 +436,27 @@ const App = () => {
                 <Route path="/tasaciones" element={<Tasaciones />} />
                 <Route path="/tours-virtuales" element={<ToursVirtuales />} />
 
-                {/* pages  */}
-                <Route path="/orders" element={<Orders />} />
-                <Route path="/employees" element={<Employees />} />
-                <Route path="/customers" element={<Customers />} />
-
-                {/* apps  */}
-                <Route path="/kanban" element={<Kanban />} />
-                <Route path="/editor" element={<EditorImagenes />} />
+                {/* Editor de imágenes (alias histórico) */}
+                <Route path="/editor" element={<Navigate to="/editor-imagenes" replace />} />
                 <Route path="/editor-imagenes" element={<EditorImagenes />} />
-                <Route path="/calendar" element={<Calendar />} />
-                <Route path="/color-picker" element={<ColorPicker />} />
 
-                {/* charts  */}
-                <Route path="/line" element={<Line />} />
-                <Route path="/area" element={<Area />} />
-                <Route path="/bar" element={<Bar />} />
-                <Route path="/pie" element={<Pie />} />
-                <Route path="/financial" element={<Financial />} />
-                <Route path="/color-mapping" element={<ColorMapping />} />
-                <Route path="/pyramid" element={<Pyramid />} />
-                <Route path="/stacked" element={<Stacked />} />
-
-                {/* Módulos Avanzados - Automatización */}
-                <Route path="/workflows" element={<Workflows />} />
+                {/* Automatización */}
                 <Route path="/automatizacion" element={<Automatizacion />} />
-                <Route path="/reglas-negocio" element={<Workflows />} />
 
-                {/* Módulos Avanzados - Seguridad */}
-                <Route path="/autenticacion" element={<RolesPermisos />} />
-                <Route path="/roles-permisos" element={<RolesPermisos />} />
-                <Route path="/auditoria" element={<RolesPermisos />} />
-
-                {/* Módulos Avanzados - Marketing */}
-                <Route path="/campanas" element={<Campanas />} />
-                <Route path="/email-marketing" element={<EmailMarketing />} />
-                <Route path="/analytics-marketing" element={<AnalyticsMarketing />} />
+                {/* Marketing e IA */}
                 <Route path="/marketing-ai" element={<MarketingAI />} />
                 <Route path="/ai-providers" element={<AIProviders />} />
                 <Route path="/ai-observability" element={<AIObservability />} />
 
-                {/* Módulos Avanzados - Atención al Cliente */}
-                <Route path="/tickets" element={<Workflows />} />
-                <Route path="/chat-soporte" element={<Workflows />} />
-                <Route path="/base-conocimiento" element={<Workflows />} />
+                {/* Integraciones (alias por tipo de sistema conectado) */}
+                <Route path="/erp-integracion" element={<Navigate to="/integraciones" replace />} />
+                <Route path="/contabilidad" element={<Navigate to="/integraciones" replace />} />
+                <Route path="/telefonia" element={<Navigate to="/integraciones" replace />} />
+                <Route path="/apis-externas" element={<Navigate to="/integraciones" replace />} />
+                <Route path="/webhooks" element={<Navigate to="/integraciones" replace />} />
 
-                {/* Módulos Avanzados - Integraciones */}
-                <Route path="/erp-integracion" element={<Integraciones />} />
-                <Route path="/contabilidad" element={<Integraciones />} />
-                <Route path="/telefonia" element={<Integraciones />} />
-                <Route path="/apis-externas" element={<Integraciones />} />
-                <Route path="/webhooks" element={<Integraciones />} />
-
-                {/* Módulos Avanzados - Movilidad */}
-                <Route path="/app-movil" element={<Workflows />} />
-                <Route path="/geolocalizacion" element={<Workflows />} />
-                <Route path="/notificaciones-push" element={<Workflows />} />
+                {/* Cualquier otra URL vuelve al inicio */}
+                <Route path="*" element={<Navigate to="/" replace />} />
 
               </Routes>
             </div>

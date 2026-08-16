@@ -31,11 +31,6 @@ const whatsappService = {
   // Templates
   getTemplates: () => api.get('/whatsapp/templates'),
 
-  syncTemplates: () => api.post('/whatsapp/templates/sync'),
-
-  // Broadcast
-  sendBroadcast: (payload) => api.post('/whatsapp/broadcast', payload),
-
   // Estadísticas
   getStats: () => api.get('/whatsapp/stats'),
 

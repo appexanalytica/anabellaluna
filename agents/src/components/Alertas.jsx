@@ -1,244 +1,206 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaBell, FaExclamationTriangle, FaInfoCircle, FaCheckCircle, FaTimesCircle, FaBirthdayCake, FaUserPlus, FaHandshake, FaFileAlt, FaClock, FaStar, FaCalendarAlt, FaBuilding, FaDollarSign, FaChartLine, FaClipboardList } from 'react-icons/fa';
+import {
+  FaBell, FaBirthdayCake, FaBuilding, FaCalendarAlt, FaChartLine, FaCheckCircle, FaCheckDouble,
+  FaClipboardList, FaClock, FaDollarSign, FaExclamationTriangle, FaFileAlt, FaHandshake,
+  FaInfoCircle, FaStar, FaTimesCircle, FaUserPlus,
+} from 'react-icons/fa';
+
+import NavPanel from './navbar/NavPanel';
 import { useStateContext } from '../contexts/ContextProvider';
 import notificationService from '../services/notificationService';
 
-const Alertas = () => {
-  const { currentColor, setIsClicked, initialState } = useStateContext();
+/**
+ * Centro de alertas.
+ *
+ * Antes este panel marcaba todo como leído apenas se abría: nunca se veía cuál
+ * era nueva, el contador quedaba clavado en 0 y "marcar todas" salía siempre
+ * deshabilitado. Ahora se marca al abrir cada alerta o con el botón explícito,
+ * y el badge de la navbar sólo baja cuando el servidor confirma.
+ */
+
+const ESTILOS = {
+  bienvenida: { icon: <FaUserPlus />, fondo: 'bg-green-50 dark:bg-green-900/20', borde: 'border-green-500', texto: 'text-green-600 dark:text-green-400' },
+  seguimiento_contacto: { icon: <FaClock />, fondo: 'bg-blue-50 dark:bg-blue-900/20', borde: 'border-blue-500', texto: 'text-blue-600 dark:text-blue-400' },
+  cumpleanos: { icon: <FaBirthdayCake />, fondo: 'bg-pink-50 dark:bg-pink-900/20', borde: 'border-pink-500', texto: 'text-pink-600 dark:text-pink-400' },
+  cumpleanos_contacto: { icon: <FaBirthdayCake />, fondo: 'bg-pink-50 dark:bg-pink-900/20', borde: 'border-pink-500', texto: 'text-pink-600 dark:text-pink-400' },
+  seguimiento_propuesta: { icon: <FaFileAlt />, fondo: 'bg-purple-50 dark:bg-purple-900/20', borde: 'border-purple-500', texto: 'text-purple-600 dark:text-purple-400' },
+  renovacion: { icon: <FaHandshake />, fondo: 'bg-orange-50 dark:bg-orange-900/20', borde: 'border-orange-500', texto: 'text-orange-600 dark:text-orange-400' },
+  evento_especial: { icon: <FaStar />, fondo: 'bg-yellow-50 dark:bg-yellow-900/20', borde: 'border-yellow-500', texto: 'text-yellow-600 dark:text-yellow-400' },
+  feedback: { icon: <FaCheckCircle />, fondo: 'bg-teal-50 dark:bg-teal-900/20', borde: 'border-teal-500', texto: 'text-teal-600 dark:text-teal-400' },
+  inactividad: { icon: <FaExclamationTriangle />, fondo: 'bg-red-50 dark:bg-red-900/20', borde: 'border-red-500', texto: 'text-red-600 dark:text-red-400' },
+  objetivo: { icon: <FaCalendarAlt />, fondo: 'bg-indigo-50 dark:bg-indigo-900/20', borde: 'border-indigo-500', texto: 'text-indigo-600 dark:text-indigo-400' },
+  vencimiento_documento: { icon: <FaTimesCircle />, fondo: 'bg-orange-50 dark:bg-orange-900/20', borde: 'border-orange-500', texto: 'text-orange-600 dark:text-orange-400' },
+  hito: { icon: <FaStar />, fondo: 'bg-amber-50 dark:bg-amber-900/20', borde: 'border-amber-500', texto: 'text-amber-600 dark:text-amber-400' },
+  fecha_importante: { icon: <FaCalendarAlt />, fondo: 'bg-violet-50 dark:bg-violet-900/20', borde: 'border-violet-500', texto: 'text-violet-600 dark:text-violet-400' },
+  sistema: { icon: <FaInfoCircle />, fondo: 'bg-gray-50 dark:bg-gray-900/20', borde: 'border-gray-500', texto: 'text-gray-600 dark:text-gray-400' },
+  operacion_nueva: { icon: <FaDollarSign />, fondo: 'bg-green-50 dark:bg-green-900/20', borde: 'border-green-500', texto: 'text-green-600 dark:text-green-400' },
+  agente_rendimiento: { icon: <FaChartLine />, fondo: 'bg-indigo-50 dark:bg-indigo-900/20', borde: 'border-indigo-500', texto: 'text-indigo-600 dark:text-indigo-400' },
+  contrato_vencimiento: { icon: <FaTimesCircle />, fondo: 'bg-orange-50 dark:bg-orange-900/20', borde: 'border-orange-500', texto: 'text-orange-600 dark:text-orange-400' },
+  propiedad_estado: { icon: <FaBuilding />, fondo: 'bg-emerald-50 dark:bg-emerald-900/20', borde: 'border-emerald-500', texto: 'text-emerald-600 dark:text-emerald-400' },
+  meta_cumplida: { icon: <FaCheckCircle />, fondo: 'bg-green-50 dark:bg-green-900/20', borde: 'border-green-500', texto: 'text-green-600 dark:text-green-400' },
+  reporte_diario: { icon: <FaClipboardList />, fondo: 'bg-slate-50 dark:bg-slate-900/20', borde: 'border-slate-500', texto: 'text-slate-600 dark:text-slate-400' },
+};
+
+const estiloDe = (tipo, prioridad) => {
+  const base = ESTILOS[tipo] || ESTILOS.sistema;
+  if (prioridad === 'urgente') {
+    return { ...base, fondo: 'bg-red-50 dark:bg-red-900/20', borde: 'border-red-500', texto: 'text-red-600 dark:text-red-400' };
+  }
+  return base;
+};
+
+const formatTiempo = (fecha) => {
+  if (!fecha) return '';
+  const d = new Date(fecha);
+  const mins = Math.floor((Date.now() - d.getTime()) / 60000);
+  if (mins < 1) return 'Ahora';
+  if (mins < 60) return `Hace ${mins} min`;
+  const horas = Math.floor(mins / 60);
+  if (horas < 24) return `Hace ${horas} h`;
+  const dias = Math.floor(horas / 24);
+  if (dias === 1) return 'Ayer';
+  if (dias < 7) return `Hace ${dias} días`;
+  return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+};
+
+const Alertas = ({ onClose, onUnreadChange }) => {
+  const { currentColor } = useStateContext();
   const navigate = useNavigate();
   const [alertas, setAlertas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [unreadCount, setUnreadCount] = useState(0);
 
-  // Map notification types to icons and styles
-  const getNotificationStyle = (tipo, prioridad) => {
-    const styles = {
-      bienvenida: { icon: <FaUserPlus />, color: 'bg-green-50 dark:bg-green-900/20', borderColor: 'border-green-500', textColor: 'text-green-600 dark:text-green-400' },
-      seguimiento_contacto: { icon: <FaClock />, color: 'bg-blue-50 dark:bg-blue-900/20', borderColor: 'border-blue-500', textColor: 'text-blue-600 dark:text-blue-400' },
-      cumpleanos: { icon: <FaBirthdayCake />, color: 'bg-pink-50 dark:bg-pink-900/20', borderColor: 'border-pink-500', textColor: 'text-pink-600 dark:text-pink-400' },
-      seguimiento_propuesta: { icon: <FaFileAlt />, color: 'bg-purple-50 dark:bg-purple-900/20', borderColor: 'border-purple-500', textColor: 'text-purple-600 dark:text-purple-400' },
-      renovacion: { icon: <FaHandshake />, color: 'bg-orange-50 dark:bg-orange-900/20', borderColor: 'border-orange-500', textColor: 'text-orange-600 dark:text-orange-400' },
-      evento_especial: { icon: <FaStar />, color: 'bg-yellow-50 dark:bg-yellow-900/20', borderColor: 'border-yellow-500', textColor: 'text-yellow-600 dark:text-yellow-400' },
-      feedback: { icon: <FaCheckCircle />, color: 'bg-teal-50 dark:bg-teal-900/20', borderColor: 'border-teal-500', textColor: 'text-teal-600 dark:text-teal-400' },
-      inactividad: { icon: <FaExclamationTriangle />, color: 'bg-red-50 dark:bg-red-900/20', borderColor: 'border-red-500', textColor: 'text-red-600 dark:text-red-400' },
-      cumpleanos_contacto: { icon: <FaBirthdayCake />, color: 'bg-pink-50 dark:bg-pink-900/20', borderColor: 'border-pink-500', textColor: 'text-pink-600 dark:text-pink-400' },
-      objetivo: { icon: <FaCalendarAlt />, color: 'bg-indigo-50 dark:bg-indigo-900/20', borderColor: 'border-indigo-500', textColor: 'text-indigo-600 dark:text-indigo-400' },
-      vencimiento_documento: { icon: <FaTimesCircle />, color: 'bg-orange-50 dark:bg-orange-900/20', borderColor: 'border-orange-500', textColor: 'text-orange-600 dark:text-orange-400' },
-      hito: { icon: <FaStar />, color: 'bg-amber-50 dark:bg-amber-900/20', borderColor: 'border-amber-500', textColor: 'text-amber-600 dark:text-amber-400' },
-      sistema: { icon: <FaInfoCircle />, color: 'bg-gray-50 dark:bg-gray-900/20', borderColor: 'border-gray-500', textColor: 'text-gray-600 dark:text-gray-400' },
-      tarea: { icon: <FaClipboardList />, color: 'bg-blue-50 dark:bg-blue-900/20', borderColor: 'border-blue-500', textColor: 'text-blue-600 dark:text-blue-400' },
-      cita: { icon: <FaCalendarAlt />, color: 'bg-violet-50 dark:bg-violet-900/20', borderColor: 'border-violet-500', textColor: 'text-violet-600 dark:text-violet-400' },
-      fecha_importante: { icon: <FaCalendarAlt />, color: 'bg-violet-50 dark:bg-violet-900/20', borderColor: 'border-violet-500', textColor: 'text-violet-600 dark:text-violet-400' },
-      operacion_nueva: { icon: <FaDollarSign />, color: 'bg-green-50 dark:bg-green-900/20', borderColor: 'border-green-500', textColor: 'text-green-600 dark:text-green-400' },
-      consulta_web: { icon: <FaUserPlus />, color: 'bg-cyan-50 dark:bg-cyan-900/20', borderColor: 'border-cyan-500', textColor: 'text-cyan-600 dark:text-cyan-400' },
-      agente_rendimiento: { icon: <FaChartLine />, color: 'bg-indigo-50 dark:bg-indigo-900/20', borderColor: 'border-indigo-500', textColor: 'text-indigo-600 dark:text-indigo-400' },
-      contrato_vencimiento: { icon: <FaTimesCircle />, color: 'bg-orange-50 dark:bg-orange-900/20', borderColor: 'border-orange-500', textColor: 'text-orange-600 dark:text-orange-400' },
-      propiedad_estado: { icon: <FaBuilding />, color: 'bg-emerald-50 dark:bg-emerald-900/20', borderColor: 'border-emerald-500', textColor: 'text-emerald-600 dark:text-emerald-400' },
-      meta_cumplida: { icon: <FaCheckCircle />, color: 'bg-green-50 dark:bg-green-900/20', borderColor: 'border-green-500', textColor: 'text-green-600 dark:text-green-400' },
-      reporte_diario: { icon: <FaClipboardList />, color: 'bg-slate-50 dark:bg-slate-900/20', borderColor: 'border-slate-500', textColor: 'text-slate-600 dark:text-slate-400' },
-    };
+  const noLeidas = alertas.filter((a) => !a.leida).length;
 
-    // Override colors for urgent priority
-    if (prioridad === 'urgente') {
-      return { ...styles[tipo] || styles.sistema, color: 'bg-red-50 dark:bg-red-900/20', borderColor: 'border-red-500', textColor: 'text-red-600 dark:text-red-400' };
-    }
-
-    return styles[tipo] || styles.sistema;
-  };
-
-  const formatTime = (date) => {
-    if (!date) return '';
-    const now = new Date();
-    const d = new Date(date);
-    const diffMs = now - d;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Ahora';
-    if (diffMins < 60) return `Hace ${diffMins} min`;
-    if (diffHours < 24) return `Hace ${diffHours}h`;
-    if (diffDays === 1) return 'Ayer';
-    if (diffDays < 7) return `Hace ${diffDays} días`;
-    return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
-  };
-
-  const loadNotifications = useCallback(async () => {
+  const cargar = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await notificationService.getNotifications({ limite: 20 });
-      setAlertas(response?.items || []);
-      setUnreadCount(0);
-      notificationService.markAllAsRead().catch(() => {});
+      const respuesta = await notificationService.getNotifications({ limite: 20 });
+      setAlertas(respuesta?.items || []);
     } catch (err) {
-      console.error('Error loading notifications:', err);
+      console.error('Error cargando alertas:', err);
+      setAlertas([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    loadNotifications();
-  }, [loadNotifications]);
+  useEffect(() => { cargar(); }, [cargar]);
 
-  const handleMarkAsRead = async (id) => {
+  const marcarUna = async (alerta) => {
+    if (alerta.leida) return;
     try {
-      await notificationService.markAsRead(id);
-      setAlertas((prev) => prev.map((a) => (a._id === id ? { ...a, leida: true } : a)));
-      setUnreadCount((prev) => Math.max(0, prev - 1));
+      await notificationService.markAsRead(alerta._id);
+      setAlertas((prev) => {
+        const siguiente = prev.map((a) => (a._id === alerta._id ? { ...a, leida: true } : a));
+        if (onUnreadChange) onUnreadChange(siguiente.filter((a) => !a.leida).length);
+        return siguiente;
+      });
     } catch (err) {
-      console.error('Error marking as read:', err);
+      console.error('Error marcando la alerta como leída:', err);
     }
   };
 
-  const handleMarkAllAsRead = async () => {
+  const marcarTodas = async () => {
     try {
       await notificationService.markAllAsRead();
       setAlertas((prev) => prev.map((a) => ({ ...a, leida: true })));
-      setUnreadCount(0);
+      if (onUnreadChange) onUnreadChange(0);
     } catch (err) {
-      console.error('Error marking all as read:', err);
+      console.error('Error marcando todas como leídas:', err);
     }
   };
 
-  const alertasNoLeidas = unreadCount;
+  const abrirAlerta = (alerta) => {
+    marcarUna(alerta);
+    if (!alerta.accionUrl) return;
+    onClose();
+    // El backend guarda las rutas sin prefijo; el panel de agentes vive bajo /crm.
+    const ruta = alerta.accionUrl.startsWith('/crm') ? alerta.accionUrl : `/crm${alerta.accionUrl}`;
+    navigate(ruta);
+  };
 
   return (
-    <div className="nav-item fixed inset-x-4 top-20 mx-auto md:absolute md:inset-x-auto md:right-40 md:top-16 md:mx-0 bg-white dark:bg-[#42464D] p-6 rounded-lg max-w-96 w-auto md:w-96 shadow-xl z-50">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <FaBell className="text-2xl" style={{ color: currentColor }} />
-            {alertasNoLeidas > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                {alertasNoLeidas}
-              </span>
-            )}
-          </div>
-          <div>
-            <p className="font-semibold text-lg dark:text-gray-200">Alertas del Sistema</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {alertasNoLeidas} sin leer
-            </p>
-          </div>
+    <NavPanel
+      titulo="Alertas"
+      subtitulo={noLeidas > 0 ? `${noLeidas} sin leer` : 'Todo al día'}
+      icono={(
+        <div className="relative flex-shrink-0">
+          <FaBell className="text-2xl" style={{ color: currentColor }} />
+          {noLeidas > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-bold px-1">
+              {noLeidas > 99 ? '99+' : noLeidas}
+            </span>
+          )}
         </div>
-      </div>
-
-      <div className="space-y-3 max-h-96 overflow-y-auto">
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: currentColor }} />
-          </div>
-        ) : alertas.length === 0 ? (
-          <div className="text-center py-8">
-            <FaBell className="text-4xl text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-500 dark:text-gray-400">No hay notificaciones</p>
-          </div>
-        ) : (
-          alertas.map((alerta) => {
-            const style = getNotificationStyle(alerta.tipo, alerta.prioridad);
-            return (
-              <div
-                key={alerta._id}
-                onClick={() => !alerta.leida && handleMarkAsRead(alerta._id)}
-                className={`${style.color} border-l-4 ${style.borderColor} p-4 rounded-lg hover:shadow-md transition-all cursor-pointer ${
-                  alerta.leida ? 'opacity-70' : ''
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`text-xl ${style.textColor}`}>
-                    {style.icon}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-1">
-                      <h4 className="font-bold text-sm dark:text-gray-200">
-                        {alerta.titulo}
-                      </h4>
-                      {!alerta.leida && (
-                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                      {alerta.mensaje}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatTime(alerta.createdAt)}
-                      </span>
-                      {(alerta.accionUrl || alerta.entidadTipo) && (
-                        <button
-                          type="button"
-                          className={`text-xs font-medium px-3 py-1 rounded-full transition-colors ${style.textColor} hover:bg-opacity-20`}
-                          style={{ backgroundColor: 'rgba(0,0,0,0.05)' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsClicked(initialState);
-                            // Navigate based on entity type
-                            if (alerta.entidadTipo === 'cliente' && alerta.entidadId) {
-                              navigate(`/crm/clientes?id=${alerta.entidadId}`);
-                            } else if (alerta.entidadTipo === 'propiedad' && alerta.entidadId) {
-                              navigate(`/crm/propiedades?id=${alerta.entidadId}`);
-                            } else if (alerta.accionUrl) {
-                              // Prefix with /crm if it's a relative path without it
-                              const url = alerta.accionUrl.startsWith('/crm') ? alerta.accionUrl : `/crm${alerta.accionUrl}`;
-                              navigate(url);
-                            }
-                          }}
-                        >
-                          Ver más
-                        </button>
-                      )}
-                    </div>
-                    {alerta.calendarSynced && (
-                      <div className="mt-2 flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                        <FaCalendarAlt className="text-xs" />
-                        <span>Sincronizado con Calendar</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      <div className="mt-4 pt-4 border-t dark:border-gray-600 space-y-2">
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={handleMarkAllAsRead}
-            disabled={alertasNoLeidas === 0}
-            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors disabled:opacity-50"
-          >
-            Marcar todas como leídas
-          </button>
-          <button
-            type="button"
-            className="text-sm font-medium"
-            style={{ color: currentColor }}
-            onClick={() => {
-              setIsClicked(initialState);
-              navigate('/crm/automatizacion');
-            }}
-          >
-            Configurar alertas
-          </button>
-        </div>
+      )}
+      onClose={onClose}
+      acciones={noLeidas > 0 ? (
         <button
           type="button"
-          className="w-full py-2 rounded-lg font-medium transition-colors"
-          style={{ backgroundColor: currentColor, color: 'white' }}
-          onClick={() => {
-            setIsClicked(initialState);
-            navigate('/crm/automatizacion');
-          }}
+          onClick={marcarTodas}
+          title="Marcar todas como leídas"
+          aria-label="Marcar todas como leídas"
+          className="p-2 rounded-full text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
-          Ver Centro de Automatización →
+          <FaCheckDouble />
         </button>
-      </div>
-    </div>
+      ) : null}
+      footer={(
+        <button
+          type="button"
+          className="w-full py-2 rounded-lg font-medium transition-colors border"
+          style={{ borderColor: currentColor, color: currentColor }}
+          onClick={() => { onClose(); navigate('/crm/automatizacion'); }}
+        >
+          Configurar automatizaciones →
+        </button>
+      )}
+    >
+      {loading && alertas.length === 0 ? (
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: currentColor }} />
+        </div>
+      ) : alertas.length === 0 ? (
+        <div className="text-center py-10">
+          <FaBell className="text-4xl text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+          <p className="text-gray-500 dark:text-gray-400">No hay alertas</p>
+          <p className="text-xs text-gray-400 mt-1">
+            Acá aparecen operaciones nuevas, contratos por vencer y cambios de estado
+          </p>
+        </div>
+      ) : (
+        alertas.map((alerta) => {
+          const estilo = estiloDe(alerta.tipo, alerta.prioridad);
+          return (
+            <button
+              key={alerta._id}
+              type="button"
+              onClick={() => abrirAlerta(alerta)}
+              className={`w-full text-left ${estilo.fondo} border-l-4 ${estilo.borde} p-3 rounded-lg hover:shadow-md transition-all ${alerta.leida ? 'opacity-60' : ''}`}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`text-lg flex-shrink-0 mt-0.5 ${estilo.texto}`}>{estilo.icon}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2 mb-0.5">
+                    <h4 className={`text-sm dark:text-gray-200 ${alerta.leida ? 'font-medium' : 'font-bold'}`}>
+                      {alerta.titulo}
+                    </h4>
+                    {!alerta.leida && (
+                      <span className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0 mt-1.5" />
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-1 line-clamp-2">{alerta.mensaje}</p>
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                    {formatTiempo(alerta.createdAt)}
+                  </span>
+                </div>
+              </div>
+            </button>
+          );
+        })
+      )}
+    </NavPanel>
   );
 };
 

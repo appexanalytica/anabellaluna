@@ -15,7 +15,6 @@ import { Navbar, Footer, Sidebar, ThemeSettings, Celebration, OnboardingTutorial
 import { AgentDashboard, Propiedades, ClientesCRM, Citas, Ventas, Documentos, Plantillas, Reportes, Integraciones, Consultas, MiPerfil, Recompensas, Automatizacion, FechasImportantes, EditorImagenes, Tasaciones, ToursVirtuales } from './pages';
 import MarketingAI from './pages/MarketingAI';
 import MisSesiones from './pages/MisSesiones';
-import Mensajeria from './pages/Mensajeria';
 import LoginAgente from './pages/LoginAgente';
 import Seguridad from './pages/Seguridad';
 import AIFloatingOrb from './components/ai/AIFloatingOrb';
@@ -26,6 +25,7 @@ import './App.css';
 import { useStateContext } from './contexts/ContextProvider';
 import { isApiUnavailableError } from './config/api';
 import { authService } from './services/authService';
+import { crmService } from './services/crmService';
 
 const RequireAuth = ({ children }) => {
   const location = useLocation();
@@ -39,6 +39,12 @@ const RequireAuth = ({ children }) => {
 
 const CrmLayout = () => {
   const { currentMode, themeSettings } = useStateContext();
+
+  // Registro de login para la racha de recompensas. Vivía en la navbar, que ya
+  // no muestra los logros; el registro sigue siendo necesario igual.
+  useEffect(() => {
+    crmService.rewards.recordLogin().catch(() => {});
+  }, []);
 
   return (
     <div className={currentMode === 'Dark' ? 'dark' : ''}>
@@ -181,7 +187,8 @@ const App = () => {
           <Route path="tours-virtuales" element={<ToursVirtuales />} />
           <Route path="marketing-ai" element={<MarketingAI />} />
           <Route path="mis-sesiones" element={<MisSesiones />} />
-          <Route path="mensajeria" element={<Mensajeria />} />
+          {/* Mensajería se fusionó en Consultas */}
+          <Route path="mensajeria" element={<Navigate to="/crm/consultas" replace />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

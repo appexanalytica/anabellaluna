@@ -680,6 +680,8 @@ router.post('/enquiries', async (req, res) => {
           id: String(prop._id),
           slug: prop.slug || String(prop._id),
           title: prop.title || (prop.metadata && prop.metadata.titulo) || '',
+          // Portada pública: la navbar del ERP la usa como miniatura.
+          coverUrl: (await getPropertyCoverMap([prop._id])).get(String(prop._id)) || '',
         },
       },
     });
@@ -823,6 +825,8 @@ router.post('/visits', async (req, res) => {
           id: String(prop._id),
           slug: prop.slug || String(prop._id),
           title: prop.title || (prop.metadata && prop.metadata.titulo) || '',
+          // Portada pública: la navbar del ERP la usa como miniatura.
+          coverUrl: (await getPropertyCoverMap([prop._id])).get(String(prop._id)) || '',
         },
         start: startDate.toISOString(),
         end: endDate.toISOString(),

@@ -28,17 +28,19 @@ router.get('/providers', async (req, res) => {
     const statsMap = {};
     providerStats.forEach((p) => { statsMap[p.name] = p; });
 
-    const orEnvValid = !!(process.env.OPENROUTER_API_KEY);
+    const envValid = !!(process.env.OPENAI_API_KEY);
+    const openai   = config.openai || {};
 
     const safeConfig = {
-      defaultProvider: 'openrouter',
-      openrouter: {
+      defaultProvider: 'openai',
+      openai: {
         enabled:   true,
-        hasKey:    !!(config.openrouter && config.openrouter.apiKeyEncrypted) || orEnvValid,
-        keySource: (config.openrouter && config.openrouter.apiKeyEncrypted) ? 'db' : (orEnvValid ? 'env' : 'none'),
-        model:     (config.openrouter && config.openrouter.model)     || process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini',
-        maxTokens: (config.openrouter && config.openrouter.maxTokens) || 4096,
-        stats:     statsMap['openrouter'] || null,
+        hasKey:    !!openai.apiKeyEncrypted || envValid,
+        keySource: openai.apiKeyEncrypted ? 'db' : (envValid ? 'env' : 'none'),
+        model:     openai.model     || process.env.OPENAI_MODEL || 'gpt-4o-mini',
+        maxTokens: openai.maxTokens || 4096,
+        embeddingModel: process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small',
+        stats:     statsMap['openai'] || null,
       },
     };
 
@@ -51,31 +53,33 @@ router.get('/providers', async (req, res) => {
 // PUT /admin/config/ai/providers
 router.put('/providers', async (req, res) => {
   try {
-    const { openrouter } = req.body;
+    const { openai } = req.body;
     const userId = String(req.user.sub || req.user.id || req.user._id || '');
 
     const existing = await GlobalConfig.getValue('ai_provider_config', {});
-    const update   = { ...existing, defaultProvider: 'openrouter' };
+    const update   = { ...existing, defaultProvider: 'openai' };
+    // La config de OpenRouter queda descartada: su key no sirve contra OpenAI.
+    delete update.openrouter;
 
-    if (openrouter) {
-      const prev = existing.openrouter || {};
-      update.openrouter = {
+    if (openai) {
+      const prev = existing.openai || {};
+      update.openai = {
         ...prev,
         enabled:   true,
-        model:     openrouter.model     || prev.model     || 'openai/gpt-4o-mini',
-        maxTokens: openrouter.maxTokens || prev.maxTokens || 4096,
+        model:     openai.model     || prev.model     || 'gpt-4o-mini',
+        maxTokens: openai.maxTokens || prev.maxTokens || 4096,
       };
-      if (openrouter.apiKey && openrouter.apiKey.trim()) {
-        update.openrouter.apiKeyEncrypted = encrypt(openrouter.apiKey.trim());
+      if (openai.apiKey && openai.apiKey.trim()) {
+        update.openai.apiKeyEncrypted = encrypt(openai.apiKey.trim());
       } else if (prev.apiKeyEncrypted) {
-        update.openrouter.apiKeyEncrypted = prev.apiKeyEncrypted;
+        update.openai.apiKeyEncrypted = prev.apiKeyEncrypted;
       }
     }
 
     await GlobalConfig.setValue('ai_provider_config', update, 'AI provider config', userId);
     invalidateCache();
 
-    res.json({ success: true, message: 'OpenRouter config updated' });
+    res.json({ success: true, message: 'OpenAI config updated' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

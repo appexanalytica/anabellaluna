@@ -119,13 +119,6 @@ export const header = [
         ],
       },
       {
-        menuValue: "Detalles de la factura",
-        route: all_routes.invoiceDetails,
-        hasSubRoute: false,
-        showSubRoute: false,
-        subMenus: [],
-      },
-      {
         menuValue: "Contáctanos",
         route: all_routes.contactUs,
         hasSubRoute: false,
@@ -135,35 +128,6 @@ export const header = [
       {
         menuValue: "Lista de deseos",
         route: all_routes.wishlist,
-        hasSubRoute: false,
-        showSubRoute: false,
-        subMenus: [],
-      },
-      {
-        menuValue: "Página de error",
-        hasSubRoute: true,
-        showSubRoute: true,
-        showAsTab2: false,
-        subMenus: [
-          {
-            menuValue: "Error 404",
-            route: all_routes.error404,
-            hasSubRoute: false,
-            showSubRoute: false,
-            subMenus: [],
-          },
-          {
-            menuValue: "Error 500",
-            route: all_routes.error500,
-            hasSubRoute: false,
-            showSubRoute: false,
-            subMenus: [],
-          },
-        ],
-      },
-      {
-        menuValue: "Precios",
-        route: all_routes.pricing,
         hasSubRoute: false,
         showSubRoute: false,
         subMenus: [],
@@ -206,20 +170,6 @@ export const header = [
       {
         menuValue: "Política de privacidad",
         route: all_routes.privacyPolicy,
-        hasSubRoute: false,
-        showSubRoute: false,
-        subMenus: [],
-      },
-      {
-        menuValue: "Mantenimiento",
-        route: all_routes.maintenance,
-        hasSubRoute: false,
-        showSubRoute: false,
-        subMenus: [],
-      },
-      {
-        menuValue: "Próximamente",
-        route: all_routes.comingSoon,
         hasSubRoute: false,
         showSubRoute: false,
         subMenus: [],

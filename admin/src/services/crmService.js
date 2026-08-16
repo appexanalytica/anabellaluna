@@ -18,6 +18,9 @@ const requireVisitPersisted = async (request) => {
 };
 
 export const crmService = {
+  // ============ BÚSQUEDA GLOBAL (Ctrl+K) ============
+  search: (q) => api.get(`/crm/search?q=${encodeURIComponent(q)}`),
+
   // ============ LINKS (DOCUMENTOS <-> ENTIDADES CRM) ============
   links: {
     getByEntity: (entityType, entityId) => api.get(`/crm/links?entityType=${encodeURIComponent(entityType)}&entityId=${encodeURIComponent(entityId)}`),
@@ -158,9 +161,9 @@ export const crmService = {
     getDashboard: () => api.get('/crm/stats/dashboard'),
     getAdminDashboard: () => api.get('/admin/stats/dashboard'),
     getOperacionesStats: () => api.get('/crm/stats/operaciones'),
-    getPropiedadesStats: () => api.get('/crm/stats/propiedades'),
-    getVentasStats: () => api.get('/crm/stats/ventas'),
-    getAgentesStats: () => api.get('/crm/stats/agentes'),
+    // Series mensuales para los gráficos del panel de clientes
+    getLeadsMensuales: (months = 6) => api.get(`/crm/stats/leads-mensuales?months=${months}`),
+    getClienteActividad: (clienteId, months = 6) => api.get(`/crm/stats/cliente/${encodeURIComponent(clienteId)}/actividad?months=${months}`),
   },
 
   // ============ RECOMPENSAS V2 ============

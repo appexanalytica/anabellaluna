@@ -39,7 +39,7 @@ const NotificationSchema = new mongoose.Schema({
   leida: { type: Boolean, default: false },
   fechaLectura: { type: Date },
   // Reference to related entity
-  entidadTipo: { type: String, enum: ['cliente', 'propiedad', 'operacion', 'cita', 'tarea', 'documento', 'agente'] },
+  entidadTipo: { type: String, enum: ['cliente', 'propiedad', 'operacion', 'cita', 'tarea', 'documento', 'agente', 'consulta'] },
   entidadId: { type: String, index: true },
   entidadNombre: { type: String },
   // Google Calendar integration

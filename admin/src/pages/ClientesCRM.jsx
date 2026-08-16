@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { confirmToast } from '../utils/confirmToast';
 import { FaPlus, FaSearch, FaTags, FaEnvelope, FaWhatsapp, FaPhone, FaBell, FaUsers, FaChartLine, FaFire, FaTimes, FaSave, FaUser, FaMapMarkerAlt, FaDollarSign, FaStar, FaCalendar, FaBuilding, FaHome, FaArrowLeft, FaEdit, FaTrash, FaHistory, FaComments, FaBriefcase, FaHeartbeat, FaClock, FaFileAlt, FaStream } from 'react-icons/fa';
@@ -160,6 +160,8 @@ const ClientesCRM = () => {
   const [clientesEjemplo, setClientesEjemplo] = useState([]);
   const [clientesLoading, setClientesLoading] = useState(false);
   const [clientesError, setClientesError] = useState('');
+  // Series mensuales reales de altas y conversiones (backend: /crm/stats/leads-mensuales)
+  const [leadsMensuales, setLeadsMensuales] = useState(null);
   const responsableOptions = useMemo(() => {
     const agentes = (Array.isArray(agentesOptions) ? agentesOptions : []).filter((item) => item?.tipo === 'agente');
     if (!inmobiliariaResponsable) return agentes;
@@ -404,6 +406,16 @@ const ClientesCRM = () => {
     }
   }, [normalizeCliente]);
 
+  // Series mensuales del gráfico de evolución. Si falla, el gráfico no se dibuja
+  // en lugar de mostrar números inventados.
+  useEffect(() => {
+    let cancelled = false;
+    crmService.stats.getLeadsMensuales(6)
+      .then((data) => { if (!cancelled) setLeadsMensuales(data); })
+      .catch(() => { if (!cancelled) setLeadsMensuales(null); });
+    return () => { cancelled = true; };
+  }, []);
+
   const handleFunnelStageChange = useCallback((clienteId, newStage) => {
     setClientesEjemplo((prev) =>
       prev.map((c) =>
@@ -423,6 +435,16 @@ const ClientesCRM = () => {
     crmService.agentes.forAssignment().then((data) => {
       setAgentesOptions(Array.isArray(data) ? data : []);
     }).catch(() => setAgentesOptions([]));
+  }, []);
+
+  // Abre el alta cuando se llega desde "+ Nuevo" de la navbar (?nuevo=1)
+  const openCreateModalRef = useRef(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('nuevo') && openCreateModalRef.current) {
+      openCreateModalRef.current();
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
 
   // Auto-open client detail when navigating via ?id=
@@ -615,6 +637,7 @@ const ClientesCRM = () => {
     setNuevoCliente(emptyForm);
     setShowModal(true);
   };
+  openCreateModalRef.current = openCreateModal;
 
   const handleEditCliente = (cliente) => {
     const id = cliente?._id || cliente?.id;
@@ -733,7 +756,7 @@ const ClientesCRM = () => {
     stroke: { curve: 'smooth', width: 2.5 },
     fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] } },
     xaxis: {
-      categories: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+      categories: leadsMensuales?.categories || [],
       labels: { style: { colors: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280', fontSize: '10px' } },
       axisBorder: { show: false }, axisTicks: { show: false },
     },
@@ -743,8 +766,8 @@ const ClientesCRM = () => {
     tooltip: { theme: currentMode === 'Dark' ? 'dark' : 'light' },
   };
   const scoringAreaSeries = [
-    { name: 'Nuevos Leads', data: [12, 18, 15, 22, 28, clientesEjemplo.filter(c => c.estado === 'Lead').length] },
-    { name: 'Conversiones', data: [3, 5, 4, 7, 9, cerrados] },
+    { name: 'Nuevos Leads', data: leadsMensuales?.nuevosLeads || [] },
+    { name: 'Conversiones', data: leadsMensuales?.conversiones || [] },
   ];
 
   const isDark = currentMode === 'Dark';
@@ -1014,7 +1037,13 @@ const ClientesCRM = () => {
               </div>
             </div>
           </div>
-          <Chart options={scoringAreaOptions} series={scoringAreaSeries} type="area" height={240} />
+          {leadsMensuales ? (
+            <Chart options={scoringAreaOptions} series={scoringAreaSeries} type="area" height={240} />
+          ) : (
+            <div className="h-[240px] flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">
+              Sin datos de evolución todavía
+            </div>
+          )}
           <div className="grid grid-cols-4 gap-4 mt-4 pt-4 border-t dark:border-gray-700">
             <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{clientesEjemplo.length}</p>

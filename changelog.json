@@ -2,6 +2,162 @@
   "$comment": "Changelog visible en el panel de Novedades del sidebar. Redactar en español simple, pensado para el usuario final (no técnico). Tipos válidos: nuevo | mejora | arreglo. Editar este archivo y rebuildear: scripts/write-app-version.js lo convierte en admin/agents src/config/changelog.js.",
   "entries": [
     {
+      "date": "2026-08-16",
+      "title": "La inteligencia artificial pasa a OpenAI, y llega la cotización del dólar",
+      "items": [
+        {
+          "type": "mejora",
+          "text": "Toda la inteligencia artificial del sistema ahora se conecta directo con OpenAI. La pantalla de Configuración AI cambió: hay que cargar una vez la API key de OpenAI para que vuelvan a funcionar el asistente y las sugerencias."
+        },
+        {
+          "type": "nuevo",
+          "text": "Se puede cargar la cotización del dólar desde Configuración AI. Sirve para comparar una propiedad publicada en pesos con el presupuesto de un cliente en dólares, y avisa cuando pasó más de una semana sin actualizarse."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-15",
+      "title": "Barra superior nueva: avisos que avisan de verdad",
+      "items": [
+        {
+          "type": "arreglo",
+          "text": "Los contadores de la barra superior ahora cuentan bien. Antes el número de tareas incluía las que ya estaban terminadas o canceladas y nunca bajaba, y las citas canceladas seguían sumando."
+        },
+        {
+          "type": "arreglo",
+          "text": "Se terminaron los avisos repetidos. Una consulta del sitio contaba a la vez en Consultas y en Alertas, y una tarea vencida volvía a avisar todos los días. Ahora cada cosa avisa una sola vez y en un solo lugar."
+        },
+        {
+          "type": "arreglo",
+          "text": "Al completar o cancelar una tarea, su aviso desaparece de la campana en el momento. Antes seguía ahí hasta que alguien borraba la tarea."
+        },
+        {
+          "type": "arreglo",
+          "text": "El panel de Alertas ya no marca todo como leído apenas se abre: ahora se ve cuáles son nuevas y cada una se marca al abrirla, o todas juntas con el botón."
+        },
+        {
+          "type": "arreglo",
+          "text": "El botón \"Ver más\" de las alertas ahora abre la pantalla correcta. Varias llevaban a direcciones que no existían y terminaban devolviendo al inicio o a la pantalla de ingreso."
+        },
+        {
+          "type": "arreglo",
+          "text": "La foto y el nombre del perfil se actualizan al instante después de guardarlos. Antes había que recargar la página para verlos cambiados."
+        },
+        {
+          "type": "arreglo",
+          "text": "Se dejaron de mostrar los avisos del navegador en cada recarga de página."
+        },
+        {
+          "type": "nuevo",
+          "text": "Buscador general con Ctrl+K: encontrá una propiedad por título o dirección, un cliente por nombre, mail o teléfono, o una operación, desde cualquier pantalla."
+        },
+        {
+          "type": "nuevo",
+          "text": "Botón \"+\" para crear una propiedad, un cliente, una cita o una tarea sin salir de donde estás."
+        },
+        {
+          "type": "nuevo",
+          "text": "El avatar ahora abre un menú con Mi perfil, Seguridad, modo claro/oscuro y Cerrar sesión. Antes no había forma de cerrar sesión desde la barra superior."
+        },
+        {
+          "type": "nuevo",
+          "text": "Los agentes ven su próxima cita con hora y lugar en la barra superior, y se resalta cuando falta menos de una hora."
+        },
+        {
+          "type": "nuevo",
+          "text": "Las notificaciones ahora llegan al celular aunque tengas la app cerrada. Si la tenés abierta no se duplican: se actualizan los números directamente."
+        },
+        {
+          "type": "mejora",
+          "text": "Tareas y Citas quedaron separadas, cada una con su propio botón, y muestran sólo lo urgente: lo vencido, lo de hoy y las citas de las próximas 24 horas."
+        },
+        {
+          "type": "mejora",
+          "text": "Propiedades salió de la barra superior: su lugar está en el menú lateral. El número que mostraba era el total de propiedades disponibles, no algo pendiente de resolver."
+        },
+        {
+          "type": "mejora",
+          "text": "El trofeo de Logros salió de la barra superior de agentes. Los logros siguen completos en su propia pantalla."
+        },
+        {
+          "type": "mejora",
+          "text": "Las consultas del sitio ahora muestran la foto de la propiedad consultada en lugar de un ícono."
+        },
+        {
+          "type": "mejora",
+          "text": "Los desplegables se cierran con Escape o tocando de nuevo el mismo botón, y en el celular ya no se salen de la pantalla."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-14",
+      "title": "Limpieza: se van las pantallas que no hacían nada",
+      "items": [
+        {
+          "type": "arreglo",
+          "text": "Los gráficos de la ficha de cliente ahora muestran datos reales de la base. Antes varias barras y líneas traían números de ejemplo que no salían de ningún lado."
+        },
+        {
+          "type": "arreglo",
+          "text": "Se quitaron de la ficha de cliente los recuadros de sesiones web, dispositivos, fuente de tráfico y acciones en la web. Esa información nunca se midió, así que los números que mostraban eran inventados."
+        },
+        {
+          "type": "arreglo",
+          "text": "El gráfico de evolución de leads y conversiones del panel de clientes ahora se calcula con las altas reales de cada mes."
+        },
+        {
+          "type": "nuevo",
+          "text": "Administración ya tiene la pantalla de Automatización completa, la misma que usaban los agentes: crear reglas desde plantillas, activarlas, pausarlas, probarlas y ver sus estadísticas."
+        },
+        {
+          "type": "mejora",
+          "text": "Se retiraron las pantallas de Campañas, Email Marketing, Workflows, Analítica de Marketing, Roles y Permisos y Configuración. Estaban a medio hacer: mostraban datos de ejemplo y sus botones no guardaban nada. Vuelven cuando estén terminadas."
+        },
+        {
+          "type": "mejora",
+          "text": "En el menú del perfil de administración, Configuración se reemplazó por Seguridad, que sí permite cambiar la contraseña y activar la verificación en dos pasos."
+        },
+        {
+          "type": "mejora",
+          "text": "En el panel de agentes, el menú del perfil ahora dice Consultas y Agenda, que es adonde llevaba realmente."
+        },
+        {
+          "type": "mejora",
+          "text": "Se quitó el botón de adjuntar archivos del chat de WhatsApp, que solo avisaba que no estaba disponible."
+        },
+        {
+          "type": "mejora",
+          "text": "Se limpió el menú del sitio público: ya no aparecen las páginas de demostración que venían con la plantilla (factura, errores 404 y 500, mantenimiento, próximamente y precios)."
+        },
+        {
+          "type": "mejora",
+          "text": "El panel de administración carga bastante más rápido: se eliminaron las pantallas de demostración que quedaban de la plantilla original y que se descargaban en cada visita."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-08",
+      "title": "El panel de agentes también centraliza sus consultas",
+      "items": [
+        {
+          "type": "nuevo",
+          "text": "En el panel de agentes, la burbuja de mensajes ahora abre un desplegable con el adelanto de las consultas recibidas, igual que en administración. Cada agente ve las consultas de sus propias propiedades."
+        },
+        {
+          "type": "nuevo",
+          "text": "Las consultas se pueden marcar como leídas o sin leer, filtrar por pendientes y eliminar de la base de datos, con el mismo funcionamiento que en administración."
+        },
+        {
+          "type": "mejora",
+          "text": "Se quitó la sección Mensajería del menú de agentes. Todo lo que llega del sitio se atiende desde Consultas."
+        },
+        {
+          "type": "mejora",
+          "text": "Se eliminó el chat interno entre agentes, que no se estaba usando."
+        }
+      ]
+    },
+    {
       "date": "2026-08-08",
       "title": "Consultas del sitio en un solo lugar",
       "items": [

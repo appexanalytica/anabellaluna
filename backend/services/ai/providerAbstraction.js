@@ -1,9 +1,14 @@
 /**
- * Provider Abstraction — OpenRouter (único provider activo).
+ * Provider Abstraction — OpenAI (único provider activo).
  *
- * OpenRouter expone una API 100% compatible OpenAI en https://openrouter.ai/api/v1
- * Config: env OPENROUTER_API_KEY (requerido) + OPENROUTER_MODEL (opcional).
+ * Toda la IA del sistema (chat, tools, embeddings) va directo a la API de OpenAI
+ * en https://api.openai.com/v1 — sin intermediarios.
+ *
+ * Config: env OPENAI_API_KEY (requerido) + OPENAI_MODEL (opcional).
  * Override adicional desde GlobalConfig key: 'ai_provider_config'.
+ *
+ * La API key también puede cargarse desde el panel de admin (se guarda cifrada
+ * en GlobalConfig). Precedencia: env > DB.
  */
 
 const crypto = require('crypto');
@@ -12,8 +17,9 @@ const AIProvider   = require('../../models/AIProvider');
 const AIUsageLog   = require('../../models/AIUsageLog');
 const { eventBus } = require('../../utils/eventBus');
 
-const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
-const DEFAULT_MODEL       = 'openai/gpt-4o-mini';
+const OPENAI_BASE_URL = 'https://api.openai.com/v1';
+const DEFAULT_MODEL   = 'gpt-4o-mini';
+const PROVIDER_NAME   = 'openai';
 
 const CACHE_TTL_MS = 60 * 1000;
 let _credCache   = null;
@@ -53,27 +59,43 @@ function decrypt(text) {
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
+/**
+ * Normaliza el nombre del modelo.
+ * Config vieja guardaba nombres con prefijo de ruteo ('openai/gpt-4o-mini');
+ * la API de OpenAI los rechaza. Se limpia el prefijo y se descarta cualquier
+ * modelo de otro proveedor que hubiera quedado guardado.
+ */
+function _normalizeModel(model) {
+  const raw = String(model || '').trim();
+  if (!raw) return DEFAULT_MODEL;
+  const clean = raw.startsWith('openai/') ? raw.slice('openai/'.length) : raw;
+  if (clean.includes('/')) return DEFAULT_MODEL; // modelo de otro proveedor
+  return clean;
+}
+
 async function getProviderConfig() {
   const now = Date.now();
   if (_credCache && now - _credCacheAt < CACHE_TTL_MS) return _credCache;
 
   const config = await GlobalConfig.getValue('ai_provider_config', null);
-  const dbOR   = config && config.openrouter ? config.openrouter : {};
+  const dbAI   = (config && config.openai) ? config.openai : {};
+  // Config previa al cambio de proveedor: se reaprovechan los ajustes, no la key.
+  const legacy = (config && config.openrouter) ? config.openrouter : {};
 
-  // API key: env > DB (encrypted)
-  let apiKey = process.env.OPENROUTER_API_KEY || '';
-  if (!apiKey && dbOR.apiKeyEncrypted) {
-    try { apiKey = decrypt(dbOR.apiKeyEncrypted); } catch { apiKey = ''; }
+  // API key: env > DB
+  let apiKey = process.env.OPENAI_API_KEY || '';
+  if (!apiKey && dbAI.apiKeyEncrypted) {
+    try { apiKey = decrypt(dbAI.apiKeyEncrypted); } catch { apiKey = ''; }
   }
 
   const result = {
-    defaultProvider: 'openrouter',
-    openrouter: {
+    defaultProvider: PROVIDER_NAME,
+    openai: {
       enabled:     true,
       apiKey,
-      model:       process.env.OPENROUTER_MODEL || dbOR.model || DEFAULT_MODEL,
-      maxTokens:   dbOR.maxTokens   || 4096,
-      temperature: dbOR.temperature ?? 0.3,
+      model:       _normalizeModel(process.env.OPENAI_MODEL || dbAI.model || legacy.model),
+      maxTokens:   dbAI.maxTokens   || legacy.maxTokens   || 4096,
+      temperature: dbAI.temperature ?? legacy.temperature ?? 0.3,
     },
   };
 
@@ -98,60 +120,64 @@ async function chatCompletion({
   conversationId,
   maxTokens,
   toolChoice,
+  model,
+  responseFormat,
 }) {
   const config = await getProviderConfig();
-  const cfg    = { ...config.openrouter, maxTokens: maxTokens || config.openrouter.maxTokens };
+  const cfg    = {
+    ...config.openai,
+    maxTokens: maxTokens || config.openai.maxTokens,
+    model:     model ? _normalizeModel(model) : config.openai.model,
+  };
 
   if (!cfg.apiKey) {
-    throw new Error('OPENROUTER_API_KEY no configurada. Agregala al .env del servidor.');
+    throw new Error('OPENAI_API_KEY no configurada. Agregala al .env del servidor o cargala en Configuración > IA.');
   }
 
   const startedAt = Date.now();
   try {
-    const result    = await _callOpenRouter(cfg, { messages, tools, stream, toolChoice });
+    const result    = await _callOpenAI(cfg, { messages, tools, stream, toolChoice, responseFormat });
     const latencyMs = Date.now() - startedAt;
 
-    _logUsage({ provider: 'openrouter', model: cfg.model, userId, agenteId,
+    logUsage({ model: cfg.model, userId, agenteId,
       conversationId, tokens: result.usage, latencyMs, success: true }).catch(() => {});
 
     await AIProvider.findOneAndUpdate(
-      { name: 'openrouter' },
+      { name: PROVIDER_NAME },
       { $set: { consecutiveErrors: 0, lastHealthCheck: new Date(), healthStatus: 'healthy', isEnabled: true },
         $inc: { totalRequests: 1, totalTokensUsed: result.usage?.total_tokens || 0 } },
       { upsert: true }
     );
 
-    return { ...result, provider: 'openrouter' };
+    return { ...result, provider: PROVIDER_NAME };
 
   } catch (err) {
     const latencyMs = Date.now() - startedAt;
-    console.error('[AI] OpenRouter failed:', err.message);
+    console.error('[AI] OpenAI failed:', err.message);
 
     await AIProvider.findOneAndUpdate(
-      { name: 'openrouter' },
+      { name: PROVIDER_NAME },
       { $inc: { consecutiveErrors: 1, totalErrors: 1 },
         $set: { lastHealthCheck: new Date(), healthStatus: 'degraded', lastError: err.message } },
       { upsert: true }
     );
 
-    _logUsage({ provider: 'openrouter', model: cfg.model, userId, agenteId,
+    logUsage({ model: cfg.model, userId, agenteId,
       conversationId, tokens: null, latencyMs, success: false, errorCode: err.message }).catch(() => {});
 
-    eventBus.emit('ai.provider.failed', { provider: 'openrouter', error: err.message, userId });
+    eventBus.emit('ai.provider.failed', { provider: PROVIDER_NAME, error: err.message, userId });
     throw err;
   }
 }
 
-async function _callOpenRouter(cfg, { messages, tools, stream, toolChoice }) {
-  const apiKey = cfg.apiKey;
-  const model  = cfg.model || DEFAULT_MODEL;
+async function _callOpenAI(cfg, { messages, tools, stream, toolChoice, responseFormat }) {
+  const model = cfg.model || DEFAULT_MODEL;
 
   const headers = {
     'Content-Type':  'application/json',
-    'Authorization': `Bearer ${apiKey}`,
-    'HTTP-Referer':  process.env.SITE_ORIGIN || 'https://anabellaluna.com.ar',
-    'X-Title':       'Anabella Luna CRM',
+    'Authorization': `Bearer ${cfg.apiKey}`,
   };
+  if (process.env.OPENAI_ORG_ID) headers['OpenAI-Organization'] = process.env.OPENAI_ORG_ID;
 
   const body = JSON.stringify({
     model,
@@ -159,22 +185,23 @@ async function _callOpenRouter(cfg, { messages, tools, stream, toolChoice }) {
     temperature: cfg.temperature ?? 0.3,
     max_tokens:  cfg.maxTokens  || 4096,
     ...(tools && tools.length > 0 ? { tools, tool_choice: toolChoice || 'auto' } : {}),
+    ...(responseFormat ? { response_format: responseFormat } : {}),
     ...(stream ? { stream: true } : {}),
   });
 
-  const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+  const response = await fetch(`${OPENAI_BASE_URL}/chat/completions`, {
     method: 'POST', headers, body,
   });
 
   if (!response.ok) {
     const text = await response.text().catch(() => response.statusText);
-    throw new Error(`OpenRouter API error ${response.status}: ${text}`);
+    throw new Error(`OpenAI API error ${response.status}: ${text}`);
   }
 
   const data = await response.json();
 
   if (!data.choices || !data.choices[0]) {
-    throw new Error(`OpenRouter returned empty response: ${JSON.stringify(data)}`);
+    throw new Error(`OpenAI returned empty response: ${JSON.stringify(data)}`);
   }
 
   return {
@@ -185,28 +212,57 @@ async function _callOpenRouter(cfg, { messages, tools, stream, toolChoice }) {
 
 // ── Usage logging ─────────────────────────────────────────────────────────────
 
-async function _logUsage({ provider, model, userId, agenteId, conversationId, tokens, latencyMs, success, errorCode }) {
+/**
+ * Registra un llamado a la API. Compartido con el servicio de embeddings.
+ */
+async function logUsage({ model, userId, agenteId, conversationId, tokens, latencyMs, success, errorCode, requestType }) {
   try {
     await AIUsageLog.create({
-      provider, model, userId, agenteId, conversationId,
+      provider: PROVIDER_NAME,
+      model,
+      userId:   userId || 'system',
+      agenteId,
+      conversationId,
       promptTokens:     tokens?.prompt_tokens     || 0,
       completionTokens: tokens?.completion_tokens || 0,
       totalTokens:      tokens?.total_tokens      || 0,
-      costUSD: _estimateCost(model, tokens),
-      latencyMs, success, errorCode,
+      costUSD: estimateCost(model, tokens),
+      latencyMs,
+      success,
+      errorCode,
+      requestType: requestType || 'chat',
     });
   } catch (err) {
     console.error('[AI] Usage log failed:', err.message);
   }
 }
 
-function _estimateCost(model, tokens) {
+// Precios OpenAI en USD por 1M de tokens (input / output).
+const PRICING = {
+  'gpt-4o-mini':            { in: 0.15,  out: 0.60 },
+  'gpt-4o':                 { in: 2.50,  out: 10.00 },
+  'text-embedding-3-small': { in: 0.02,  out: 0 },
+  'text-embedding-3-large': { in: 0.13,  out: 0 },
+};
+
+function estimateCost(model, tokens) {
   if (!tokens) return 0;
-  // gpt-4o-mini via OpenRouter: ~$0.00015/1K input + $0.0006/1K output
-  if (model && model.includes('gpt-4o-mini')) {
-    return ((tokens.prompt_tokens || 0) * 0.00015 + (tokens.completion_tokens || 0) * 0.0006) / 1000;
-  }
-  return 0;
+  const key   = Object.keys(PRICING).find((m) => String(model || '').startsWith(m));
+  const price = key ? PRICING[key] : PRICING['gpt-4o-mini'];
+  const input  = tokens.prompt_tokens || tokens.total_tokens || 0;
+  const output = tokens.completion_tokens || 0;
+  return (input * price.in + output * price.out) / 1_000_000;
 }
 
-module.exports = { chatCompletion, getProviderConfig, invalidateCache, encrypt, decrypt };
+module.exports = {
+  chatCompletion,
+  getProviderConfig,
+  invalidateCache,
+  encrypt,
+  decrypt,
+  logUsage,
+  estimateCost,
+  OPENAI_BASE_URL,
+  DEFAULT_MODEL,
+  PROVIDER_NAME,
+};

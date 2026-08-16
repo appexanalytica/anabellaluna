@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Chart from 'react-apexcharts';
-import { FaPlus, FaSearch, FaTags, FaEnvelope, FaWhatsapp, FaPhone, FaBell, FaUsers, FaChartLine, FaFire, FaTimes, FaSave, FaUser, FaMapMarkerAlt, FaDollarSign, FaStar, FaCalendar, FaBuilding, FaHome, FaEdit, FaTrash, FaHistory, FaComments, FaBriefcase, FaPercentage, FaFunnelDollar, FaArrowUp, FaHeart, FaUserClock, FaThermometerHalf, FaGlobe, FaDesktop, FaMobileAlt, FaLink, FaMousePointer, FaHeartbeat, FaClock, FaEye, FaHandshake, FaFileAlt, FaStream } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaTags, FaEnvelope, FaWhatsapp, FaPhone, FaUsers, FaChartLine, FaFire, FaTimes, FaSave, FaUser, FaMapMarkerAlt, FaDollarSign, FaStar, FaBuilding, FaHome, FaEdit, FaTrash, FaHistory, FaComments, FaBriefcase, FaPercentage, FaFunnelDollar, FaArrowUp, FaHeart, FaUserClock, FaThermometerHalf, FaHeartbeat, FaClock, FaEye, FaHandshake, FaFileAlt, FaStream } from 'react-icons/fa';
 
 import { confirmToast } from '../utils/confirmToast';
 import { useStateContext } from '../contexts/ContextProvider';
@@ -378,6 +378,8 @@ const ClientesCRM = () => {
   const [lifebars, setLifebars] = useState({});
   const [interactionCounts, setInteractionCounts] = useState({});
   const [clientMetrics, setClientMetrics] = useState(null);
+  // Serie mensual del gráfico de historial (backend: /crm/stats/cliente/:id/actividad)
+  const [clienteActividad, setClienteActividad] = useState(null);
   const [clientInteractions, setClientInteractions] = useState([]);
   const [interactionForm, setInteractionForm] = useState({ tipo: 'nota', descripcion: '', medioContacto: '', fechaContacto: '', visitaFecha: '', nivelInteres: '', opcionPago: { tipo: '', detalle: '', montoOfrecido: 0, moneda: 'USD' }, preferencias: { tipo: '', detalle: '' }, propiedadId: '', propiedadNombre: '' });
   const [interactionSubmitting, setInteractionSubmitting] = useState(false);
@@ -409,6 +411,10 @@ const ClientesCRM = () => {
       crmService.clientInteractions.clientMetrics(clienteSeleccionado.id).then(data => {
         setClientMetrics(data);
       }).catch(() => setClientMetrics(null));
+      // Serie mensual real de interacciones y consultas del cliente
+      crmService.stats.getClienteActividad(clienteSeleccionado.id, 6).then(data => {
+        setClienteActividad(data);
+      }).catch(() => setClienteActividad(null));
       if (propiedadesList.length === 0) {
         crmService.propiedades.getAll().then(data => {
           setPropiedadesList(Array.isArray(data) ? data : []);
@@ -416,6 +422,7 @@ const ClientesCRM = () => {
       }
     } else {
       setClientMetrics(null);
+      setClienteActividad(null);
     }
   }, [vistaActual, clienteSeleccionado?.id]);
 
@@ -521,6 +528,16 @@ const ClientesCRM = () => {
     }
   }, [showModal]);
 
+  // Abre el alta cuando se llega desde "+ Nuevo" de la navbar (?nuevo=1)
+  const openCreateModalRef = useRef(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('nuevo') && openCreateModalRef.current) {
+      openCreateModalRef.current();
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   const openCreateModal = () => {
     setEditingClienteId(null);
     const emptyForm = createEmptyClienteForm();
@@ -535,6 +552,7 @@ const ClientesCRM = () => {
     setNuevoCliente(emptyForm);
     setShowModal(true);
   };
+  openCreateModalRef.current = openCreateModal;
 
   const handleEditCliente = (cliente) => {
     const id = cliente?._id || cliente?.id;
@@ -1997,7 +2015,7 @@ const ClientesCRM = () => {
             </h2>
 
             {/* Primera fila de gráficos */}
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
               {/* Actividad por Canal */}
               <div className={`${cardBase} xl:col-span-2`}>
                 <div className="flex items-center gap-2 mb-2">
@@ -2056,45 +2074,6 @@ const ClientesCRM = () => {
                 </div>
               </div>
 
-              {/* Actividad Web del Usuario */}
-              <div className={cardBase}>
-                <div className="flex items-center gap-2 mb-2">
-                  <FaGlobe className="text-blue-500" />
-                  <h3 className="font-semibold dark:text-gray-100 text-sm">Actividad Web</h3>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Comportamiento en el sitio</p>
-                <Chart
-                  options={{
-                    chart: { type: 'donut', height: 180, background: 'transparent' },
-                    labels: ['Búsquedas', 'Visitas', 'Favoritos', 'Consultas'],
-                    colors: ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'],
-                    plotOptions: { pie: { donut: { size: '60%', labels: { show: true, name: { fontSize: '10px', color: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280' }, value: { fontSize: '14px', fontWeight: 700, color: currentMode === 'Dark' ? '#F3F4F6' : '#1F2937' }, total: { show: true, label: 'Total', fontSize: '9px', color: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280' } } } } },
-                    dataLabels: { enabled: false },
-                    legend: { show: false },
-                    stroke: { show: false },
-                    tooltip: { theme: currentMode === 'Dark' ? 'dark' : 'light' },
-                  }}
-                  series={[
-                    Math.floor((clienteSeleccionado.propiedadesVistas || 5) * 2.5),
-                    clienteSeleccionado.propiedadesVistas || 5,
-                    Math.floor((clienteSeleccionado.propiedadesVistas || 5) * 0.4),
-                    Math.floor((clienteSeleccionado.interacciones || 3) * 0.3),
-                  ]}
-                  type="donut"
-                  height={160}
-                />
-                <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t dark:border-gray-700">
-                  <div className="text-center">
-                    <p className="text-xs font-bold text-blue-600">{Math.floor((clienteSeleccionado.propiedadesVistas || 5) * 2.5)}</p>
-                    <p className="text-xs text-gray-500">Búsquedas</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs font-bold text-emerald-600">{clienteSeleccionado.propiedadesVistas || 5}</p>
-                    <p className="text-xs text-gray-500">Visitas</p>
-                  </div>
-                </div>
-              </div>
-
               {/* Engagement Score */}
               <div className={cardBase}>
                 <div className="flex items-center gap-2 mb-2">
@@ -2138,27 +2117,32 @@ const ClientesCRM = () => {
                   <h3 className="font-semibold dark:text-gray-100">Historial de Actividad</h3>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Actividad del cliente en los últimos 6 meses</p>
-                <Chart
-                  options={{
-                    chart: { type: 'area', height: 200, background: 'transparent', toolbar: { show: false }, zoom: { enabled: false } },
-                    colors: ['#3B82F6', '#10B981', '#8B5CF6'],
-                    dataLabels: { enabled: false },
-                    stroke: { curve: 'smooth', width: 2.5 },
-                    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] } },
-                    xaxis: { categories: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'], labels: { style: { colors: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
-                    yaxis: { labels: { style: { colors: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280', fontSize: '10px' } } },
-                    grid: { borderColor: currentMode === 'Dark' ? '#374151' : '#E5E7EB', strokeDashArray: 4 },
-                    legend: { show: true, position: 'top', fontSize: '10px', labels: { colors: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280' } },
-                    tooltip: { theme: currentMode === 'Dark' ? 'dark' : 'light' },
-                  }}
-                  series={[
-                    { name: 'Visitas Web', data: [2, 4, 3, 5, 8, clienteSeleccionado.propiedadesVistas || 6] },
-                    { name: 'Interacciones', data: [1, 2, 1, 3, 4, Math.floor((clienteSeleccionado.interacciones || 3) * 0.4)] },
-                    { name: 'Consultas', data: [0, 1, 0, 1, 2, Math.floor((clienteSeleccionado.interacciones || 2) * 0.2)] },
-                  ]}
-                  type="area"
-                  height={180}
-                />
+                {clienteActividad ? (
+                  <Chart
+                    options={{
+                      chart: { type: 'area', height: 200, background: 'transparent', toolbar: { show: false }, zoom: { enabled: false } },
+                      colors: ['#10B981', '#8B5CF6'],
+                      dataLabels: { enabled: false },
+                      stroke: { curve: 'smooth', width: 2.5 },
+                      fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] } },
+                      xaxis: { categories: clienteActividad.categories || [], labels: { style: { colors: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+                      yaxis: { labels: { style: { colors: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280', fontSize: '10px' } } },
+                      grid: { borderColor: currentMode === 'Dark' ? '#374151' : '#E5E7EB', strokeDashArray: 4 },
+                      legend: { show: true, position: 'top', fontSize: '10px', labels: { colors: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280' } },
+                      tooltip: { theme: currentMode === 'Dark' ? 'dark' : 'light' },
+                    }}
+                    series={[
+                      { name: 'Interacciones', data: clienteActividad.interacciones || [] },
+                      { name: 'Consultas', data: clienteActividad.consultas || [] },
+                    ]}
+                    type="area"
+                    height={180}
+                  />
+                ) : (
+                  <div className="h-[180px] flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">
+                    Sin actividad registrada
+                  </div>
+                )}
               </div>
 
               {/* Propiedades de Interés */}
@@ -2188,108 +2172,6 @@ const ClientesCRM = () => {
                   type="polarArea"
                   height={180}
                 />
-              </div>
-            </div>
-
-            {/* Tercera fila - Datos de Usuario Web */}
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-              {/* Sesiones Web */}
-              <div className={cardBase}>
-                <div className="flex items-center gap-2 mb-2">
-                  <FaDesktop className="text-blue-500" />
-                  <h3 className="font-semibold dark:text-gray-100 text-sm">Sesiones Web</h3>
-                </div>
-                <div className="text-center py-3">
-                  <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{Math.floor((clienteSeleccionado.propiedadesVistas || 5) * 1.5)}</p>
-                  <p className="text-xs text-gray-500 mt-1">Total de visitas</p>
-                </div>
-                <div className="space-y-2 pt-2 border-t dark:border-gray-700">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-600 dark:text-gray-400">Tiempo promedio</span>
-                    <span className="font-bold dark:text-gray-200">4:32 min</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-600 dark:text-gray-400">Páginas/sesión</span>
-                    <span className="font-bold dark:text-gray-200">3.2</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Dispositivos */}
-              <div className={cardBase}>
-                <div className="flex items-center gap-2 mb-2">
-                  <FaMobileAlt className="text-purple-500" />
-                  <h3 className="font-semibold dark:text-gray-100 text-sm">Dispositivos</h3>
-                </div>
-                <Chart
-                  options={{
-                    chart: { type: 'donut', height: 140, background: 'transparent', sparkline: { enabled: true } },
-                    labels: ['Móvil', 'Desktop', 'Tablet'],
-                    colors: ['#8B5CF6', '#3B82F6', '#10B981'],
-                    plotOptions: { pie: { donut: { size: '70%' } } },
-                    legend: { show: false },
-                    stroke: { show: false },
-                    tooltip: { theme: currentMode === 'Dark' ? 'dark' : 'light' },
-                  }}
-                  series={[55, 35, 10]}
-                  type="donut"
-                  height={110}
-                />
-                <div className="grid grid-cols-3 gap-1 mt-2 text-center">
-                  <div><p className="text-xs font-bold text-purple-600">55%</p><p className="text-xs text-gray-500">Móvil</p></div>
-                  <div><p className="text-xs font-bold text-blue-600">35%</p><p className="text-xs text-gray-500">Desktop</p></div>
-                  <div><p className="text-xs font-bold text-emerald-600">10%</p><p className="text-xs text-gray-500">Tablet</p></div>
-                </div>
-              </div>
-
-              {/* Fuente de Tráfico */}
-              <div className={cardBase}>
-                <div className="flex items-center gap-2 mb-2">
-                  <FaLink className="text-indigo-500" />
-                  <h3 className="font-semibold dark:text-gray-100 text-sm">Fuente Tráfico</h3>
-                </div>
-                <Chart
-                  options={{
-                    chart: { type: 'bar', height: 130, background: 'transparent', toolbar: { show: false }, sparkline: { enabled: false } },
-                    plotOptions: { bar: { borderRadius: 3, horizontal: true, distributed: true, barHeight: '60%' } },
-                    colors: ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'],
-                    dataLabels: { enabled: false },
-                    xaxis: { categories: ['Google', 'Directo', 'Redes', 'Otros'], labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
-                    yaxis: { labels: { style: { colors: currentMode === 'Dark' ? '#9CA3AF' : '#6B7280', fontSize: '9px' } } },
-                    grid: { show: false },
-                    legend: { show: false },
-                    tooltip: { theme: currentMode === 'Dark' ? 'dark' : 'light' },
-                  }}
-                  series={[{ name: 'Visitas', data: [45, 30, 15, 10] }]}
-                  type="bar"
-                  height={120}
-                />
-              </div>
-
-              {/* Acciones en Web */}
-              <div className={cardBase}>
-                <div className="flex items-center gap-2 mb-2">
-                  <FaMousePointer className="text-orange-500" />
-                  <h3 className="font-semibold dark:text-gray-100 text-sm">Acciones Web</h3>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-                    <span className="text-xs dark:text-gray-300">Favoritos guardados</span>
-                    <span className="font-bold text-blue-600">{Math.floor((clienteSeleccionado.propiedadesVistas || 3) * 0.4)}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded">
-                    <span className="text-xs dark:text-gray-300">Consultas enviadas</span>
-                    <span className="font-bold text-green-600">{clientMetrics?.interactionsByType?.nota || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
-                    <span className="text-xs dark:text-gray-300">Comparaciones</span>
-                    <span className="font-bold text-purple-600">{Math.floor((clienteSeleccionado.propiedadesVistas || 2) * 0.2)}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
-                    <span className="text-xs dark:text-gray-300">Descargas PDF</span>
-                    <span className="font-bold text-orange-600">{Math.floor((clienteSeleccionado.propiedadesVistas || 1) * 0.15)}</span>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

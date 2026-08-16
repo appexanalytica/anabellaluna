@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaComments, FaHome, FaSync, FaCheck } from 'react-icons/fa';
+import NavPanel from './navbar/NavPanel';
 import { useStateContext } from '../contexts/ContextProvider';
 import { crmService } from '../services/crmService';
+import API_CONFIG from '../config/api';
 
 const formatTime = (date) => {
   if (!date) return '';
@@ -36,6 +38,7 @@ const mapEnquiry = (item) => {
     rol: item.type === 'visit_scheduled' ? 'Visita programada' : 'Consulta de propiedad',
     icono: item.type === 'visit_scheduled' ? '📅' : '🏠',
     propiedad: property.title || meta.propertyTitle || '',
+    cover: property.coverUrl || '',
     leida: !!meta.read,
     createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
   };
@@ -59,9 +62,41 @@ const markReadApi = (item, read) => (
     : crmService.activities.markRead(item.id, read)
 );
 
+/**
+ * Miniatura de la propiedad consultada.
+ *
+ * La portada llega en `metadata.property.coverUrl` como ruta pública
+ * (/public/media/:id), así que se puede pedir sin token. Si la consulta es
+ * vieja o la propiedad no tiene fotos, cae en el ícono de siempre.
+ */
+const Miniatura = ({ cover, icono }) => {
+  const [fallo, setFallo] = useState(false);
+  const src = cover && !fallo
+    ? (String(cover).startsWith('http') ? cover : `${API_CONFIG.baseURL}${cover}`)
+    : '';
+
+  if (!src) {
+    return (
+      <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xl flex-shrink-0">
+        {icono}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt=""
+      loading="lazy"
+      onError={() => setFallo(true)}
+      className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+    />
+  );
+};
+
 // Dropdown de la burbuja de mensajes del navbar: preview de las consultas del sitio
-const ConsultasDropdown = ({ onUnreadChange }) => {
-  const { currentColor, setIsClicked, initialState } = useStateContext();
+const ConsultasDropdown = ({ onUnreadChange, onClose }) => {
+  const { currentColor } = useStateContext();
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -105,7 +140,7 @@ const ConsultasDropdown = ({ onUnreadChange }) => {
         return next;
       });
     }
-    setIsClicked(initialState);
+    onClose();
     navigate(`/consultas?id=${item.id}&origen=${item.origen}`);
   };
 
@@ -123,34 +158,54 @@ const ConsultasDropdown = ({ onUnreadChange }) => {
   const preview = items.slice(0, 20);
 
   return (
-    <div className="nav-item fixed inset-x-4 top-20 mx-auto md:absolute md:inset-x-auto md:right-40 md:top-16 md:mx-0 bg-white dark:bg-[#42464D] p-6 rounded-lg max-w-96 w-auto md:w-96 shadow-xl z-50">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <FaComments className="text-2xl" style={{ color: currentColor }} />
-            {noLeidas > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                {noLeidas > 99 ? '99+' : noLeidas}
-              </span>
-            )}
-          </div>
-          <div>
-            <p className="font-semibold text-lg dark:text-gray-200">Consultas</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{noLeidas} sin leer</p>
-          </div>
+    <NavPanel
+      titulo="Consultas"
+      subtitulo={noLeidas > 0 ? `${noLeidas} sin leer` : 'Todo respondido'}
+      icono={(
+        <div className="relative flex-shrink-0">
+          <FaComments className="text-2xl" style={{ color: currentColor }} />
+          {noLeidas > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-bold px-1">
+              {noLeidas > 99 ? '99+' : noLeidas}
+            </span>
+          )}
         </div>
+      )}
+      onClose={onClose}
+      acciones={(
         <button
           type="button"
           onClick={load}
           disabled={loading}
           title="Actualizar"
+          aria-label="Actualizar consultas"
           className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
           <FaSync className={`text-gray-500 ${loading ? 'animate-spin' : ''}`} />
         </button>
-      </div>
-
-      <div className="space-y-2 max-h-96 overflow-y-auto">
+      )}
+      footer={(
+        <div className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={marcarTodas}
+            disabled={noLeidas === 0}
+            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors disabled:opacity-50 flex items-center gap-1"
+          >
+            <FaCheck className="text-xs" /> Marcar todas
+          </button>
+          <button
+            type="button"
+            className="text-sm font-medium"
+            style={{ color: currentColor }}
+            onClick={() => { onClose(); navigate('/consultas'); }}
+          >
+            Ver todas →
+          </button>
+        </div>
+      )}
+    >
+      <>
         {loading && items.length === 0 ? (
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: currentColor }} />
@@ -162,10 +217,11 @@ const ConsultasDropdown = ({ onUnreadChange }) => {
           </div>
         ) : (
           preview.map((item) => (
-            <div
+            <button
+              type="button"
               key={`${item.origen}-${item.id}`}
               onClick={() => abrirConsulta(item)}
-              className={`border-l-4 p-3 rounded-lg hover:shadow-md transition-all cursor-pointer ${
+              className={`w-full text-left border-l-4 p-3 rounded-lg hover:shadow-md transition-all ${
                 item.leida
                   ? 'bg-gray-50 dark:bg-gray-800/40 border-gray-300 dark:border-gray-600 opacity-70'
                   : item.origen === 'contacto'
@@ -174,7 +230,7 @@ const ConsultasDropdown = ({ onUnreadChange }) => {
               }`}
             >
               <div className="flex items-start gap-3">
-                <div className="text-xl leading-none pt-0.5">{item.icono}</div>
+                <Miniatura cover={item.cover} icono={item.icono} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-0.5">
                     <h4 className="font-bold text-sm dark:text-gray-200 truncate">{item.nombre}</h4>
@@ -190,30 +246,11 @@ const ConsultasDropdown = ({ onUnreadChange }) => {
                   <span className="text-xs text-gray-500 dark:text-gray-400">{formatTime(item.createdAt)}</span>
                 </div>
               </div>
-            </div>
+            </button>
           ))
         )}
-      </div>
-
-      <div className="mt-4 pt-4 border-t dark:border-gray-600 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={marcarTodas}
-          disabled={noLeidas === 0}
-          className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors disabled:opacity-50 flex items-center gap-1"
-        >
-          <FaCheck className="text-xs" /> Marcar todas como leídas
-        </button>
-        <button
-          type="button"
-          className="text-sm font-medium"
-          style={{ color: currentColor }}
-          onClick={() => { setIsClicked(initialState); navigate('/consultas'); }}
-        >
-          Ver todas →
-        </button>
-      </div>
-    </div>
+      </>
+    </NavPanel>
   );
 };
 

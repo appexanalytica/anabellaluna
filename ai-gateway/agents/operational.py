@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from agents.base import AgentResult, BaseAgent
 from events.consumer import BusinessEvent
 from observability.langfuse_client import trace_agent
-from providers.openrouter import chat_completion
+from providers.openai_provider import chat_completion
 
 logger = logging.getLogger(__name__)
 

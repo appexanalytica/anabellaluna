@@ -137,17 +137,11 @@ const activities = {
   create: (data) => apiCall('POST', '/crm/activities', data),
 };
 
-const messages = {
-  send: (data) => apiCall('POST', '/crm/messages/send', data),
-  markRead: (messageId) => apiCall('PATCH', `/crm/messages/${messageId}/read`),
-  markReadByPartner: (partnerId) => apiCall('PUT', `/crm/messages/read/${partnerId}`),
-};
-
 const notifications = {
   create: (data) => apiCall('POST', '/crm/notifications', data),
 };
 
 module.exports = {
   apiCall, clientes, propiedades, citas, tareas,
-  operaciones, agentes, bookings, activities, messages, notifications,
+  operaciones, agentes, bookings, activities, notifications,
 };

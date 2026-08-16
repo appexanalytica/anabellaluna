@@ -1,10 +1,11 @@
 """
 Embedding Models — Abstracción de proveedores de embeddings.
 
-Soporta múltiples backends:
-  - OpenAI (text-embedding-ada-002 / text-embedding-3-small via OpenRouter)
-  - Sentence Transformers (local, futuro)
-  - Custom (extensible)
+Backend: API de OpenAI (text-embedding-3-small, 1536 dims).
+
+Nota: el endpoint /v1/embeddings solo existe en la API de OpenAI. Cualquier
+gateway de chat que no sea OpenAI no lo expone, y por eso el sistema usa la
+API directa con OPENAI_API_KEY.
 
 El proveedor se configura via variables de entorno.
 """
@@ -44,21 +45,21 @@ class EmbeddingProvider(ABC):
 
 
 class OpenAIEmbeddingProvider(EmbeddingProvider):
-    """Proveedor de embeddings via API OpenAI-compatible (OpenRouter)."""
+    """Proveedor de embeddings via API de OpenAI."""
 
     name = "openai"
     dimensions = 1536
 
-    def __init__(self, model: str = "openai/text-embedding-3-small") -> None:
-        self._model = model
+    def __init__(self, model: str | None = None) -> None:
+        self._model = model or settings.openai_embedding_model
         self._client = None
 
     def _get_client(self):
         if self._client is None:
             from openai import AsyncOpenAI
             self._client = AsyncOpenAI(
-                api_key=settings.openrouter_api_key,
-                base_url=settings.openrouter_base_url,
+                api_key=settings.openai_api_key,
+                base_url=settings.openai_base_url,
             )
         return self._client
 
@@ -125,7 +126,7 @@ def get_embedding_provider() -> EmbeddingProvider:
     """Retorna el proveedor de embeddings configurado."""
     global _provider
     if _provider is None:
-        if settings.openrouter_api_key:
+        if settings.openai_api_key:
             _provider = OpenAIEmbeddingProvider()
             logger.info("Using OpenAI embedding provider")
         else:

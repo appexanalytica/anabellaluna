@@ -26,9 +26,10 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379"
 
     # ── LLM Provider ───────────────────────────────────────────────────────
-    openrouter_api_key: str = ""
-    openrouter_model: str = "openai/gpt-4o-mini"
-    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4o-mini"
+    openai_base_url: str = "https://api.openai.com/v1"
+    openai_embedding_model: str = "text-embedding-3-small"
 
     # ── Langfuse ────────────────────────────────────────────────────────────
     langfuse_public_key: str = ""

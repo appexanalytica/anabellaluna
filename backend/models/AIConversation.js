@@ -15,7 +15,7 @@ const AIConversationSchema = new mongoose.Schema({
 
   messageCount: { type: Number, default: 0 },
 
-  provider: { type: String, default: 'openrouter' },
+  provider: { type: String, default: 'openai' },
   model:    String,
   summary:  { type: String, default: '' },
   summaryMessageCount: { type: Number, default: 0 },

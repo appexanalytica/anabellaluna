@@ -1,19 +1,12 @@
 const express = require('express');
 const Notification = require('../models/Notification');
-const Operacion = require('../models/Operacion');
-const Propiedad = require('../models/Propiedad');
-const Cliente = require('../models/Cliente');
-const Cita = require('../models/Cita');
-const Tarea = require('../models/Tarea');
-const Agente = require('../models/Agente');
-const Activity = require('../models/Activity');
-const User = require('../models/User');
-const ContactMessage = require('../models/ContactMessage');
 const { authenticateToken, requireRole } = require('../auth');
+const { buildNavbarSummary, ADMIN_AGENT_ID } = require('../services/navbarSummary');
+const { generateAdminNotifications } = require('../services/notificationGenerator');
 
 const router = express.Router();
-const ADMIN_AGENT_ID = '__admin__';
 
+// Las notificaciones programadas a futuro todavía no son visibles.
 function applyVisibilityFilter(filter, now = new Date()) {
   const visibility = [
     { fechaProgramada: null },
@@ -68,236 +61,26 @@ router.get('/unread-count', authenticateToken, requireRole('admin'), async (req,
 // MUST be before /:id routes
 router.get('/navbar-summary', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
-    const now = new Date();
-    const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(now); todayEnd.setHours(23, 59, 59, 999);
-
-    const [
-      propiedadesTotal,
-      propiedadesDisponibles,
-      tareasPendientes,
-      tareasHoy,
-      citasPendientes,
-      citasHoy,
-      consultasNoLeidas,
-      notifFilter,
-      contactosNoLeidos,
-    ] = await Promise.all([
-      Propiedad.countDocuments({}),
-      Propiedad.countDocuments({ status: 'Disponible' }),
-      Tarea.countDocuments({ $or: [{ kanbanColumn: { $ne: 'done' } }, { kanbanColumn: { $exists: false } }] }),
-      Tarea.countDocuments({
-        fechaVencimiento: { $gte: todayStart, $lt: todayEnd },
-        $or: [{ kanbanColumn: { $ne: 'done' } }, { kanbanColumn: { $exists: false } }],
-      }),
-      Cita.countDocuments({ fecha: { $gte: now }, estado: { $ne: 'cancelada' } }),
-      Cita.countDocuments({ fecha: { $gte: todayStart, $lt: todayEnd }, estado: { $ne: 'cancelada' } }),
-      Activity.countDocuments({ type: { $in: ['enquiry', 'visit_scheduled'] }, 'metadata.read': { $ne: true } }),
-      (async () => {
-        const f = { agenteId: ADMIN_AGENT_ID, leida: false };
-        applyVisibilityFilter(f);
-        return Notification.countDocuments(f);
-      })(),
-      ContactMessage.countDocuments({ leido: { $ne: true } }),
-    ]);
-
-    // Las consultas del sitio agrupan formulario de contacto + enquiries de propiedades
-    const consultasWebTotal = consultasNoLeidas + contactosNoLeidos;
-
-    res.json({
-      propiedades: { total: propiedadesTotal, disponibles: propiedadesDisponibles },
-      tareas: { pendientes: tareasPendientes, hoy: tareasHoy, citas: citasPendientes, citasHoy, total: tareasPendientes + citasPendientes },
-      consultas: { noLeidas: consultasWebTotal },
-      mensajes: {
-        consultasNoLeidas: consultasWebTotal,
-        contactosNoLeidos,
-        propiedadesNoLeidas: consultasNoLeidas,
-        total: consultasWebTotal,
-      },
-      notificaciones: { noLeidas: notifFilter },
+    const summary = await buildNavbarSummary({
+      scopeId: null, // el admin ve toda la inmobiliaria
+      notifOwnerId: ADMIN_AGENT_ID,
+      incluirContacto: true,
+      incluirProximaCita: false,
     });
+    res.json(summary);
   } catch (err) {
+    console.error('Admin navbar summary error:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
 // ============ POST /admin/notifications/generate ============
-// Scans real data and creates admin notifications for actionable business events
+// Escanea datos reales y crea las notificaciones accionables del admin.
+// La lógica vive en services/notificationGenerator.js, compartida con el scheduler.
 router.post('/generate', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
-    const created = [];
-    const now = new Date();
-    const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
-
-    // Helper: avoid duplicates for today
-    async function alreadyNotified(tipo, entidadId) {
-      return Notification.exists({
-        agenteId: ADMIN_AGENT_ID,
-        tipo,
-        entidadId: entidadId ? String(entidadId) : undefined,
-        createdAt: { $gte: todayStart },
-      });
-    }
-
-    // 1. New web inquiries not yet notified
-    const recentInquiries = await Activity.find({
-      type: { $in: ['enquiry', 'visit_scheduled'] },
-      'metadata.read': { $ne: true },
-      createdAt: { $gte: new Date(Date.now() - 48 * 60 * 60 * 1000) },
-    }).sort({ createdAt: -1 }).limit(10).lean();
-
-    for (const inq of recentInquiries) {
-      if (await alreadyNotified('consulta_web', inq._id)) continue;
-      const n = await Notification.create({
-        agenteId: ADMIN_AGENT_ID,
-        tipo: 'consulta_web',
-        titulo: inq.type === 'visit_scheduled' ? 'Nueva solicitud de visita' : 'Nueva consulta web',
-        mensaje: `${inq.metadata?.clientName || 'Visitante'} - ${inq.notes || inq.metadata?.propertyTitle || 'Sin detalle'}`,
-        prioridad: 'alta',
-        entidadTipo: 'cliente',
-        entidadId: String(inq._id),
-        entidadNombre: inq.metadata?.clientName || '',
-        accionUrl: '/clientes',
-      });
-      created.push(n);
-    }
-
-    // 2. New operations created recently
-    const recentOps = await Operacion.find({
-      createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-    }).sort({ createdAt: -1 }).limit(10).lean();
-
-    for (const op of recentOps) {
-      if (await alreadyNotified('operacion_nueva', op._id)) continue;
-      const agente = op.agenteId ? await Agente.findById(op.agenteId).lean() : null;
-      const n = await Notification.create({
-        agenteId: ADMIN_AGENT_ID,
-        tipo: 'operacion_nueva',
-        titulo: `Nueva operación: ${op.tipo || 'Operación'}`,
-        mensaje: `${op.titulo || op.propiedad || 'Sin título'} - ${agente?.nombre || 'Sin agente'} - $${(op.monto || 0).toLocaleString()}`,
-        prioridad: 'alta',
-        entidadTipo: 'operacion',
-        entidadId: String(op._id),
-        entidadNombre: op.titulo || op.propiedad || '',
-        accionUrl: '/operaciones',
-      });
-      created.push(n);
-    }
-
-    // 3. Contracts expiring in next 30 days
-    const in30Days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    const clientesConVencimiento = await Cliente.find({
-      'metadata.fechaVencimientoContrato': { $gte: now, $lte: in30Days },
-    }).lean();
-
-    for (const cli of clientesConVencimiento) {
-      if (await alreadyNotified('contrato_vencimiento', cli._id)) continue;
-      const fecha = new Date(cli.metadata.fechaVencimientoContrato);
-      const dias = Math.ceil((fecha - now) / (1000 * 60 * 60 * 24));
-      const n = await Notification.create({
-        agenteId: ADMIN_AGENT_ID,
-        tipo: 'contrato_vencimiento',
-        titulo: `Contrato por vencer en ${dias} días`,
-        mensaje: `${cli.nombre || 'Cliente'} - Vence el ${fecha.toLocaleDateString('es-AR')}`,
-        prioridad: dias <= 7 ? 'urgente' : dias <= 15 ? 'alta' : 'media',
-        entidadTipo: 'cliente',
-        entidadId: String(cli._id),
-        entidadNombre: cli.nombre || '',
-        accionUrl: '/clientes',
-      });
-      created.push(n);
-    }
-
-    // 4. Properties with status changes (reserved/sold recently)
-    const recentProps = await Propiedad.find({
-      status: { $in: ['Reservada', 'Vendida', 'Alquilada'] },
-      updatedAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-    }).lean();
-
-    for (const prop of recentProps) {
-      if (await alreadyNotified('propiedad_estado', prop._id)) continue;
-      const n = await Notification.create({
-        agenteId: ADMIN_AGENT_ID,
-        tipo: 'propiedad_estado',
-        titulo: `Propiedad ${prop.status}`,
-        mensaje: `${prop.title || prop.titulo || 'Propiedad'} - ${prop.address || prop.direccion || ''}`,
-        prioridad: 'media',
-        entidadTipo: 'propiedad',
-        entidadId: String(prop._id),
-        entidadNombre: prop.title || prop.titulo || '',
-        accionUrl: '/propiedades',
-      });
-      created.push(n);
-    }
-
-    // 5. Overdue tasks (past due and not done)
-    const overdueTasks = await Tarea.find({
-      fechaVencimiento: { $lt: todayStart },
-      $or: [{ kanbanColumn: { $ne: 'done' } }, { kanbanColumn: { $exists: false } }],
-    }).limit(5).lean();
-
-    for (const t of overdueTasks) {
-      if (await alreadyNotified('tarea', t._id)) continue;
-      const n = await Notification.create({
-        agenteId: ADMIN_AGENT_ID,
-        tipo: 'tarea',
-        titulo: 'Tarea vencida',
-        mensaje: `${t.titulo || t.title || 'Sin título'} - Venció el ${new Date(t.fechaVencimiento).toLocaleDateString('es-AR')}`,
-        prioridad: 'alta',
-        entidadTipo: 'tarea',
-        entidadId: String(t._id),
-        entidadNombre: t.titulo || t.title || '',
-        accionUrl: '/tareas',
-      });
-      created.push(n);
-    }
-
-    // 6. Today's appointments summary
-    const todayAppts = await Cita.countDocuments({
-      fecha: { $gte: todayStart, $lt: new Date(todayStart.getTime() + 24 * 60 * 60 * 1000) },
-      estado: { $ne: 'cancelada' },
-    });
-    if (todayAppts > 0) {
-      const exists = await alreadyNotified('cita', 'resumen_hoy');
-      if (!exists) {
-        const n = await Notification.create({
-          agenteId: ADMIN_AGENT_ID,
-          tipo: 'cita',
-          titulo: `${todayAppts} cita${todayAppts > 1 ? 's' : ''} programada${todayAppts > 1 ? 's' : ''} hoy`,
-          mensaje: `Hay ${todayAppts} cita${todayAppts > 1 ? 's' : ''} agendada${todayAppts > 1 ? 's' : ''} para hoy`,
-          prioridad: 'media',
-          entidadTipo: 'cita',
-          entidadId: 'resumen_hoy',
-          accionUrl: '/citas',
-        });
-        created.push(n);
-      }
-    }
-
-    // 7. Daily summary report
-    const dailyExists = await alreadyNotified('reporte_diario', 'daily');
-    if (!dailyExists) {
-      const [totalClientes, totalProps, totalOps, opsThisMonth] = await Promise.all([
-        Cliente.countDocuments({}),
-        Propiedad.countDocuments({}),
-        Operacion.countDocuments({}),
-        Operacion.countDocuments({
-          createdAt: { $gte: new Date(now.getFullYear(), now.getMonth(), 1) },
-        }),
-      ]);
-      const n = await Notification.create({
-        agenteId: ADMIN_AGENT_ID,
-        tipo: 'reporte_diario',
-        titulo: 'Resumen del día',
-        mensaje: `Clientes: ${totalClientes} | Propiedades: ${totalProps} | Operaciones mes: ${opsThisMonth} | Total ops: ${totalOps}`,
-        prioridad: 'baja',
-        entidadId: 'daily',
-        accionUrl: '/',
-      });
-      created.push(n);
-    }
-
-    res.json({ ok: true, created: created.length });
+    const creadas = await generateAdminNotifications();
+    res.json({ ok: true, created: creadas.length });
   } catch (err) {
     console.error('Admin notification generation error:', err);
     res.status(500).json({ error: err.message });

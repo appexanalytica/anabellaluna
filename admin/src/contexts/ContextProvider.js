@@ -5,13 +5,10 @@ const persistTheme = (patch) => { try { api.patch('/auth/theme', patch); } catch
 
 const StateContext = createContext();
 
+// Paneles desplegables de la navbar. Cada uno es dueño de un único badge.
 const initialState = {
-  chat: false,
-  cart: false,
-  userProfile: false,
-  notification: false,
-  propiedades: false,
   tareas: false,
+  citas: false,
   alertas: false,
   consultas: false,
 };

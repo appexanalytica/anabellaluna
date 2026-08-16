@@ -319,6 +319,16 @@ const Propiedades = () => {
     return token ? `${base}?token=${encodeURIComponent(token)}` : base;
   };
 
+  // Abre el alta cuando se llega desde "+ Nuevo" de la navbar (?nuevo=1)
+  const openCreateModalRef = useRef(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('nuevo') && openCreateModalRef.current) {
+      openCreateModalRef.current();
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   const openCreateModal = () => {
     setEditingPropiedadId(null);
     setFilesFotos([]);
@@ -389,6 +399,7 @@ const Propiedades = () => {
     });
     setShowModal(true);
   };
+  openCreateModalRef.current = openCreateModal;
 
   const handleEditPropiedad = (prop) => {
     if (!prop) return;

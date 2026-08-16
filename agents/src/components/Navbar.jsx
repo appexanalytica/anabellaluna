@@ -1,44 +1,29 @@
-import React, { useEffect, useCallback, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { MdDarkMode, MdLightMode, MdSpaceDashboard } from 'react-icons/md';
-import { FaBars, FaBuilding, FaTasks, FaBell, FaComments, FaTrophy } from 'react-icons/fa';
+import { MdSpaceDashboard } from 'react-icons/md';
+import { FaBars, FaBell, FaCalendarAlt, FaComments, FaSearch, FaTasks } from 'react-icons/fa';
 import { TooltipComponent } from '@syncfusion/ej2-react-popups';
 
-import avatar from '../data/avatar.png';
-import { Propiedades, Tareas, Alertas, ChatInterno, RewardsPanel } from '.';
+import { Tareas, Citas, Alertas, ConsultasDropdown } from '.';
+import NavButton from './navbar/NavButton';
+import ProfileMenu from './navbar/ProfileMenu';
+import GlobalSearch from './navbar/GlobalSearch';
+import QuickCreate from './navbar/QuickCreate';
+import ProximaCita from './navbar/ProximaCita';
 import { useStateContext } from '../contexts/ContextProvider';
 import { crmService } from '../services/crmService';
 import { authService } from '../services/authService';
 import notificationService from '../services/notificationService';
 import { isApiUnavailableError } from '../config/api';
+import useNavbarSummary from '../hooks/useNavbarSummary';
 
-const NavButton = ({ title, customFunc, icon, color, dotColor, badgeCount, isActive }) => (
-  <TooltipComponent content={title} position="BottomCenter">
-    <button
-      type="button"
-      onClick={() => customFunc()}
-      className={`
-        relative text-xl p-3 rounded-xl transition-all duration-200
-        hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105
-        ${isActive ? 'bg-gray-100 dark:bg-gray-700 shadow-sm' : ''}
-      `}
-      style={{ color }}
-    >
-      {badgeCount > 0 ? (
-        <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center font-bold px-1">
-          {badgeCount > 99 ? '99+' : badgeCount}
-        </span>
-      ) : dotColor && dotColor !== 'transparent' ? (
-        <span
-          style={{ background: dotColor }}
-          className="absolute inline-flex rounded-full h-2.5 w-2.5 right-2 top-2 animate-pulse"
-        />
-      ) : null}
-      {icon}
-    </button>
-  </TooltipComponent>
-);
-
+/**
+ * Navbar del panel de agentes.
+ *
+ * Mismo set de ítems que admin, más el chip de próxima cita. Propiedades vive
+ * en el sidebar y los logros en /crm/recompensas: la navbar sólo muestra lo
+ * que requiere una acción.
+ */
 const Navbar = () => {
   const {
     currentColor,
@@ -46,128 +31,55 @@ const Navbar = () => {
     setActiveMenu,
     handleClick,
     isClicked,
+    setIsClicked,
+    initialState,
     setScreenSize,
     screenSize,
     setMode,
-    setIsClicked,
-    initialState,
   } = useStateContext();
 
-  const [topBarVisible, setTopBarVisible] = useState(true);
-  const lastScrollY = useRef(0);
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = screenSize <= 900;
-  const [, setUnreadCount] = useState(0);
-  const [rewardCount, setRewardCount] = useState(0);
-  const [currentUser, setCurrentUser] = useState(authService.getCurrentUser());
-  const [apiOffline, setApiOffline] = useState(false);
 
-  // Navbar summary counts
-  const [navbarStats, setNavbarStats] = useState({
-    propiedades: { total: 0, disponibles: 0 },
-    tareas: { pendientes: 0, hoy: 0, citas: 0, total: 0 },
-    mensajes: { consultasNoLeidas: 0, internosNoLeidos: 0, total: 0 },
-    notificaciones: { noLeidas: 0 },
-  });
+  const [topBarVisible, setTopBarVisible] = useState(true);
+  const lastScrollY = useRef(0);
 
-  // Listen for user updates (e.g., after profile save)
-  useEffect(() => {
-    const handleUserUpdate = (event) => {
-      setCurrentUser(event.detail || authService.getCurrentUser());
-    };
-    window.addEventListener('userUpdated', handleUserUpdate);
-    return () => window.removeEventListener('userUpdated', handleUserUpdate);
-  }, []);
+  const [usuario, setUsuario] = useState(authService.getCurrentUser());
+  const [menuPerfil, setMenuPerfil] = useState(false);
+  const [menuNuevo, setMenuNuevo] = useState(false);
+  const [buscadorAbierto, setBuscadorAbierto] = useState(false);
 
-  const capitalize = (str) => {
-    if (!str) return '';
-    return str.split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
-  };
-
-  const userName = capitalize(currentUser?.nombre || currentUser?.username || 'Usuario');
-  const userAvatar = currentUser?.avatar || avatar;
-
-  const prevNoLeidas = useRef(0);
-
-  const loadNavbarStats = useCallback(async () => {
-    try {
-      const summary = await crmService.navbar.getSummary();
-      setApiOffline(false);
-      if (summary) {
-        const newCount = summary.notificaciones?.noLeidas || 0;
-        // Fire native notification when new unread notifications arrive
-        if (newCount > prevNoLeidas.current && prevNoLeidas.current >= 0 && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-          const diff = newCount - prevNoLeidas.current;
-          new Notification('Anabella Luna', {
-            body: `Tenés ${diff} nueva${diff > 1 ? 's' : ''} notificaci${diff > 1 ? 'ones' : 'ón'}`,
-            icon: '/icons/icon-192.png',
-            tag: 'navbar-alert',
-            renotify: true,
-          });
-        }
-        prevNoLeidas.current = newCount;
-        setNavbarStats(summary);
-        setUnreadCount(summary.mensajes?.total || 0);
-      }
-    } catch (e) {
-      if (isApiUnavailableError(e)) {
-        setApiOffline(true);
-        return;
-      }
-      console.error('Error loading navbar stats:', e);
-    }
-  }, []);
-
-  // loadUnreadCount removed — unread count now computed via navbarStats
-
-  const loadRewardCount = useCallback(async () => {
-    try {
-      const unseen = await crmService.rewards.getUnseen();
-      setApiOffline(false);
-      setRewardCount(Array.isArray(unseen) ? unseen.length : 0);
-    } catch (e) {
-      if (isApiUnavailableError(e)) {
-        setApiOffline(true);
-      }
-    }
-  }, []);
+  const fetchSummary = useCallback(() => crmService.navbar.getSummary(), []);
+  const { summary, apiOffline, refrescar, aplicarLocal } = useNavbarSummary(
+    fetchSummary,
+    isApiUnavailableError,
+  );
 
   useEffect(() => {
-    loadNavbarStats();
-    loadRewardCount();
-    crmService.rewards.recordLogin().catch(() => {});
-    // Generate notifications from real business events on load
-    notificationService.generateNotifications().catch(() => {});
-    const interval = setInterval(() => {
-      loadNavbarStats();
-      loadRewardCount();
-    }, 30000);
-    // Re-generate notifications every 5 minutes
-    const genInterval = setInterval(() => {
-      notificationService.generateNotifications().catch(() => {});
-    }, 300000);
-    return () => { clearInterval(interval); clearInterval(genInterval); };
-  }, [loadNavbarStats, loadRewardCount]);
+    const onUserUpdate = (event) => setUsuario(event.detail || authService.getCurrentUser());
+    window.addEventListener('userUpdated', onUserUpdate);
+    return () => window.removeEventListener('userUpdated', onUserUpdate);
+  }, []);
 
-  const handleResize = useCallback(() => {
-    setScreenSize(window.innerWidth);
-  }, [setScreenSize]);
+  // La generación periódica corre en el scheduler del backend; acá alcanza con
+  // pedirla una vez al entrar.
+  useEffect(() => {
+    notificationService.generateNotifications()
+      .then(() => refrescar())
+      .catch(() => {});
+  }, [refrescar]);
+
+  const handleResize = useCallback(() => setScreenSize(window.innerWidth), [setScreenSize]);
 
   useEffect(() => {
     window.addEventListener('resize', handleResize);
-
     handleResize();
-
     return () => window.removeEventListener('resize', handleResize);
   }, [handleResize]);
 
   useEffect(() => {
-    if (screenSize <= 900) {
-      setActiveMenu(false);
-    } else {
-      setActiveMenu(true);
-    }
+    setActiveMenu(screenSize > 900);
   }, [screenSize, setActiveMenu]);
 
   useEffect(() => {
@@ -183,35 +95,99 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isMobile]);
 
-  const themeToggle = (
-    <NavButton
-      title={currentMode === 'Dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-      customFunc={() => setMode({ target: { value: currentMode === 'Dark' ? 'Light' : 'Dark' } })}
-      color={currentColor}
-      icon={currentMode === 'Dark' ? <MdLightMode /> : <MdDarkMode />}
-    />
-  );
+  // Cuando llega un push con la app abierta, el service worker no muestra la
+  // notificación del sistema y avisa por acá: refrescamos los badges al toque.
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return undefined;
+    const onMensaje = (event) => {
+      if (event.data?.type === 'erp-push') refrescar();
+    };
+    navigator.serviceWorker.addEventListener('message', onMensaje);
+    return () => navigator.serviceWorker.removeEventListener('message', onMensaje);
+  }, [refrescar]);
+
+  // Ctrl+K / ⌘K abre la búsqueda global desde cualquier pantalla.
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsClicked(initialState);
+        setBuscadorAbierto(true);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [initialState, setIsClicked]);
+
+  /** Abre o cierra un panel: volver a tocar el mismo ícono lo cierra. */
+  const togglePanel = useCallback((panel) => {
+    setMenuPerfil(false);
+    setMenuNuevo(false);
+    if (isClicked[panel]) setIsClicked(initialState);
+    else handleClick(panel);
+  }, [handleClick, initialState, isClicked, setIsClicked]);
+
+  const cerrarPaneles = useCallback(() => setIsClicked(initialState), [initialState, setIsClicked]);
+
+  const toggleModo = () => setMode({ target: { value: currentMode === 'Dark' ? 'Light' : 'Dark' } });
+
+  const consultasSinLeer = summary.consultas.noLeidas;
+  const tareasPendientes = summary.tareas.total;
+  const citasProximas = summary.citas.total;
+  const alertasSinLeer = summary.alertas.noLeidas;
+
+  const hayPanelAbierto = isClicked.tareas || isClicked.citas || isClicked.consultas || isClicked.alertas;
 
   const bottomNavItems = [
-    { icon: <MdSpaceDashboard size={22} />, label: 'Inicio', action: () => navigate('/crm'), active: location.pathname === '/crm', badge: 0 },
-    { icon: <FaTasks size={20} />, label: 'Tareas', action: () => handleClick('tareas'), active: isClicked.tareas, badge: navbarStats.tareas.total },
-    { icon: <FaComments size={20} />, label: 'Chat', action: () => { setIsClicked(initialState); navigate('/crm/mensajeria'); }, active: location.pathname === '/crm/mensajeria', badge: navbarStats.mensajes.total },
-    { icon: <FaBell size={20} />, label: 'Alertas', action: () => { handleClick('alertas'); setNavbarStats(prev => ({ ...prev, notificaciones: { ...prev.notificaciones, noLeidas: 0 } })); }, active: isClicked.alertas, badge: navbarStats.notificaciones.noLeidas },
-    { icon: null, label: 'Perfil', action: () => { setIsClicked(initialState); navigate('/crm/perfil'); }, active: location.pathname === '/crm/perfil', isProfile: true, badge: 0 },
+    {
+      icon: <MdSpaceDashboard size={22} />,
+      label: 'Inicio',
+      action: () => { cerrarPaneles(); navigate('/crm'); },
+      active: location.pathname === '/crm',
+      badge: 0,
+    },
+    {
+      icon: <FaTasks size={20} />,
+      label: 'Tareas',
+      action: () => togglePanel('tareas'),
+      active: isClicked.tareas,
+      badge: tareasPendientes,
+    },
+    {
+      icon: <FaCalendarAlt size={20} />,
+      label: 'Citas',
+      action: () => togglePanel('citas'),
+      active: isClicked.citas,
+      badge: citasProximas,
+    },
+    {
+      icon: <FaComments size={20} />,
+      label: 'Consultas',
+      action: () => togglePanel('consultas'),
+      active: isClicked.consultas,
+      badge: consultasSinLeer,
+    },
+    {
+      icon: <FaBell size={20} />,
+      label: 'Alertas',
+      action: () => togglePanel('alertas'),
+      active: isClicked.alertas,
+      badge: alertasSinLeer,
+    },
   ];
 
   return (
     <div className="relative">
-      {/* Top Bar */}
+      {/* Barra superior */}
       <div
         className={`flex items-center p-3 md:px-6 gap-2 transition-transform duration-300${isMobile ? ' fixed top-0 left-0 right-0 z-40 bg-main-bg dark:bg-main-dark-bg' : ''}`}
         style={isMobile ? { transform: topBarVisible ? 'translateY(0)' : 'translateY(-100%)' } : undefined}
       >
-        {/* Mobile: Hamburger button */}
         {isMobile && (
           <button
             type="button"
             onClick={() => setActiveMenu(true)}
+            aria-label="Abrir menú"
             className="p-2.5 rounded-xl text-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             style={{ color: currentColor }}
           >
@@ -221,101 +197,136 @@ const Navbar = () => {
 
         <div className="flex-1" />
 
+        <ProximaCita cita={summary.proximaCita} currentColor={currentColor} />
+
         {apiOffline && (
-          <div className="mr-2 rounded-full bg-rose-50 px-3 py-1 text-[11px] font-semibold text-rose-600 dark:bg-rose-500/10 dark:text-rose-300">
+          <div className="rounded-full bg-rose-50 px-3 py-1 text-[11px] font-semibold text-rose-600 dark:bg-rose-500/10 dark:text-rose-300">
             API sin conexión
           </div>
         )}
 
-        {/* Desktop: Full nav group */}
+        <TooltipComponent content="Buscar (Ctrl+K)" position="BottomCenter">
+          <button
+            type="button"
+            onClick={() => { cerrarPaneles(); setBuscadorAbierto(true); }}
+            aria-label="Buscar"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          >
+            <FaSearch />
+            <span className="hidden lg:inline">Buscar</span>
+            <kbd className="hidden lg:inline text-[10px] font-sans border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5">
+              Ctrl K
+            </kbd>
+          </button>
+        </TooltipComponent>
+
         {!isMobile && (
           <div className="flex items-center gap-1 bg-white dark:bg-gray-800 rounded-2xl px-2 py-1 shadow-sm">
-            <NavButton
-              title={`Propiedades (${navbarStats.propiedades.disponibles} disponibles)`}
-              customFunc={() => handleClick('propiedades')}
-              color={currentColor}
-              icon={<FaBuilding />}
-              badgeCount={navbarStats.propiedades.disponibles}
-              isActive={isClicked.propiedades}
+            <QuickCreate
+              abierto={menuNuevo}
+              onToggle={() => { cerrarPaneles(); setMenuPerfil(false); setMenuNuevo((v) => !v); }}
+              onClose={() => setMenuNuevo(false)}
+              currentColor={currentColor}
             />
+
+            <div className="w-px h-8 bg-gray-200 dark:bg-gray-600 mx-1" />
+
             <NavButton
-              title={`Tareas (${navbarStats.tareas.total} pendientes)`}
-              customFunc={() => handleClick('tareas')}
+              title={`Tareas (${summary.tareas.vencidas} vencidas · ${summary.tareas.hoy} para hoy)`}
+              ariaLabel={`Tareas, ${tareasPendientes} pendientes`}
+              onClick={() => togglePanel('tareas')}
               color={currentColor}
               icon={<FaTasks />}
-              badgeCount={navbarStats.tareas.total}
-              dotColor={navbarStats.tareas.hoy > 0 ? '#EF4444' : 'transparent'}
+              badgeCount={tareasPendientes}
+              badgeColor="bg-amber-500"
+              dotColor={summary.tareas.vencidas > 0 ? '#EF4444' : 'transparent'}
               isActive={isClicked.tareas}
             />
             <NavButton
-              title={`Mensajes (${navbarStats.mensajes.total} sin leer)`}
-              customFunc={() => { setIsClicked(initialState); navigate('/crm/mensajeria'); }}
+              title={`Citas (${summary.citas.hoy} hoy · ${citasProximas} en 24 h)`}
+              ariaLabel={`Citas, ${citasProximas} próximas`}
+              onClick={() => togglePanel('citas')}
+              color={currentColor}
+              icon={<FaCalendarAlt />}
+              badgeCount={citasProximas}
+              badgeColor="bg-violet-500"
+              isActive={isClicked.citas}
+            />
+            <NavButton
+              title={`Consultas (${consultasSinLeer} sin leer)`}
+              ariaLabel={`Consultas, ${consultasSinLeer} sin leer`}
+              onClick={() => togglePanel('consultas')}
               color={currentColor}
               icon={<FaComments />}
-              badgeCount={navbarStats.mensajes.total}
+              badgeCount={consultasSinLeer}
+              isActive={isClicked.consultas}
             />
             <NavButton
-              title={`Alertas (${navbarStats.notificaciones.noLeidas} sin leer)`}
-              customFunc={() => { handleClick('alertas'); setNavbarStats(prev => ({ ...prev, notificaciones: { ...prev.notificaciones, noLeidas: 0 } })); }}
+              title={`Alertas (${alertasSinLeer} sin leer)`}
+              ariaLabel={`Alertas, ${alertasSinLeer} sin leer`}
+              onClick={() => togglePanel('alertas')}
               color={currentColor}
               icon={<FaBell />}
-              badgeCount={navbarStats.notificaciones.noLeidas}
+              badgeCount={alertasSinLeer}
+              dotColor={summary.alertas.urgentes > 0 ? '#EF4444' : 'transparent'}
               isActive={isClicked.alertas}
             />
-            <NavButton
-              title="Mis Logros"
-              dotColor={rewardCount > 0 ? '#FFD700' : 'transparent'}
-              customFunc={() => handleClick('rewards')}
-              color={currentColor}
-              icon={<FaTrophy />}
-              isActive={isClicked.rewards}
-            />
+
             <div className="w-px h-8 bg-gray-200 dark:bg-gray-600 mx-1" />
-            {themeToggle}
-            <button
-              type="button"
-              onClick={() => { setIsClicked(initialState); navigate('/crm/perfil'); }}
-              className="flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200"
-            >
-              <img
-                className="rounded-full w-10 h-10 object-cover ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-800"
-                style={{ ringColor: currentColor }}
-                src={userAvatar}
-                alt="user-profile"
-              />
-              <div className="text-left">
-                <p className="text-base font-bold text-gray-800 dark:text-gray-100 leading-tight">
-                  {userName}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Agente
-                </p>
-              </div>
-            </button>
+
+            <ProfileMenu
+              usuario={usuario}
+              abierto={menuPerfil}
+              onToggle={() => { cerrarPaneles(); setMenuNuevo(false); setMenuPerfil((v) => !v); }}
+              onClose={() => setMenuPerfil(false)}
+              currentColor={currentColor}
+              currentMode={currentMode}
+              onToggleMode={toggleModo}
+            />
           </div>
         )}
 
-        {/* Mobile: Minimal top-right controls */}
         {isMobile && (
-          <div className="flex items-center gap-1">
-            {themeToggle}
-          </div>
+          <ProfileMenu
+            usuario={usuario}
+            abierto={menuPerfil}
+            onToggle={() => { cerrarPaneles(); setMenuPerfil((v) => !v); }}
+            onClose={() => setMenuPerfil(false)}
+            currentColor={currentColor}
+            currentMode={currentMode}
+            onToggleMode={toggleModo}
+          />
         )}
       </div>
 
-      {/* Backdrop — click outside to close any panel */}
-      {(isClicked.propiedades || isClicked.tareas || isClicked.chatInterno || isClicked.alertas) && (
-        <div className="fixed inset-0 z-40" onClick={() => setIsClicked(initialState)} />
+      {/* Clic afuera para cerrar cualquier panel */}
+      {hayPanelAbierto && (
+        <div className="fixed inset-0 z-40" onClick={cerrarPaneles} role="presentation" />
       )}
 
-      {/* Panels */}
-      {isClicked.propiedades && (<Propiedades />)}
-      {isClicked.tareas && (<Tareas />)}
-      {isClicked.chatInterno && (<ChatInterno />)}
-      {isClicked.alertas && (<Alertas />)}
-      {isClicked.rewards && (<RewardsPanel onClose={() => handleClick('')} />)}
+      {/* Paneles */}
+      {isClicked.tareas && <Tareas onClose={cerrarPaneles} />}
+      {isClicked.citas && <Citas onClose={cerrarPaneles} />}
+      {isClicked.consultas && (
+        <ConsultasDropdown
+          onClose={cerrarPaneles}
+          onUnreadChange={(noLeidas) => aplicarLocal('consultas', { noLeidas })}
+        />
+      )}
+      {isClicked.alertas && (
+        <Alertas
+          onClose={cerrarPaneles}
+          onUnreadChange={(noLeidas) => aplicarLocal('alertas', { noLeidas })}
+        />
+      )}
 
-      {/* Mobile Bottom Navigation */}
+      <GlobalSearch
+        abierto={buscadorAbierto}
+        onClose={() => setBuscadorAbierto(false)}
+        currentColor={currentColor}
+      />
+
+      {/* Navegación inferior en mobile */}
       {isMobile && (
         <div
           className="fixed bottom-0 left-0 right-0 z-[9999] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200 dark:border-gray-700/80 shadow-[0_-2px_20px_rgba(0,0,0,0.08)] transition-transform duration-300"
@@ -327,10 +338,9 @@ const Navbar = () => {
                 key={item.label}
                 type="button"
                 onClick={item.action}
+                aria-label={item.badge > 0 ? `${item.label}, ${item.badge} sin resolver` : item.label}
                 className={`relative flex flex-col items-center justify-center gap-0.5 min-w-[56px] py-1.5 rounded-2xl transition-all duration-200 ${
-                  item.active
-                    ? 'scale-105'
-                    : 'text-gray-400 dark:text-gray-500 active:scale-95'
+                  item.active ? 'scale-105' : 'text-gray-400 dark:text-gray-500 active:scale-95'
                 }`}
                 style={item.active ? { color: currentColor } : {}}
               >
@@ -339,16 +349,7 @@ const Navbar = () => {
                     {item.badge > 99 ? '99+' : item.badge}
                   </span>
                 )}
-                {item.isProfile ? (
-                  <img
-                    src={userAvatar}
-                    alt="perfil"
-                    className="w-6 h-6 rounded-full object-cover transition-shadow"
-                    style={item.active ? { boxShadow: `0 0 0 2px ${currentColor}` } : {}}
-                  />
-                ) : (
-                  <span className="text-[22px] leading-none">{item.icon}</span>
-                )}
+                <span className="text-[22px] leading-none">{item.icon}</span>
                 <span className="text-[10px] font-semibold leading-tight">{item.label}</span>
               </button>
             ))}

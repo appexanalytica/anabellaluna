@@ -52,8 +52,18 @@ self.addEventListener('push', (event) => {
   // Log for debugging
   console.log('[SW CRM] Push received:', title, options.body);
 
+  // Si el CRM ya está abierto y a la vista, no se muestra la notificación del
+  // sistema: se avisa a la pestaña para que refresque los badges al instante.
+  // Así el push no duplica lo que el usuario ya está mirando.
   event.waitUntil(
-    self.registration.showNotification(title, options)
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      const visible = clientList.find((c) => c.visibilityState === 'visible');
+      if (visible) {
+        clientList.forEach((c) => c.postMessage({ type: 'erp-push', payload: data }));
+        return undefined;
+      }
+      return self.registration.showNotification(title, options);
+    })
   );
 });
 

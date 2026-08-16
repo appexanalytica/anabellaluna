@@ -113,6 +113,7 @@ const inmobiliariasRoutes = require('./routes/inmobiliarias');
 const pushRoutes = require('./routes/push');
 
 const clientInteractionsRoutes = require('./routes/clientInteractions');
+const cotizacionRoutes = require('./routes/cotizacion');
 const mercadoLibreRoutes = require('./routes/mercadolibre');
 const portalesRoutes = require('./routes/portales');
 const marketingAIRoutes = require('./routes/marketing-ai/index');
@@ -284,6 +285,8 @@ app.use('/crm/automations', automationsRoutes);
 app.use('/crm/fechas-importantes', fechasImportantesRoutes);
 
 app.use('/crm/client-interactions', clientInteractionsRoutes);
+
+app.use('/crm/cotizacion', cotizacionRoutes);
 
 app.use('/crm/tours', virtualToursRoutes.crmRouter);
 

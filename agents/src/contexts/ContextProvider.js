@@ -5,16 +5,13 @@ const persistTheme = (patch) => { try { api.patch('/auth/theme', patch); } catch
 
 const StateContext = createContext();
 
+// Paneles desplegables de la navbar. Cada uno es dueño de un único badge.
+// Los logros se quitaron de la navbar y viven en /crm/recompensas.
 const initialState = {
-  chat: false,
-  cart: false,
-  userProfile: false,
-  notification: false,
-  propiedades: false,
   tareas: false,
+  citas: false,
   alertas: false,
-  chatInterno: false,
-  rewards: false,
+  consultas: false,
 };
 
 export const ContextProvider = ({ children }) => {

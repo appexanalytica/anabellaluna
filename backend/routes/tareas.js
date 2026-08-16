@@ -8,6 +8,8 @@ const Notification = require('../models/Notification');
 const { authenticateToken, agentScopeId, requireCRMUser } = require('../auth');
 const { authenticateTokenOrService } = require('../middlewares/serviceAuth');
 const { publishEventAsync, metaFromRequest } = require('../utils/redisStreams');
+const { retirarNotificaciones } = require('../services/notificationGenerator');
+const { ESTADOS_TAREA_CERRADA: ESTADOS_CERRADOS } = require('../services/navbarSummary');
 
 const router = express.Router();
 
@@ -120,6 +122,10 @@ router.put('/kanban/move/:id', authenticateTokenOrService, requireCRMUser, async
       tarea.completedAt = undefined;
     }
     await tarea.save();
+    // Una tarea cerrada deja de avisar.
+    if (ESTADOS_CERRADOS.includes(kanbanColumn)) {
+      retirarNotificaciones('tarea', tarea._id).catch(() => {});
+    }
     if (prevStatus !== kanbanColumn) {
       logActivity(tarea._id, req, 'status_changed', { previousValue: prevStatus, newValue: kanbanColumn });
     }
@@ -229,6 +235,11 @@ router.put('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) 
       body.completed = true;
     }
     const updated = await Tarea.findByIdAndUpdate(req.params.id, body, { new: true, runValidators: true });
+    // Una tarea completada o cancelada deja de avisar: sin esto el aviso
+    // quedaba en la campana hasta que alguien borrara la tarea.
+    if (ESTADOS_CERRADOS.includes(updated.status) || updated.completed === true) {
+      retirarNotificaciones('tarea', updated._id).catch(() => {});
+    }
     // Log changes
     if (body.status && body.status !== prev.status) {
       logActivity(updated._id, req, 'status_changed', { previousValue: prev.status, newValue: body.status });
@@ -262,6 +273,8 @@ router.delete('/:id', authenticateTokenOrService, requireCRMUser, async (req, re
     const deleted = await Tarea.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ error: 'Not found' });
     await TaskActivity.deleteMany({ taskId: req.params.id });
+    // La tarea ya no existe: sus avisos tampoco.
+    await retirarNotificaciones('tarea', req.params.id);
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

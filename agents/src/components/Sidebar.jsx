@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { Link, NavLink } from 'react-router-dom';
 import { MdSpaceDashboard, MdOutlineCancel } from 'react-icons/md';
-import { FaUsers, FaRegCalendarAlt, FaDollarSign, FaChartBar, FaPlug, FaEnvelope, FaTrophy, FaBuilding, FaRobot, FaFileAlt, FaMagic, FaImage, FaBalanceScale, FaVrCardboard, FaComments, FaGift } from 'react-icons/fa';
+import { FaUsers, FaRegCalendarAlt, FaDollarSign, FaChartBar, FaPlug, FaEnvelope, FaTrophy, FaBuilding, FaRobot, FaFileAlt, FaMagic, FaImage, FaBalanceScale, FaVrCardboard, FaGift } from 'react-icons/fa';
 
 import { useStateContext } from '../contexts/ContextProvider';
 import { APP_COMMIT_COUNT, APP_VERSION } from '../config/appVersion';
@@ -17,7 +17,6 @@ const menuItems = [
   { name: 'Operaciones', path: '/crm/operaciones', icon: <FaDollarSign /> },
   { name: 'Agenda', path: '/crm/citas', icon: <FaRegCalendarAlt /> },
   { name: 'Consultas', path: '/crm/consultas', icon: <FaEnvelope /> },
-  { name: 'Mensajería', path: '/crm/mensajeria', icon: <FaComments /> },
   { name: 'Automatización', path: '/crm/automatizacion', icon: <FaRobot /> },
   { name: 'Recompensas', path: '/crm/recompensas', icon: <FaTrophy /> },
   { name: 'Integraciones', path: '/crm/integraciones', icon: <FaPlug /> },

@@ -51,7 +51,7 @@ const emptyForm = () => ({
 });
 
 // ── component ────────────────────────────────────────────────────────
-const Tareas = ({ embedded = false }) => {
+const Tareas = ({ embedded = false, abrirNueva = false, onNuevaAbierta }) => {
   const { currentMode } = useStateContext();
   const isDark = currentMode === 'Dark';
   const cardBase = `rounded-2xl p-6 border transition-shadow ${isDark ? 'bg-secondary-dark-bg border-gray-700/50' : 'bg-white border-gray-100 shadow-md'}`;
@@ -138,6 +138,15 @@ const Tareas = ({ embedded = false }) => {
 
   // ── CRUD ──────────────────────────────────────────────────────────
   const openCreate = () => { setEditingId(null); setForm(emptyForm()); setShowForm(true); };
+
+  // "+ Nuevo → Tarea" de la navbar llega hasta acá con el formulario ya abierto.
+  useEffect(() => {
+    if (!abrirNueva) return;
+    openCreate();
+    if (onNuevaAbierta) onNuevaAbierta();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abrirNueva]);
+
   const openEdit = (t) => {
     setEditingId(t._id);
     setForm({

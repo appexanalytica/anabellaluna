@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { toast } from 'react-toastify';
 import Chart from 'react-apexcharts';
@@ -21,6 +21,22 @@ const Citas = () => {
 
   // Sección activa: agenda o tareas
   const [activeSection, setActiveSection] = useState('agenda');
+  // "+ Nuevo" de la navbar: ?nuevo=1 abre una cita, ?nuevo=tarea abre una tarea.
+  const [autoNuevaTarea, setAutoNuevaTarea] = useState(false);
+  const openCreateCitaRef = useRef(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const nuevo = params.get('nuevo');
+    if (!nuevo) return;
+    if (nuevo === 'tarea') {
+      setActiveSection('tareas');
+      setAutoNuevaTarea(true);
+    } else if (openCreateCitaRef.current) {
+      openCreateCitaRef.current();
+    }
+    window.history.replaceState({}, '', window.location.pathname);
+  }, []);
   const [taskStats, setTaskStats] = useState(null);
 
   // Estados para modales de estadísticas
@@ -314,6 +330,7 @@ const Citas = () => {
     resetCitaModal();
     setShowModalCita(true);
   };
+  openCreateCitaRef.current = openCreateCitaModal;
 
   const openEditCitaModal = (citaItem) => {
     const raw = citaItem?.raw || citaItem || {};
@@ -495,7 +512,7 @@ const Citas = () => {
 
       {/* ===== TAREAS SECTION ===== */}
       {activeSection === 'tareas' && (
-        <Tareas embedded />
+        <Tareas embedded abrirNueva={autoNuevaTarea} onNuevaAbierta={() => setAutoNuevaTarea(false)} />
       )}
 
       {/* ===== AGENDA SECTION ===== */}

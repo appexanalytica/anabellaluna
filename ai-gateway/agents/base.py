@@ -22,7 +22,7 @@ from typing import Any
 from events.consumer import BusinessEvent
 from memory.archival import archive_execution
 from observability.langfuse_client import trace_agent
-from providers.openrouter import chat_completion
+from providers.openai_provider import chat_completion
 from tools.crm_client import crm_client
 
 logger = logging.getLogger(__name__)

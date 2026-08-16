@@ -37,6 +37,8 @@ export const aiGatewayService = {
       const decoder = new TextDecoder();
       let buffer = '';
 
+      // El stream SSE se corta con el `done` del reader, no por condición previa.
+      // eslint-disable-next-line no-constant-condition
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;

@@ -1,6 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { FiSend, FiPaperclip, FiSmile, FiLayout } from 'react-icons/fi';
-import { toast } from 'react-toastify';
+import { FiSend, FiSmile, FiLayout } from 'react-icons/fi';
 import WhatsAppTemplateSelector from './WhatsAppTemplateSelector';
 
 const EMOJI_LIST = ['😀','😂','😊','😍','😎','👍','🙏','❤️','🎉','✅','📱','💬','🏠','🔑','📋','💰','🤝','📞','📅','⭐'];
@@ -49,10 +48,6 @@ const WhatsAppInputBar = ({ onSend, windowOpen = true, templates = [] }) => {
     setText((prev) => prev + emoji);
     setShowEmojiPicker(false);
     textareaRef.current?.focus();
-  };
-
-  const handleAttach = () => {
-    toast.info('Adjuntar archivos: próximamente', { autoClose: 2000 });
   };
 
   const handleTemplateSelect = async (templatePayload) => {
@@ -118,15 +113,6 @@ const WhatsAppInputBar = ({ onSend, windowOpen = true, templates = [] }) => {
               title="Emojis"
             >
               <FiSmile size={20} className="text-gray-500" />
-            </button>
-
-            {/* Attach button */}
-            <button
-              onClick={handleAttach}
-              className="flex-shrink-0 p-2 rounded-full hover:bg-gray-200 transition-colors mb-0.5"
-              title="Adjuntar archivo (próximamente)"
-            >
-              <FiPaperclip size={20} className="text-gray-500" />
             </button>
 
             {/* Textarea */}

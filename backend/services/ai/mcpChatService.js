@@ -1,7 +1,7 @@
 /**
  * MCP Chat Service — Agentic chat con tool loop completo.
  *
- * USA providerAbstraction (OpenRouter) como LLM.
+ * USA providerAbstraction (OpenAI) como LLM.
  * Tools provistos por el MCP Server (proceso hijo via stdio).
  * Formato de tools: OpenAI-compatible (tool_calls / tool role).
  *

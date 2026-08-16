@@ -2,121 +2,95 @@ const express = require('express');
 const DocumentLink = require('../models/DocumentLink');
 const Document = require('../models/Document');
 const Propiedad = require('../models/Propiedad');
-const Tarea = require('../models/Tarea');
-const Cita = require('../models/Cita');
-const Activity = require('../models/Activity');
-const Message = require('../models/Message');
-const Notification = require('../models/Notification');
+const Cliente = require('../models/Cliente');
+const Operacion = require('../models/Operacion');
 const {
   authenticateToken,
   agentScopeId,
-  getUserId,
   requireCRMUser,
 } = require('../auth');
+const { buildNavbarSummary } = require('../services/navbarSummary');
 
 const router = express.Router();
 
+// ============ BÚSQUEDA GLOBAL (Ctrl+K de la navbar) ============
+// Devuelve resultados agrupados de propiedades, clientes y operaciones.
+// Los agentes sólo ven lo suyo; el admin ve toda la inmobiliaria.
+const LIMITE_POR_GRUPO = 5;
+
+/** Escapa el texto para usarlo como regex literal. */
+function regexBusqueda(q) {
+  return new RegExp(String(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+}
+
+router.get('/search', authenticateToken, requireCRMUser, async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    if (q.length < 2) return res.json({ propiedades: [], clientes: [], operaciones: [], total: 0 });
+
+    const scopeId = agentScopeId(req);
+    const rx = regexBusqueda(q);
+
+    const [propiedades, clientes, operaciones] = await Promise.all([
+      Propiedad.find({
+        ...(scopeId ? { agentId: scopeId } : {}),
+        $or: [{ title: rx }, { address: rx }],
+      }).select('_id title address status price moneda').limit(LIMITE_POR_GRUPO).lean(),
+
+      Cliente.find({
+        ...(scopeId ? { agenteId: scopeId } : {}),
+        $or: [{ nombre: rx }, { email: rx }, { telefono: rx }],
+      }).select('_id nombre email telefono').limit(LIMITE_POR_GRUPO).lean(),
+
+      Operacion.find({
+        ...(scopeId ? { agenteId: scopeId } : {}),
+        $or: [{ 'metadata.propiedad': rx }, { 'metadata.cliente': rx }, { estado: rx }],
+      }).select('_id tipo estado monto moneda metadata.propiedad metadata.cliente')
+        .limit(LIMITE_POR_GRUPO).lean(),
+    ]);
+
+    res.json({
+      propiedades: propiedades.map((p) => ({
+        id: String(p._id),
+        titulo: p.title || 'Sin título',
+        subtitulo: p.address || '',
+        estado: p.status || '',
+        precio: p.price || 0,
+        moneda: p.moneda || 'USD',
+      })),
+      clientes: clientes.map((c) => ({
+        id: String(c._id),
+        titulo: c.nombre || 'Sin nombre',
+        subtitulo: c.email || c.telefono || '',
+      })),
+      operaciones: operaciones.map((o) => ({
+        id: String(o._id),
+        titulo: o.metadata?.propiedad || `${o.tipo || 'Operación'}`,
+        subtitulo: [o.metadata?.cliente, o.estado].filter(Boolean).join(' · '),
+        monto: o.monto || 0,
+        moneda: o.moneda || 'USD',
+      })),
+      total: propiedades.length + clientes.length + operaciones.length,
+    });
+  } catch (err) {
+    console.error('Global search error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ============ NAVBAR SUMMARY (counts for badges) ============
+// La lógica vive en services/navbarSummary.js para que admin y agentes no diverjan.
 router.get('/navbar-summary', authenticateToken, requireCRMUser, async (req, res) => {
   try {
     const scopeId = agentScopeId(req);
-    const filter = scopeId ? { agenteId: scopeId } : {};
-    const propFilter = scopeId ? { agentId: scopeId } : {};
-    
-    // Properties: count available
-    const propiedadesTotal = await Propiedad.countDocuments(propFilter);
-    const propiedadesDisponibles = await Propiedad.countDocuments({ ...propFilter, status: 'Disponible' });
-    
-    // Tasks: count pending (not completed)
-    const tareasPendientes = await Tarea.countDocuments({ 
-      ...filter, 
-      $or: [
-        { kanbanColumn: { $ne: 'done' } },
-        { kanbanColumn: { $exists: false } }
-      ]
+    const summary = await buildNavbarSummary({
+      scopeId,
+      notifOwnerId: scopeId,
+      // El formulario de contacto del sitio no tiene agente: sólo lo ve quien ve todo.
+      incluirContacto: !scopeId,
+      incluirProximaCita: true,
     });
-    const tareasHoy = await Tarea.countDocuments({
-      ...filter,
-      fechaVencimiento: {
-        $gte: new Date(new Date().setHours(0, 0, 0, 0)),
-        $lt: new Date(new Date().setHours(23, 59, 59, 999))
-      },
-      $or: [
-        { kanbanColumn: { $ne: 'done' } },
-        { kanbanColumn: { $exists: false } }
-      ]
-    });
-    
-    // Citas: upcoming appointments
-    const citasPendientes = await Cita.countDocuments({
-      ...filter,
-      fecha: { $gte: new Date() },
-      estado: { $ne: 'cancelada' }
-    });
-    const citasHoy = await Cita.countDocuments({
-      ...filter,
-      fecha: {
-        $gte: new Date(new Date().setHours(0, 0, 0, 0)),
-        $lt: new Date(new Date().setHours(23, 59, 59, 999))
-      },
-      estado: { $ne: 'cancelada' }
-    });
-    
-    // Activities: unread website inquiries
-    const consultasNoLeidas = await Activity.countDocuments({
-      ...filter,
-      type: { $in: ['enquiry', 'visit_scheduled'] },
-      'metadata.read': { $ne: true }
-    });
-    const consultasTotal = await Activity.countDocuments({
-      ...filter,
-      type: { $in: ['enquiry', 'visit_scheduled'] }
-    });
-    
-    // Internal messages: unread count
-    let mensajesNoLeidos = 0;
-    const chatUserId = scopeId || getUserId(req);
-    if (chatUserId) {
-      mensajesNoLeidos = await Message.countDocuments({
-        receiverId: chatUserId,
-        read: false
-      });
-    }
-    
-    // Notifications: unread count with visibility filter
-    const now = new Date();
-    const notificacionesNoLeidas = await Notification.countDocuments({
-      ...filter,
-      leida: false,
-      $or: [
-        { fechaProgramada: { $exists: false } },
-        { fechaProgramada: null },
-        { fechaProgramada: { $lte: now } }
-      ]
-    });
-    
-    res.json({
-      propiedades: {
-        total: propiedadesTotal,
-        disponibles: propiedadesDisponibles,
-      },
-      tareas: {
-        pendientes: tareasPendientes,
-        hoy: tareasHoy,
-        citas: citasPendientes,
-        citasHoy: citasHoy,
-        total: tareasPendientes + citasPendientes,
-      },
-      mensajes: {
-        consultasNoLeidas,
-        consultasTotal,
-        internosNoLeidos: mensajesNoLeidos,
-        total: consultasNoLeidas + mensajesNoLeidos,
-      },
-      notificaciones: {
-        noLeidas: notificacionesNoLeidas,
-      },
-    });
+    res.json(summary);
   } catch (err) {
     console.error('Navbar summary error:', err);
     res.status(500).json({ error: err.message });

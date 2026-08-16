@@ -662,4 +662,126 @@ router.get('/operaciones', authenticateToken, requireCRMUser, async (req, res) =
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Series mensuales
+//
+// Ambos endpoints devuelven la misma forma: un array `categories` con las
+// etiquetas de mes ya localizadas y una serie numerica por metrica, alineada
+// posicion a posicion. El frontend las pasa directo a ApexCharts sin recalcular.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Cantidad de meses pedida, acotada a un rango razonable (por defecto 6). */
+function parseMonths(value) {
+  const num = Number.parseInt(value, 10);
+  if (!Number.isFinite(num)) return 6;
+  return Math.min(24, Math.max(1, num));
+}
+
+/**
+ * Construye los buckets mensuales que terminan en el mes actual.
+ * Devuelve { start, categories, indexOf } donde `indexOf(date)` da la posicion
+ * del bucket correspondiente, o -1 si la fecha cae fuera del rango.
+ */
+function buildMonthBuckets(months) {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1, 0, 0, 0, 0);
+  const categories = [];
+  for (let i = 0; i < months; i += 1) {
+    const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+    categories.push(MONTH_LABELS[d.getMonth()]);
+  }
+  const indexOf = (date) => {
+    const d = new Date(date);
+    if (Number.isNaN(d.getTime())) return -1;
+    const idx = (d.getFullYear() - start.getFullYear()) * 12 + (d.getMonth() - start.getMonth());
+    return idx >= 0 && idx < months ? idx : -1;
+  };
+  return { start, categories, indexOf };
+}
+
+// Estados de Cliente que cuentan como conversion cerrada.
+const CONVERTED_CLIENT_STATES = ['convertido', 'cerrado', 'ganado'];
+
+/**
+ * GET /crm/stats/leads-mensuales?months=6
+ * Altas de clientes y conversiones por mes. Reemplaza las series que antes
+ * estaban escritas a mano en el panel de Clientes.
+ */
+router.get('/leads-mensuales', authenticateToken, requireCRMUser, async (req, res) => {
+  try {
+    const months = parseMonths(req.query.months);
+    const { start, categories, indexOf } = buildMonthBuckets(months);
+
+    const scopeId = agentScopeId(req);
+    const filter = { createdAt: { $gte: start } };
+    if (scopeId) filter.agenteId = scopeId;
+
+    const clientes = await Cliente.find(filter).select('createdAt metadata').lean();
+
+    const nuevosLeads = new Array(months).fill(0);
+    const conversiones = new Array(months).fill(0);
+
+    for (const cliente of clientes) {
+      const idx = indexOf(cliente.createdAt);
+      if (idx < 0) continue;
+      nuevosLeads[idx] += 1;
+      const estado = String(cliente.metadata?.estado || '').trim().toLowerCase();
+      if (CONVERTED_CLIENT_STATES.includes(estado)) conversiones[idx] += 1;
+    }
+
+    res.json({ categories, nuevosLeads, conversiones });
+  } catch (err) {
+    console.error('Leads mensuales stats error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /crm/stats/cliente/:id/actividad?months=6
+ * Actividad de un cliente por mes: interacciones registradas por el agente y
+ * consultas que el propio cliente envio desde el sitio.
+ */
+router.get('/cliente/:id/actividad', authenticateToken, requireCRMUser, async (req, res) => {
+  try {
+    const months = parseMonths(req.query.months);
+    const { start, categories, indexOf } = buildMonthBuckets(months);
+
+    const clienteId = String(req.params.id || '');
+    const scopeId = agentScopeId(req);
+
+    // Un agente solo puede ver la actividad de sus propios clientes.
+    if (scopeId) {
+      const cliente = await Cliente.findById(clienteId).select('agenteId').lean();
+      if (!cliente) return res.status(404).json({ error: 'Cliente no encontrado' });
+      if (String(cliente.agenteId || '') !== scopeId) return res.status(403).json({ error: 'forbidden' });
+    }
+
+    const [interaccionesDocs, consultasDocs] = await Promise.all([
+      ClientInteraction.find({ clienteId, createdAt: { $gte: start } }).select('createdAt').lean(),
+      Activity.find({
+        clientId: clienteId,
+        type: { $in: ['enquiry', 'visit_scheduled'] },
+        createdAt: { $gte: start },
+      }).select('createdAt').lean(),
+    ]);
+
+    const interacciones = new Array(months).fill(0);
+    const consultas = new Array(months).fill(0);
+
+    for (const doc of interaccionesDocs) {
+      const idx = indexOf(doc.createdAt);
+      if (idx >= 0) interacciones[idx] += 1;
+    }
+    for (const doc of consultasDocs) {
+      const idx = indexOf(doc.createdAt);
+      if (idx >= 0) consultas[idx] += 1;
+    }
+
+    res.json({ categories, interacciones, consultas });
+  } catch (err) {
+    console.error('Cliente actividad stats error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

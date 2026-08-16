@@ -8,9 +8,7 @@ Define la interfaz que todos los proveedores deben implementar:
   - Metadata y costos
 
 Proveedores implementados:
-  - OpenRouter (openrouter.py) — default, multi-modelo
-  - Anthropic (anthropic.py) — directo a Claude
-  - Gemini (gemini.py) — Google AI
+  - OpenAI (openai_provider.py) — único proveedor del sistema
 """
 
 from __future__ import annotations
@@ -98,7 +96,7 @@ class BaseModelProvider(ABC):
 # ── Provider Registry ─────────────────────────────────────────────────────────
 
 _providers: dict[str, BaseModelProvider] = {}
-_default_provider: str = "openrouter"
+_default_provider: str = "openai"
 
 
 def register_provider(provider: BaseModelProvider) -> None:

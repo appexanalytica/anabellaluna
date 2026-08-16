@@ -13,9 +13,6 @@ export const documentService = {
   // Subir documentos
   upload: (files, options = {}) => api.uploadFiles('/documents', files, options),
 
-  // Actualizar documento
-  update: (id, data) => api.put(`/documents/${id}`, data),
-
   // Eliminar documento
   delete: (id) => api.delete(`/documents/${id}`),
 
