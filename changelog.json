@@ -1,10 +1,20 @@
 {
-  "$comment": "Changelog visible en el panel de Novedades del sidebar. Redactar en español simple, pensado para el usuario final (no técnico). Tipos válidos: nuevo | mejora | arreglo. Editar este archivo y rebuildear: scripts/write-app-version.js lo convierte en admin/agents src/config/changelog.js.",
+  "$comment": "Changelog visible en el panel de Novedades del sidebar. Redactar en español simple, pensado para el usuario final (no técnico). Tipos válidos: nuevo | mejora | arreglo. Cada ítem puede declarar \"audiencia\": \"admin\" | \"agente\" | \"todos\" — sin declarar es \"todos\". También se puede fijar la audiencia de una entrada entera. Una entrada que se queda sin ítems para una app no se publica ahí. Editar este archivo y rebuildear: scripts/write-app-version.js lo convierte en admin/agents src/config/changelog.js, ya filtrado por app.",
   "entries": [
     {
       "date": "2026-08-16",
       "title": "Llega el motor de recomendaciones: cruza tu cartera con lo que pide cada cliente",
       "items": [
+        {
+          "type": "nuevo",
+          "audiencia": "admin",
+          "text": "IMPORTANTE, PRIMER PASO: hay que pegar la API key de OpenAI en Configuración AI para que todo esto funcione. Sin esa clave el sistema igual encuentra y ordena las coincidencias, pero no escribe las explicaciones ni entiende lo que está escrito en las notas de cada cliente. La clave se genera en platform.openai.com, se pega una sola vez y queda guardada."
+        },
+        {
+          "type": "nuevo",
+          "audiencia": "agente",
+          "text": "Si las sugerencias aparecen con textos cortos y secos, es porque falta que administración cargue la clave de OpenAI. Los puntajes y el orden ya son correctos; lo que falta es la explicación escrita."
+        },
         {
           "type": "nuevo",
           "text": "En la ficha de cada cliente aparece \"Propiedades sugeridas\": el sistema cruza toda la cartera con lo que ese cliente pidió, le pone un puntaje del 1 al 100 y explica en palabras por qué cada propiedad le sirve. También dice qué NO cumple, para que puedas anticiparlo antes de la visita."
@@ -19,22 +29,26 @@
         },
         {
           "type": "nuevo",
-          "text": "Cuando se carga una propiedad nueva o cambia de precio, llega un aviso con todos los clientes tuyos que la estaban buscando, en un solo mensaje en vez de uno por cliente."
-        },
-        {
-          "type": "nuevo",
-          "text": "Pantalla nueva \"Recomendaciones\" en administración: qué porcentaje de los clientes tiene algo para ver, qué están pidiendo que no tenemos (la guía de qué captar), qué propiedades no le sirven a nadie y qué oportunidades fuertes quedaron sin llamar."
+          "audiencia": "agente",
+          "text": "Cuando se carga una propiedad nueva o cambia de precio, llega un aviso con todos tus clientes que la estaban buscando, en un solo mensaje en vez de uno por cliente."
         },
         {
           "type": "nuevo",
           "text": "La zona de interés del cliente ahora acepta varias zonas en vez de una sola. La primera es la principal."
         },
         {
+          "type": "nuevo",
+          "audiencia": "admin",
+          "text": "Pantalla nueva \"Recomendaciones\": qué porcentaje de los clientes tiene algo para ver, qué están pidiendo que no tenemos (la guía de qué captar), qué propiedades no le sirven a nadie y qué oportunidades fuertes quedaron sin llamar."
+        },
+        {
           "type": "mejora",
-          "text": "Toda la inteligencia artificial del sistema ahora se conecta directo con OpenAI. La pantalla de Configuración AI cambió: hay que cargar una vez la API key de OpenAI para que funcionen el asistente, las sugerencias y las explicaciones del motor."
+          "audiencia": "admin",
+          "text": "Toda la inteligencia artificial del sistema ahora se conecta directo con OpenAI, sin intermediarios. La pantalla de Configuración AI cambió para reflejarlo."
         },
         {
           "type": "nuevo",
+          "audiencia": "admin",
           "text": "Se puede cargar la cotización del dólar desde Configuración AI. Sirve para comparar una propiedad publicada en pesos con el presupuesto de un cliente en dólares, y avisa cuando pasó más de una semana sin actualizarse."
         }
       ]
