@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { MdSpaceDashboard, MdOutlineCancel, MdOutlineIntegrationInstructions } from 'react-icons/md';
-import { FaUsers, FaRegCalendarAlt, FaDollarSign, FaChartBar, FaBuilding, FaUserTie, FaFileAlt, FaMagic, FaImage, FaBalanceScale, FaRobot, FaCog, FaVrCardboard, FaEye, FaEnvelope, FaGift } from 'react-icons/fa';
+import { FaUsers, FaRegCalendarAlt, FaDollarSign, FaChartBar, FaBuilding, FaUserTie, FaFileAlt, FaMagic, FaImage, FaBalanceScale, FaRobot, FaCog, FaVrCardboard, FaEye, FaEnvelope, FaGift, FaBullseye } from 'react-icons/fa';
 
 import { useStateContext } from '../contexts/ContextProvider';
 import { APP_COMMIT_COUNT, APP_VERSION } from '../config/appVersion';
@@ -25,6 +25,7 @@ const menuItems = [
   { name: 'Reportes', path: '/reportes', icon: <FaChartBar /> },
   { name: 'Integraciones', path: '/integraciones', icon: <MdOutlineIntegrationInstructions /> },
   { name: 'Marketing AI', path: '/marketing-ai', icon: <FaRobot /> },
+  { name: 'Recomendaciones', path: '/motor-recomendaciones', icon: <FaBullseye /> },
   { name: 'AI Config', path: '/ai-providers', icon: <FaCog /> },
   { name: 'Observabilidad IA', path: '/ai-observability', icon: <FaEye /> },
 ];

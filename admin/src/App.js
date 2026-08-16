@@ -10,6 +10,7 @@ import Seguridad from './pages/Seguridad';
 import MarketingAI from './pages/MarketingAI';
 import WhatsAppSesiones from './pages/WhatsAppSesiones';
 import AIProviders from './pages/AIProviders';
+import MotorRecomendaciones from './pages/MotorRecomendaciones';
 import AIObservability from './pages/AIObservability';
 import AIFloatingOrb from './components/ai/AIFloatingOrb';
 import InstallPrompt from './components/pwa/InstallPrompt';
@@ -447,6 +448,7 @@ const App = () => {
                 <Route path="/marketing-ai" element={<MarketingAI />} />
                 <Route path="/ai-providers" element={<AIProviders />} />
                 <Route path="/ai-observability" element={<AIObservability />} />
+                <Route path="/motor-recomendaciones" element={<MotorRecomendaciones />} />
 
                 {/* Integraciones (alias por tipo de sistema conectado) */}
                 <Route path="/erp-integracion" element={<Navigate to="/integraciones" replace />} />

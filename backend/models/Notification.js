@@ -30,6 +30,7 @@ const NotificationSchema = new mongoose.Schema({
       'reporte_diario',       // Daily summary report
       'asignacion_cliente',   // Client assigned to agent by admin
       'ai_suggestion',        // AI agent suggestion (from AI Gateway)
+      'match_sugerido',       // Recommendation engine: property ↔ client match
     ],
     required: true 
   },

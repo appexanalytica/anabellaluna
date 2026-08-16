@@ -13,6 +13,7 @@ import { useStateContext } from '../contexts/ContextProvider';
 import { crmService } from '../services/crmService';
 import { documentService } from '../services/documentService';
 import API_CONFIG, { getAuthToken } from '../config/api';
+import MatchPanel from '../components/matching/MatchPanel';
 
 const IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff', 'ico', 'heic'];
 const isImageDoc = (doc) => {
@@ -2430,6 +2431,12 @@ const Propiedades = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Motor de recomendaciones: a quién le sirve esta propiedad.
+                  Oculto en la vista de solo lectura, donde no se muestran clientes. */}
+              {!detailReadOnly && (
+                <MatchPanel tipo="propiedad" entityId={propiedadSeleccionada.id} />
+              )}
 
               {/* Descripción */}
               <div className={cardBase}>

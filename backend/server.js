@@ -114,6 +114,7 @@ const pushRoutes = require('./routes/push');
 
 const clientInteractionsRoutes = require('./routes/clientInteractions');
 const cotizacionRoutes = require('./routes/cotizacion');
+const matchingRoutes = require('./routes/matching');
 const mercadoLibreRoutes = require('./routes/mercadolibre');
 const portalesRoutes = require('./routes/portales');
 const marketingAIRoutes = require('./routes/marketing-ai/index');
@@ -287,6 +288,8 @@ app.use('/crm/fechas-importantes', fechasImportantesRoutes);
 app.use('/crm/client-interactions', clientInteractionsRoutes);
 
 app.use('/crm/cotizacion', cotizacionRoutes);
+
+app.use('/crm/matching', matchingRoutes);
 
 app.use('/crm/tours', virtualToursRoutes.crmRouter);
 
@@ -1232,6 +1235,10 @@ if (require.main === module) {
 
       // Initialize task automation scheduler (overdue alerts, inactive task reminders)
       initTaskAutomationScheduler();
+
+      // Motor de recomendaciones: escucha altas y cambios de propiedades y
+      // clientes para avisarle al agente qué cruza con qué.
+      require('./services/matching/triggers').init();
 
     });
 

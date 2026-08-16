@@ -7,6 +7,8 @@ import { confirmToast } from '../utils/confirmToast';
 import { useStateContext } from '../contexts/ContextProvider';
 import { crmService } from '../services/crmService';
 import ClienteFunnel from './ClienteFunnel';
+import ZonasInput from '../components/ZonasInput';
+import MatchPanel from '../components/matching/MatchPanel';
 
 const ClientesCRM = () => {
   const { currentMode, currentColor } = useStateContext();
@@ -59,6 +61,7 @@ const ClientesCRM = () => {
     presupuesto: '',
     moneda: 'USD',
     zonaInteres: '',
+    zonasInteres: [],
     tipoPropiedad: 'Departamento',
     tipoLote: '',
     ambientes: '',
@@ -120,7 +123,11 @@ const ClientesCRM = () => {
     const md = (item && item.metadata) ? item.metadata : {};
     const id = item?._id || item?.id;
     const tipoCliente = md.tipoCliente || md.tipo || 'Comprador';
-    const zonaInteres = md.zonaInteres || md.zona || '';
+    // Zonas de interés: array nuevo, o el texto único viejo separado por comas.
+    const zonasInteres = Array.isArray(md.zonasInteres) && md.zonasInteres.length
+      ? md.zonasInteres.map((z) => String(z || '').trim()).filter(Boolean)
+      : String(md.zonaInteres || md.zona || '').split(',').map((z) => z.trim()).filter(Boolean);
+    const zonaInteres = zonasInteres.join(', ');
     const presupuestoRaw = (md.presupuesto === 0 || md.presupuesto) ? md.presupuesto : '';
     const scoringRaw = (md.scoring === 0 || md.scoring) ? md.scoring : 50;
     const bañosVal = (md['baños'] === 0 || md['baños']) ? md['baños'] : (md.baños === 0 || md.baños) ? md.baños : '';
@@ -140,6 +147,7 @@ const ClientesCRM = () => {
       moneda: md.moneda || 'USD',
       zona: zonaInteres,
       zonaInteres,
+      zonasInteres,
       scoring: typeof scoringRaw === 'number' ? scoringRaw : Number(scoringRaw || 50),
       ultimaInteraccion: md.ultimaActividad || md.ultimaInteraccion || '',
       fechaRegistro: md.fechaRegistro || '',
@@ -214,6 +222,9 @@ const ClientesCRM = () => {
       presupuesto: cliente?.presupuesto || '',
       moneda: cliente?.moneda || base.moneda,
       zonaInteres: cliente?.zonaInteres || cliente?.zona || '',
+      zonasInteres: Array.isArray(cliente?.zonasInteres)
+        ? cliente.zonasInteres
+        : String(cliente?.zonaInteres || cliente?.zona || '').split(',').map((z) => z.trim()).filter(Boolean),
       tipoPropiedad: cliente?.tipoPropiedad || base.tipoPropiedad,
       tipoLote: cliente?.tipoLote || '',
       ambientes: cliente?.ambientes || '',
@@ -280,7 +291,12 @@ const ClientesCRM = () => {
         estado: form?.estado || 'Lead',
         presupuesto: form?.presupuesto === '' ? 0 : Number(form?.presupuesto || 0),
         moneda: form?.moneda || 'USD',
-        zonaInteres: form?.zonaInteres || '',
+        // Se guardan las dos formas: el array es el que usa el motor de
+        // recomendaciones, el texto mantiene andando todo lo que ya existía.
+        zonasInteres: Array.isArray(form?.zonasInteres) ? form.zonasInteres : [],
+        zonaInteres: Array.isArray(form?.zonasInteres)
+          ? form.zonasInteres.join(', ')
+          : (form?.zonaInteres || ''),
         tipoPropiedad: form?.tipoPropiedad || 'Departamento',
         tipoLote: form?.tipoLote || '',
         ambientes: form?.ambientes || '',
@@ -1524,6 +1540,9 @@ const ClientesCRM = () => {
                 </div>
               </div>
 
+              {/* Motor de recomendaciones: qué mostrarle a este cliente */}
+              <MatchPanel tipo="cliente" entityId={clienteSeleccionado.id} />
+
               {/* Datos comerciales por tipo de cliente */}
               {(clienteSeleccionado.presupuesto > 0 || clienteSeleccionado.valorPretendido || clienteSeleccionado.tipoPropiedad || clienteSeleccionado.tipoLote) && (
                 <div className={cardBase}>
@@ -2643,14 +2662,10 @@ const ClientesCRM = () => {
                       <label htmlFor="field-50" className="block text-sm font-medium mb-2 dark:text-gray-200">
                         {nuevoCliente.tipoCliente === 'Propietario' ? 'Ubicación de la propiedad' : 'Zona de Interés'}
                       </label>
-                      <input
-                        id="field-50"
-                        type="text"
-                        name="zonaInteres"
-                        value={nuevoCliente.zonaInteres}
-                        onChange={handleInputChange}
+                      <ZonasInput
+                        zonas={nuevoCliente.zonasInteres}
+                        onChange={(zonas) => setNuevoCliente((prev) => ({ ...prev, zonasInteres: zonas }))}
                         placeholder={nuevoCliente.tipoCliente === 'Propietario' ? 'Dirección o barrio de la propiedad' : 'Palermo, Belgrano, Recoleta'}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
                       />
                     </div>
 

@@ -287,11 +287,11 @@ agents/  →  espejo de los mismos componentes
 | Fase | Entregable | Estimado | Sirve solo |
 |---|---|---|---|
 | **0 ✅ HECHA** | Migración completa a OpenAI (chat + embeddings), servicio de embeddings en Node, **cotización del dólar + pantalla de carga en el admin** | 1 día | Sí: la cotización sirve en toda la app, no solo acá |
-| **1** | Perfiles semánticos: modelos, `profileService`, `embeddingService`, backfill, regeneración por evento. **+ zonas de interés múltiples (modelo, normalizador y selector en ambos frontends)** | 3-4 días | Sí: los `faltantes` ya son sugerencias útiles |
-| **2** | Motor de scoring determinista + endpoints, **sin LLM**. Incluye rango de presupuesto derivado y scoring multi-zona | 2 días | **Sí — el matching ya funciona y se puede validar contra el criterio del agente** |
-| **3** | Capa de explicación GPT + `MatchRecommendation` + caché | 1-2 días | Sí |
-| **4** | UI en admin y agents: pestañas en ficha de cliente y propiedad, acciones, WhatsApp, **captador visible y "coordinar con…"** | 2-3 días | Sí |
-| **5** | Automatización por eventos + **notificaciones agrupadas y resumen diario** + panel de oportunidades del admin | 2 días | Sí |
+| **1 ✅ HECHA** | Perfiles semánticos: modelos, `profileService`, `embeddingService`, backfill, regeneración por evento. **+ zonas de interés múltiples (modelo, normalizador y selector en ambos frontends)** | 3-4 días | Sí: los `faltantes` ya son sugerencias útiles |
+| **2 ✅ HECHA** | Motor de scoring determinista + endpoints, **sin LLM**. Incluye rango de presupuesto derivado y scoring multi-zona | 2 días | **Sí — el matching ya funciona y se puede validar contra el criterio del agente** |
+| **3 ✅ HECHA** | Capa de explicación GPT + `MatchRecommendation` + caché | 1-2 días | Sí |
+| **4 ✅ HECHA** | UI en admin y agents: pestañas en ficha de cliente y propiedad, acciones, WhatsApp, **captador visible y "coordinar con…"** | 2-3 días | Sí |
+| **5 ✅ HECHA** | Automatización por eventos + **notificaciones agrupadas y resumen diario** + panel de oportunidades del admin | 2 días | Sí |
 | **6** | Resto de sugerencias del punto 6 + calibración con feedback | continuo | Sí |
 
 **Total hasta producción usable: ~2 semanas y media** (las decisiones tomadas suman ~2 días: multi-zona, pantalla de cotización y notificaciones agrupadas). Las fases 1 a 3 se pueden probar por API antes de tocar una sola pantalla, y **la fase 2 ya entrega un motor funcionando sin IA generativa** — eso permite validar que los pesos reflejan el criterio real de la inmobiliaria antes de gastar un peso en redacción.

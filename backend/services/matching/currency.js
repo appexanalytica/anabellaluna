@@ -79,6 +79,10 @@ async function setRate(valor, { userId = '', nombre = '' } = {}) {
     throw err;
   }
 
+  // GlobalConfig.updatedBy es un ObjectId: mandarle cualquier string hace
+  // fallar el guardado entero. El identificador queda igual dentro del valor.
+  const esObjectId = /^[0-9a-fA-F]{24}$/.test(String(userId || ''));
+
   await GlobalConfig.setValue(
     CONFIG_KEY,
     {
@@ -89,7 +93,7 @@ async function setRate(valor, { userId = '', nombre = '' } = {}) {
       fuente: 'manual',
     },
     'Cotización del dólar para comparar precios entre monedas',
-    userId || null
+    esObjectId ? userId : null
   );
 
   invalidateCache();

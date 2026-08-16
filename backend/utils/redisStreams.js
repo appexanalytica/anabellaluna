@@ -11,6 +11,7 @@
 
 const { randomUUID } = require('crypto');
 const redis = require('../redis');
+const { eventBus } = require('./eventBus');
 
 // ── Constantes ─────────────────────────────────────────────────────────────────
 
@@ -66,6 +67,10 @@ async function publishEvent(eventType, payload, meta = {}) {
  * Garantiza que nunca rompe el flujo si Redis falla.
  */
 function publishEventAsync(eventType, payload, meta = {}) {
+  // El mismo evento se emite dentro del proceso: así el motor de
+  // recomendaciones reacciona sin depender de que Redis esté levantado.
+  eventBus.emitAsync(eventType, payload);
+
   setImmediate(() => {
     publishEvent(eventType, payload, meta).catch(() => {});
   });
