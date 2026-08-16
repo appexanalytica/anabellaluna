@@ -101,10 +101,10 @@ const GlobalSearch = ({ abierto, onClose, currentColor }) => {
         role="dialog"
         aria-modal="true"
         aria-label="Búsqueda global"
-        className="w-full max-w-xl bg-white dark:bg-[#42464D] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden"
+        className="w-full max-w-xl bg-white dark:bg-[#42464D] rounded-2xl shadow-[0_24px_60px_-15px_rgba(0,0,0,0.35)] border border-gray-100 dark:border-gray-700 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 px-4 py-3 border-b dark:border-gray-600">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-600">
           <FaSearch className="text-gray-400 flex-shrink-0" />
           <input
             ref={inputRef}
@@ -113,14 +113,14 @@ const GlobalSearch = ({ abierto, onClose, currentColor }) => {
             onKeyDown={onKeyDown}
             placeholder="Buscar propiedades, clientes u operaciones…"
             aria-label="Buscar"
-            className="flex-1 bg-transparent outline-none text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400"
+            className="flex-1 bg-transparent outline-none text-[15px] text-gray-800 dark:text-gray-100 placeholder:text-gray-400"
           />
-          <kbd className="hidden sm:block text-[10px] font-sans text-gray-400 border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5">
+          <kbd className="hidden sm:block text-[10px] font-sans font-medium tracking-wide text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-900/50 border border-gray-200/80 dark:border-gray-700 rounded-md px-1.5 py-1 leading-none">
             Esc
           </kbd>
         </div>
 
-        <div className="max-h-[55vh] overflow-y-auto">
+        <div className="max-h-[55vh] overflow-y-auto px-2">
           {q.trim().length < 2 && (
             <p className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
               Escribí al menos 2 letras para buscar.
@@ -142,7 +142,7 @@ const GlobalSearch = ({ abierto, onClose, currentColor }) => {
             if (!lista.length) return null;
             return (
               <div key={g.clave} className="py-1">
-                <p className="px-4 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                <p className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
                   {g.label}
                 </p>
                 {lista.map((r) => {
@@ -155,7 +155,7 @@ const GlobalSearch = ({ abierto, onClose, currentColor }) => {
                       type="button"
                       onMouseEnter={() => setIndice(posicion)}
                       onClick={() => abrir({ ...r, grupo: g })}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-xl transition-colors ${
                         activo ? 'bg-gray-100 dark:bg-gray-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700/60'
                       }`}
                     >
@@ -172,6 +172,12 @@ const GlobalSearch = ({ abierto, onClose, currentColor }) => {
                           </span>
                         )}
                       </span>
+                      {/* La fila activa muestra el Enter: deja claro qué se abre. */}
+                      {activo && (
+                        <span className="hidden sm:block text-[11px] text-gray-400 dark:text-gray-500 flex-shrink-0">
+                          ↵
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -179,6 +185,14 @@ const GlobalSearch = ({ abierto, onClose, currentColor }) => {
             );
           })}
         </div>
+
+        {items.length > 0 && (
+          <div className="hidden sm:flex items-center gap-4 px-5 py-2.5 border-t border-gray-100 dark:border-gray-600 text-[11px] text-gray-400 dark:text-gray-500">
+            <span className="flex items-center gap-1.5"><span className="font-sans">↑ ↓</span> navegar</span>
+            <span className="flex items-center gap-1.5"><span className="font-sans">↵</span> abrir</span>
+            <span className="flex items-center gap-1.5"><span className="font-sans">esc</span> cerrar</span>
+          </div>
+        )}
       </div>
     </div>
   );

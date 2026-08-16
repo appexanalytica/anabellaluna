@@ -4,6 +4,20 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-08-16",
+    "title": "El buscador de la barra superior ahora se ve como un buscador",
+    "items": [
+      {
+        "type": "mejora",
+        "text": "El botón de búsqueda dejó de parecer un ícono suelto: ahora es un campo con el texto \"Buscar…\" y el atajo de teclado a la vista (Ctrl K, o ⌘K si usás Mac). En pantallas chicas se achica a un botón redondo para no ocupar lugar."
+      },
+      {
+        "type": "mejora",
+        "text": "El cuadro de resultados quedó más prolijo y abajo aparece qué teclas usar: flechas para moverse, Enter para abrir y Esc para cerrar."
+      }
+    ]
+  },
+  {
+    "date": "2026-08-16",
     "title": "Llega el motor de recomendaciones: cruza tu cartera con lo que pide cada cliente",
     "items": [
       {

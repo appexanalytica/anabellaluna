@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { MdSpaceDashboard } from 'react-icons/md';
-import { FaBars, FaBell, FaCalendarAlt, FaComments, FaSearch, FaTasks } from 'react-icons/fa';
-import { TooltipComponent } from '@syncfusion/ej2-react-popups';
+import { FaBars, FaBell, FaCalendarAlt, FaComments, FaTasks } from 'react-icons/fa';
 
 import { Tareas, Citas, Alertas, ConsultasDropdown } from '.';
 import NavButton from './navbar/NavButton';
 import ProfileMenu from './navbar/ProfileMenu';
 import GlobalSearch from './navbar/GlobalSearch';
+import SearchTrigger from './navbar/SearchTrigger';
 import QuickCreate from './navbar/QuickCreate';
 import ProximaCita from './navbar/ProximaCita';
 import { useStateContext } from '../contexts/ContextProvider';
@@ -205,20 +205,11 @@ const Navbar = () => {
           </div>
         )}
 
-        <TooltipComponent content="Buscar (Ctrl+K)" position="BottomCenter">
-          <button
-            type="button"
-            onClick={() => { cerrarPaneles(); setBuscadorAbierto(true); }}
-            aria-label="Buscar"
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <FaSearch />
-            <span className="hidden lg:inline">Buscar</span>
-            <kbd className="hidden lg:inline text-[10px] font-sans border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5">
-              Ctrl K
-            </kbd>
-          </button>
-        </TooltipComponent>
+        {/* Buscador: campo en desktop, ícono redondo abajo de lg */}
+        <SearchTrigger
+          onClick={() => { cerrarPaneles(); setBuscadorAbierto(true); }}
+          currentColor={currentColor}
+        />
 
         {!isMobile && (
           <div className="flex items-center gap-1 bg-white dark:bg-gray-800 rounded-2xl px-2 py-1 shadow-sm">
