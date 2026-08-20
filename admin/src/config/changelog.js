@@ -3,6 +3,17 @@
 // Filtrado para "admin": solo las novedades que le incumben a esta app.
 export const CHANGELOG_ENTRIES = [
   {
+    "date": "2026-08-20",
+    "title": "Todos los agentes ven ahora el portfolio completo de la inmobiliaria",
+    "items": [
+      {
+        "type": "mejora",
+        "audiencia": "admin",
+        "text": "Los agentes pasaron a ver todas las propiedades de la inmobiliaria, no solo las propias. La edición no cambió: cada agente sigue modificando únicamente sus captaciones, y las carteras de clientes siguen siendo privadas de cada uno."
+      }
+    ]
+  },
+  {
     "date": "2026-08-16",
     "title": "El buscador de la barra superior ahora se ve como un buscador",
     "items": [

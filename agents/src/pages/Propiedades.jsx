@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import FunnelDesignEditor from '../components/FunnelDesignEditor';
 import PropiedadesMapView from './PropiedadesMapView';
 import PropiedadInforme from '../components/PropiedadInforme';
@@ -11,6 +11,7 @@ import { FaPlus, FaHome, FaEye, FaDollarSign, FaUser, FaCamera, FaMapMarkerAlt, 
 import { confirmToast } from '../utils/confirmToast';
 import { useStateContext } from '../contexts/ContextProvider';
 import { crmService } from '../services/crmService';
+import { authService } from '../services/authService';
 import { documentService } from '../services/documentService';
 import API_CONFIG, { getAuthToken } from '../config/api';
 import MatchPanel from '../components/matching/MatchPanel';
@@ -50,6 +51,10 @@ const Propiedades = () => {
   const [error, setError] = useState('');
 
   // Propiedades de toda la inmobiliaria (sin datos del propietario)
+  // The properties list is now portfolio-wide for every agent; "Mis Captaciones"
+  // is derived client-side from the logged-in agent's own agenteId.
+  const currentUser = useMemo(() => authService.getCurrentUser() || {}, []);
+  const currentAgenteId = String(currentUser.agenteId || '');
   const [propiedadesInmobiliaria, setPropiedadesInmobiliaria] = useState([]);
   const [inmobiliariaCoverUrls, setInmobiliariaCoverUrls] = useState({});
   const [inmobiliariaSearch, setInmobiliariaSearch] = useState('');
@@ -689,11 +694,12 @@ const Propiedades = () => {
         setLoading(true);
         setError('');
 
-        const [agentesData, propiedadesData, adminsData, inmobiliariaData, clientesData] = await Promise.all([
+        // getAll() now returns the whole agency portfolio, so the separate
+        // getAllInmobiliaria() call is redundant — both tabs derive from this one list.
+        const [agentesData, propiedadesData, adminsData, clientesData] = await Promise.all([
           crmService.agentes.getAll(),
           crmService.propiedades.getAll(),
           crmService.agentes.getAdmins().catch(() => []),
-          crmService.propiedades.getAllInmobiliaria().catch(() => []),
           crmService.clientes.getAll().catch(() => []),
         ]);
 
@@ -786,12 +792,15 @@ const Propiedades = () => {
           };
         };
         const mapped = (Array.isArray(propiedadesData) ? propiedadesData : []).map(mapPropRow);
-        if (Array.isArray(inmobiliariaData)) {
-          setPropiedadesInmobiliaria(inmobiliariaData.map(mapPropRow));
-        }
+        // Full portfolio feeds the "Propiedades de la Inmobiliaria" tab.
+        setPropiedadesInmobiliaria(mapped);
         setMisClientes(Array.isArray(clientesData) ? clientesData : []);
 
-        setPropiedades(mapped);
+        // "Mis Captaciones" keeps showing only the agent's own properties, which are
+        // the ones they can edit. Without an agenteId (admin) show everything.
+        setPropiedades(currentAgenteId
+          ? mapped.filter((p) => String(p.agenteId || '') === currentAgenteId)
+          : mapped);
       } catch (e) {
         if (!mounted) return;
         setError(e?.message || 'Error al cargar propiedades');
@@ -804,7 +813,7 @@ const Propiedades = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [currentAgenteId]);
 
   // Load authenticated cover images for property cards
   useEffect(() => {

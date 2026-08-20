@@ -703,14 +703,13 @@ const Propiedades = () => {
         setLoading(true);
         setError('');
 
-        const fetchList = [
+        // getAll() now returns the whole agency portfolio for agents too, so the
+        // separate getAllInmobiliaria() call is redundant — both tabs derive from it.
+        const [agentesData, propiedadesData, adminsData] = await Promise.all([
           crmService.agentes.getAll(),
           crmService.propiedades.getAll(),
           crmService.agentes.getAdmins().catch(() => []),
-        ];
-        if (isAgent) fetchList.push(crmService.propiedades.getAllInmobiliaria().catch(() => []));
-
-        const [agentesData, propiedadesData, adminsData, inmobiliariaData] = await Promise.all(fetchList);
+        ]);
 
         if (!mounted) return;
         setAgentes(Array.isArray(agentesData) ? agentesData : []);
@@ -795,11 +794,14 @@ const Propiedades = () => {
         };
         const mapped = (Array.isArray(propiedadesData) ? propiedadesData : []).map(mapPropRow);
 
-        setPropiedades(mapped);
+        // Agents: "Mis Captaciones" stays scoped to their own properties (the editable
+        // ones) while the inmobiliaria tab shows the full portfolio. Admins see it all.
+        const ownAgenteId = String(currentUser.agenteId || '');
+        setPropiedades(isAgent && ownAgenteId
+          ? mapped.filter((p) => String(p.agenteId || '') === ownAgenteId)
+          : mapped);
 
-        if (isAgent && Array.isArray(inmobiliariaData)) {
-          setPropiedadesInmobiliaria(inmobiliariaData.map(mapPropRow));
-        }
+        if (isAgent) setPropiedadesInmobiliaria(mapped);
       } catch (e) {
         if (!mounted) return;
         setError(e?.message || 'Error al cargar propiedades');
@@ -813,7 +815,7 @@ const Propiedades = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [isAgent, currentUser.agenteId]);
 
   // Load authenticated cover images for property cards
   useEffect(() => {

@@ -4,6 +4,10 @@ const Propiedad = require('../models/Propiedad');
 const DocumentLink = require('../models/DocumentLink');
 const Cliente = require('../models/Cliente');
 const { authenticateToken, agentScopeId, requireCRMUser } = require('../auth');
+
+// Reads on properties are portfolio-wide for every CRM user; writes stay scoped to the
+// owning agent. Aliased so the two policies never get conflated again.
+const agentWriteScopeId = agentScopeId;
 const { authenticateTokenOrService } = require('../middlewares/serviceAuth');
 const { sendNotification, sendToRole } = require('../services/pushService');
 const { syncPropertyToML } = require('../services/mercadoLibre');
@@ -31,9 +35,9 @@ const router = express.Router();
 router.get('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
     const { q } = req.query;
-    const scopeId = agentScopeId(req);
+    // Portfolio-wide read: every CRM user (agents included) sees all agency properties.
+    // Write access stays scoped per agent — see agentWriteScopeId below.
     const filter = q ? { $or: [ { title: { $regex: q, $options: 'i' } }, { description: { $regex: q, $options: 'i' } } ] } : {};
-    if (scopeId) filter.agentId = scopeId;
     const items = await Propiedad.find(filter).sort({ updatedAt: -1 }).limit(1000).lean();
 
     if (!items.length) return res.json([]);
@@ -122,8 +126,7 @@ router.get('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) 
   try {
     const item = await Propiedad.findById(req.params.id).lean();
     if (!item) return res.status(404).json({ error: 'Not found' });
-    const scopeId = agentScopeId(req);
-    if (scopeId && String(item.agentId || '') !== scopeId) return res.status(403).json({ error: 'forbidden' });
+    // Portfolio-wide read: no agent scope check — any CRM user may open any property.
     // Populate owner data
     let ownerData = null;
     if (item.ownerId && isValidObjectId(item.ownerId)) {
@@ -146,7 +149,7 @@ const normalizePublicationByStatus = (body) => {
 router.post('/', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   attachRequestId(req, res);
   try {
-    const scopeId = agentScopeId(req);
+    const scopeId = agentWriteScopeId(req);
     const body = { ...(req.body || {}) };
     traceMutation(req, 'propiedad.create.start', {
       title: body.title || '',
@@ -185,7 +188,7 @@ router.post('/', authenticateTokenOrService, requireCRMUser, async (req, res) =>
 router.put('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   attachRequestId(req, res);
   try {
-    const scopeId = agentScopeId(req);
+    const scopeId = agentWriteScopeId(req);
     const filter = { _id: req.params.id };
     if (scopeId) filter.agentId = scopeId;
     const body = { ...(req.body || {}) };
@@ -227,7 +230,7 @@ router.put('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) 
 // Toggle published status
 router.patch('/:id/publish', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
-    const scopeId = agentScopeId(req);
+    const scopeId = agentWriteScopeId(req);
     const filter = { _id: req.params.id };
     if (scopeId) filter.agentId = scopeId;
     const prop = await Propiedad.findOne(filter);
@@ -280,9 +283,9 @@ router.patch('/:id/publish', authenticateTokenOrService, requireCRMUser, async (
 router.patch('/:id/visita', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   attachRequestId(req, res);
   try {
-    const scopeId = agentScopeId(req);
+    // Visit counting follows the READ policy: any CRM user can open any property
+    // in the portfolio, so any of them may register a visit on it.
     const filter = { _id: req.params.id };
-    if (scopeId) filter.agentId = scopeId;
     traceMutation(req, 'propiedad.visita.start', { propiedadId: req.params.id });
 
     const updated = await Propiedad.findOneAndUpdate(
@@ -327,7 +330,7 @@ router.patch('/:id/visita', authenticateTokenOrService, requireCRMUser, async (r
 // Generate a private share token
 router.post('/:id/private-link', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
-    const scopeId = agentScopeId(req);
+    const scopeId = agentWriteScopeId(req);
     const filter = { _id: req.params.id };
     if (scopeId) filter.agentId = scopeId;
     const prop = await Propiedad.findOne(filter);
@@ -341,7 +344,7 @@ router.post('/:id/private-link', authenticateTokenOrService, requireCRMUser, asy
 // Revoke private share token
 router.delete('/:id/private-link', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   try {
-    const scopeId = agentScopeId(req);
+    const scopeId = agentWriteScopeId(req);
     const filter = { _id: req.params.id };
     if (scopeId) filter.agentId = scopeId;
     const prop = await Propiedad.findOne(filter);
@@ -355,7 +358,7 @@ router.delete('/:id/private-link', authenticateTokenOrService, requireCRMUser, a
 router.delete('/:id', authenticateTokenOrService, requireCRMUser, async (req, res) => {
   attachRequestId(req, res);
   try {
-    const scopeId = agentScopeId(req);
+    const scopeId = agentWriteScopeId(req);
     const filter = { _id: req.params.id };
     if (scopeId) filter.agentId = scopeId;
     traceMutation(req, 'propiedad.delete.start', { propiedadId: req.params.id });

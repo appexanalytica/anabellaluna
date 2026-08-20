@@ -3,6 +3,22 @@
 // Filtrado para "agents": solo las novedades que le incumben a esta app.
 export const CHANGELOG_ENTRIES = [
   {
+    "date": "2026-08-20",
+    "title": "Todos los agentes ven ahora el portfolio completo de la inmobiliaria",
+    "items": [
+      {
+        "type": "mejora",
+        "audiencia": "agente",
+        "text": "Ya no ves solo tus captaciones: en \"Propiedades de la Inmobiliaria\" aparece todo el portfolio, con la ficha completa de cada propiedad, sus fotos y el agente a cargo. Si un cliente tuyo pregunta por algo que captó un compañero, lo podés abrir y contestarle en el momento, sin tener que pedirle los datos a nadie."
+      },
+      {
+        "type": "mejora",
+        "audiencia": "agente",
+        "text": "\"Mis Captaciones\" sigue mostrando solo las tuyas, que son las que podés editar, despublicar o borrar. Las propiedades de otros agentes se abren en modo lectura: las consultás, pero no se tocan."
+      }
+    ]
+  },
+  {
     "date": "2026-08-16",
     "title": "El buscador de la barra superior ahora se ve como un buscador",
     "items": [
