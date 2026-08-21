@@ -34,8 +34,17 @@ const FALLBACK_OG_IMAGE = 'https://anabellaluna.com.ar/og-default.jpg';
 const DESCRIPTION_MAX_LEN = 500;
 const MAX_AMENITIES_IN_DESC = 5;
 
-// Cached build HTML (invalidated on first request, then cached until restart)
+// Cached build HTML, keyed by the file's mtime — deploy.sh restarts the
+// backend *before* rebuilding the frontend, so an unconditional "cache
+// forever until process restart" would pin every /buy|rent/:slug request to
+// whatever index.html existed at boot. Once `vite build` regenerates
+// frontend/dist with fresh hashed chunk filenames, that stale cached HTML
+// points at JS files that no longer exist on disk — a real browser hitting a
+// shared property link then gets a 404 on the bundle and a blank page. A
+// cheap stat() per request keeps the cache self-healing across deploys
+// without requiring the deploy script to explicitly signal a refresh.
 let _indexHtmlCache = null;
+let _indexHtmlCacheMtimeMs = 0;
 const INDEX_HTML_PATH = path.join(__dirname, '../frontend/dist/index.html');
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -60,17 +69,31 @@ function safeNumber(value) {
   return Number.isFinite(n) ? n : 0;
 }
 
-/** Returns the frontend/dist/index.html string (cached). */
+/** Returns the frontend/dist/index.html string, re-reading it whenever the file on disk has changed since it was last cached. */
 function readIndexHtml() {
-  if (_indexHtmlCache) return _indexHtmlCache;
-  if (!fs.existsSync(INDEX_HTML_PATH)) return null;
-  _indexHtmlCache = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let mtimeMs;
+  try {
+    mtimeMs = fs.statSync(INDEX_HTML_PATH).mtimeMs;
+  } catch {
+    _indexHtmlCache = null;
+    return null;
+  }
+
+  if (_indexHtmlCache && mtimeMs === _indexHtmlCacheMtimeMs) return _indexHtmlCache;
+
+  try {
+    _indexHtmlCache = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+    _indexHtmlCacheMtimeMs = mtimeMs;
+  } catch {
+    _indexHtmlCache = null;
+  }
   return _indexHtmlCache;
 }
 
-/** Invalidates the cached index.html (useful after deploys, but optional). */
+/** Invalidates the cached index.html (useful after deploys, but optional — readIndexHtml() already self-heals via mtime). */
 function invalidateIndexCache() {
   _indexHtmlCache = null;
+  _indexHtmlCacheMtimeMs = 0;
 }
 
 /** Map Spanish operation text → canonical 'buy' | 'rent'. */
