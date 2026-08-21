@@ -102,6 +102,21 @@ const ClientesCRM = () => {
   const [searchCliente, setSearchCliente] = useState('');
   const [dashStats, setDashStats] = useState(null);
 
+  // Las propiedades consultadas en el alta pasaron de un objeto único a una lista.
+  // Se acepta el formato viejo (objeto) para los clientes ya cargados.
+  const normalizePropiedadesConsultadas = (lista, unica) => {
+    const arr = Array.isArray(lista) ? lista : [];
+    const out = [];
+    const seen = new Set();
+    for (const p of arr.concat(unica && unica.id ? [unica] : [])) {
+      const id = String(p?.id || '');
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      out.push({ id, titulo: p.titulo || '', direccion: p.direccion || '' });
+    }
+    return out;
+  };
+
   const createEmptyClienteForm = () => ({
     nombre: '',
     apellido: '',
@@ -153,6 +168,7 @@ const ClientesCRM = () => {
     empresa: '',
     agenteId: '',
     propiedadConsultadaInicial: { id: '', titulo: '', direccion: '' },
+    propiedadesConsultadasIniciales: [],
     interesesCliente: [],
   });
 
@@ -271,6 +287,9 @@ const ClientesCRM = () => {
       agenteId: item?.agenteId || '',
       agenteNombre: md.agente || '',
       propiedadConsultadaInicial: md.propiedadConsultadaInicial || { id: '', titulo: '', direccion: '' },
+      propiedadesConsultadasIniciales: normalizePropiedadesConsultadas(
+        md.propiedadesConsultadasIniciales, md.propiedadConsultadaInicial
+      ),
       interesesCliente: Array.isArray(md.interesesCliente) ? md.interesesCliente : [],
       assignedBy: item?.assignedBy || null,
       metadata: md,
@@ -338,11 +357,17 @@ const ClientesCRM = () => {
       empresa: cliente?.empresa || '',
       agenteId: cliente?.agenteId || '',
       propiedadConsultadaInicial: cliente?.propiedadConsultadaInicial || { id: '', titulo: '', direccion: '' },
+      propiedadesConsultadasIniciales: normalizePropiedadesConsultadas(
+        cliente?.propiedadesConsultadasIniciales, cliente?.propiedadConsultadaInicial
+      ),
       interesesCliente: Array.isArray(cliente?.interesesCliente) ? cliente.interesesCliente : [],
     };
   };
 
   const buildClientePayload = (form) => {
+    const propiedadesConsultadas = normalizePropiedadesConsultadas(
+      form?.propiedadesConsultadasIniciales, form?.propiedadConsultadaInicial
+    );
     const fullName = [form?.nombre, form?.apellido].filter(Boolean).join(' ').trim();
 
     return {
@@ -401,7 +426,10 @@ const ClientesCRM = () => {
         empresa: form?.empresa || '',
         agente: form?.agenteNombre || form?.agente || '',
         agenteId: form?.agenteId || '',
-        propiedadConsultadaInicial: form?.propiedadConsultadaInicial?.id ? form.propiedadConsultadaInicial : null,
+        // Se guarda la lista completa y se mantiene el campo singular apuntando a la
+        // primera, para no romper el recontacto ni las fichas ya guardadas.
+        propiedadesConsultadasIniciales: propiedadesConsultadas,
+        propiedadConsultadaInicial: propiedadesConsultadas[0] || null,
         interesesCliente: Array.isArray(form?.interesesCliente) ? form.interesesCliente : [],
       },
     };
@@ -850,11 +878,33 @@ const ClientesCRM = () => {
     setClientesError('');
     try {
       const payload = buildClientePayload(nuevoCliente);
+      const previas = editingClienteId
+        ? normalizePropiedadesConsultadas(
+            clientesEjemplo.find((c) => String(c.id) === String(editingClienteId))?.propiedadesConsultadasIniciales,
+            clientesEjemplo.find((c) => String(c.id) === String(editingClienteId))?.propiedadConsultadaInicial
+          )
+        : [];
       const saved = editingClienteId
         ? await crmService.clientes.update(editingClienteId, payload)
         : await crmService.clientes.create(payload);
 
       const normalized = normalizeCliente(saved);
+
+      // Cada propiedad marcada en el alta queda además registrada como interacción
+      // "propiedad de interés", que es lo que alimenta métricas y matching. Solo se
+      // crean las nuevas, para no duplicar al editar un cliente existente.
+      const yaRegistradas = new Set(previas.map((x) => x.id));
+      const nuevasConsultadas = (payload.metadata?.propiedadesConsultadasIniciales || [])
+        .filter((prop) => !yaRegistradas.has(prop.id));
+      if (nuevasConsultadas.length && normalized.id) {
+        await Promise.all(nuevasConsultadas.map((prop) => (
+          crmService.clientInteractions.create(normalized.id, {
+            tipo: 'propiedad_interes',
+            propiedadId: prop.id,
+            descripcion: `Consultó por ${prop.titulo}${prop.direccion ? ` (${prop.direccion})` : ''} al momento del alta`,
+          }).catch(() => null)
+        )));
+      }
       setClientesEjemplo(prev => {
         const idx = prev.findIndex(c => String(c.id) === String(normalized.id));
         if (idx === -1) return [normalized, ...prev];
@@ -1464,24 +1514,41 @@ const ClientesCRM = () => {
               )}
 
               {/* Información Comercial */}
-              {(clienteSeleccionado.propiedadConsultadaInicial?.id || (clienteSeleccionado.interesesCliente && clienteSeleccionado.interesesCliente.length > 0)) && (
+              {(clienteSeleccionado.propiedadesConsultadasIniciales?.length > 0 || clienteSeleccionado.propiedadConsultadaInicial?.id || (clienteSeleccionado.interesesCliente && clienteSeleccionado.interesesCliente.length > 0)) && (
                 <div className={cardBase}>
                   <h3 className="text-xl font-bold mb-4 dark:text-gray-100 flex items-center gap-2">
                     <FaBuilding className="text-orange-500" /> Información Comercial
                   </h3>
                   <div className="space-y-4">
-                    {clienteSeleccionado.propiedadConsultadaInicial?.id && (
-                      <div className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Propiedad por la que consultó primero</p>
-                        <div className="flex items-center gap-2">
-                          <FaBuilding className="text-orange-500" />
-                          <span className="font-semibold dark:text-gray-200">{clienteSeleccionado.propiedadConsultadaInicial.titulo}</span>
+                    {(() => {
+                      const consultadas = clienteSeleccionado.propiedadesConsultadasIniciales?.length
+                        ? clienteSeleccionado.propiedadesConsultadasIniciales
+                        : (clienteSeleccionado.propiedadConsultadaInicial?.id ? [clienteSeleccionado.propiedadConsultadaInicial] : []);
+                      if (!consultadas.length) return null;
+                      return (
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                            {consultadas.length === 1 ? 'Propiedad por la que consultó' : `Propiedades por las que consultó (${consultadas.length})`}
+                          </p>
+                          <div className="space-y-2">
+                            {consultadas.map((prop, idx) => (
+                              <div key={prop.id || idx} className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                  <FaBuilding className="text-orange-500" />
+                                  <span className="font-semibold dark:text-gray-200">{prop.titulo}</span>
+                                  {consultadas.length > 1 && idx === 0 && (
+                                    <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-100">Primera</span>
+                                  )}
+                                </div>
+                                {prop.direccion && (
+                                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{prop.direccion}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        {clienteSeleccionado.propiedadConsultadaInicial.direccion && (
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{clienteSeleccionado.propiedadConsultadaInicial.direccion}</p>
-                        )}
-                      </div>
-                    )}
+                      );
+                    })()}
                     {clienteSeleccionado.interesesCliente?.length > 0 && (
                       <div>
                         <p className="text-sm font-medium mb-3 dark:text-gray-200">Intereses del cliente:</p>
@@ -2413,19 +2480,32 @@ const ClientesCRM = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-2 dark:text-gray-200">
-                      Propiedad por la que consultó primero
+                      Propiedades por las que consultó
                     </label>
-                    {nuevoCliente.propiedadConsultadaInicial?.id && (
-                      <div className="flex items-center gap-2 mb-2 p-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
-                        <FaBuilding className="text-orange-500 flex-shrink-0" />
-                        <span className="flex-1 text-sm dark:text-gray-200">{nuevoCliente.propiedadConsultadaInicial.titulo}</span>
-                        <button
-                          type="button"
-                          onClick={() => setNuevoCliente(prev => ({ ...prev, propiedadConsultadaInicial: { id: '', titulo: '', direccion: '' } }))}
-                          className="text-gray-400 hover:text-red-500"
-                        >
-                          <FaTimes />
-                        </button>
+                    {nuevoCliente.propiedadesConsultadasIniciales?.length > 0 && (
+                      <div className="space-y-2 mb-2">
+                        {nuevoCliente.propiedadesConsultadasIniciales.map((prop, idx) => (
+                          <div key={prop.id} className="flex items-center gap-2 p-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
+                            <FaBuilding className="text-orange-500 flex-shrink-0" />
+                            <span className="flex-1 text-sm dark:text-gray-200">
+                              {prop.titulo}
+                              {prop.direccion && <span className="text-gray-500 dark:text-gray-400 ml-2 text-xs">{prop.direccion}</span>}
+                            </span>
+                            {idx === 0 && (
+                              <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-100">Primera</span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setNuevoCliente(prev => ({
+                                ...prev,
+                                propiedadesConsultadasIniciales: prev.propiedadesConsultadasIniciales.filter((x) => x.id !== prop.id),
+                              }))}
+                              className="text-gray-400 hover:text-red-500"
+                            >
+                              <FaTimes />
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     )}
                     <div className="relative">
@@ -2446,27 +2526,36 @@ const ClientesCRM = () => {
                             return (p.title || p.titulo || p.nombre || '').toLowerCase().includes(q) || (p.address || p.direccion || '').toLowerCase().includes(q);
                           })
                           .slice(0, 8)
-                          .map((p) => (
-                            <button
-                              key={p._id || p.id}
-                              type="button"
-                              onClick={() => {
-                                setNuevoCliente(prev => ({
-                                  ...prev,
-                                  propiedadConsultadaInicial: {
-                                    id: String(p._id || p.id),
-                                    titulo: p.title || p.titulo || p.nombre || 'Sin título',
-                                    direccion: p.address || p.direccion || '',
-                                  },
-                                }));
-                                setPropSearch('');
-                              }}
-                              className="w-full text-left px-4 py-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-b dark:border-gray-700 last:border-0 text-sm dark:text-gray-200"
-                            >
-                              <span className="font-medium">{p.title || p.titulo || p.nombre || 'Sin título'}</span>
-                              {(p.address || p.direccion) && <span className="text-gray-500 dark:text-gray-400 ml-2 text-xs">{p.address || p.direccion}</span>}
-                            </button>
-                          ))}
+                          .map((p) => {
+                            const pid = String(p._id || p.id);
+                            const yaElegida = (nuevoCliente.propiedadesConsultadasIniciales || []).some((x) => x.id === pid);
+                            return (
+                              <button
+                                key={pid}
+                                type="button"
+                                disabled={yaElegida}
+                                onClick={() => {
+                                  setNuevoCliente(prev => ({
+                                    ...prev,
+                                    propiedadesConsultadasIniciales: [
+                                      ...(prev.propiedadesConsultadasIniciales || []),
+                                      {
+                                        id: pid,
+                                        titulo: p.title || p.titulo || p.nombre || 'Sin título',
+                                        direccion: p.address || p.direccion || '',
+                                      },
+                                    ],
+                                  }));
+                                  setPropSearch('');
+                                }}
+                                className={`w-full text-left px-4 py-2 border-b dark:border-gray-700 last:border-0 text-sm dark:text-gray-200 ${yaElegida ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
+                              >
+                                <span className="font-medium">{p.title || p.titulo || p.nombre || 'Sin título'}</span>
+                                {(p.address || p.direccion) && <span className="text-gray-500 dark:text-gray-400 ml-2 text-xs">{p.address || p.direccion}</span>}
+                                {yaElegida && <span className="text-xs text-orange-500 ml-2">ya agregada</span>}
+                              </button>
+                            );
+                          })}
                         {propiedadesList.filter((p) => {
                           const q = propSearch.toLowerCase();
                           return (p.title || p.titulo || p.nombre || '').toLowerCase().includes(q) || (p.address || p.direccion || '').toLowerCase().includes(q);

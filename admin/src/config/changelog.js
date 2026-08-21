@@ -3,6 +3,24 @@
 // Filtrado para "admin": solo las novedades que le incumben a esta app.
 export const CHANGELOG_ENTRIES = [
   {
+    "date": "2026-08-21",
+    "title": "En el alta de cliente ya se pueden marcar varias propiedades",
+    "items": [
+      {
+        "type": "nuevo",
+        "text": "Cuando das de alta un cliente que consultó por varias propiedades, ahora las podés marcar todas en el mismo formulario. Antes entraba una sola: al elegir la segunda se borraba la primera. Las que agregás quedan listadas y se sacan una por una con la cruz."
+      },
+      {
+        "type": "nuevo",
+        "text": "Cada propiedad que marcás en el alta queda registrada automáticamente como \"propiedad de interés\" del cliente, así que aparece en las métricas y en las sugerencias sin que tengas que cargarla otra vez a mano."
+      },
+      {
+        "type": "mejora",
+        "text": "El buscador del alta encuentra propiedades de toda la inmobiliaria, no solo las tuyas. Si el cliente consultó por algo que captó un compañero, lo podés dejar declarado igual. La primera que agregues queda marcada como \"Primera\", que es la que se usa al programar un recontacto."
+      }
+    ]
+  },
+  {
     "date": "2026-08-20",
     "title": "Todos los agentes ven ahora el portfolio completo de la inmobiliaria",
     "items": [
