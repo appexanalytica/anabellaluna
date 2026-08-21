@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const sharp = require('sharp');
 
 const { authenticateToken } = require('../auth');
 const Propiedad = require('../models/Propiedad');
@@ -293,7 +294,16 @@ router.get('/maps-config', (req, res) => {
   res.json({ mapboxToken: process.env.MAPBOX_TOKEN || '' });
 });
 
-// Public media: returns a redirect to a presigned MinIO URL (or original URL)
+const RESIZABLE_MIME = /^image\/(jpeg|jpg|png|webp|tiff|gif)$/i;
+// Originals above this size get downscaled even without an explicit ?w= — some
+// uploads are multi-MB screenshots/PNGs that were bloating property card loads
+// (visible as cards stuck half-rendered/gray on slow mobile connections).
+const AUTO_RESIZE_THRESHOLD_BYTES = 400 * 1024;
+const DEFAULT_MAX_WIDTH = 1600;
+
+// Public media: streams the file from MinIO, downscaling images to a
+// reasonable size (via ?w=) so property card thumbnails don't ship
+// multi-megabyte originals to mobile clients.
 router.get('/media/:id', async (req, res) => {
   try {
     const doc = await Document.findById(req.params.id).lean();
@@ -305,10 +315,34 @@ router.get('/media/:id', async (req, res) => {
       try {
         const stat = await minio.statObject(bucket, doc.object_key);
         const ct = (stat.metaData && stat.metaData['content-type']) || doc.mimetype || 'application/octet-stream';
+        const stream = await minio.getObject(bucket, doc.object_key);
+
+        const requestedWidth = Math.min(Math.max(parseInt(req.query.w, 10) || 0, 0), 2000);
+        const shouldResize = RESIZABLE_MIME.test(ct)
+          && (requestedWidth > 0 || (stat.size || 0) > AUTO_RESIZE_THRESHOLD_BYTES);
+
+        if (shouldResize) {
+          const targetWidth = requestedWidth > 0 ? requestedWidth : DEFAULT_MAX_WIDTH;
+          res.set('Content-Type', 'image/jpeg');
+          res.set('Cache-Control', 'public, max-age=3600');
+          const transformer = sharp()
+            .rotate()
+            .resize({ width: targetWidth, withoutEnlargement: true })
+            .jpeg({ quality: 78, progressive: true });
+          transformer.on('error', (transformErr) => {
+            if (!res.headersSent) res.status(500).json({ error: transformErr.message });
+            else res.end();
+          });
+          stream.on('error', (streamErr) => {
+            if (!res.headersSent) res.status(500).json({ error: streamErr.message });
+            else res.end();
+          });
+          return stream.pipe(transformer).pipe(res);
+        }
+
         res.set('Content-Type', ct);
         if (stat.size) res.set('Content-Length', String(stat.size));
         res.set('Cache-Control', 'public, max-age=3600');
-        const stream = await minio.getObject(bucket, doc.object_key);
         return stream.pipe(res);
       } catch (streamErr) {
         return res.status(500).json({ error: streamErr.message });

@@ -10,8 +10,11 @@ interface Image {
   alt?: string;
   height?: number;
   width?: number;
-  id?:string;
+  id?: string;
   style?: React.CSSProperties;
+  /** Requests a downscaled rendition from the backend media endpoint (e.g. for card thumbnails). Ignored for non-backend sources. */
+  resizeWidth?: number;
+  loading?: "lazy" | "eager";
 }
 
 const ImageWithBasePath = (props: Image) => {
@@ -25,10 +28,16 @@ const ImageWithBasePath = (props: Image) => {
     src.startsWith("blob:") ||
     src.startsWith("//");
 
+  const isBackendMedia = isBackendPublicPath && src.includes("/public/media/");
+  const srcWithResize =
+    isBackendMedia && props.resizeWidth
+      ? `${src}${src.includes("?") ? "&" : "?"}w=${props.resizeWidth}`
+      : src;
+
   const fullSrc = isAbsolute
-    ? src
+    ? srcWithResize
     : isBackendPublicPath
-    ? `${API_BASE_URL}${src}`
+    ? `${API_BASE_URL}${srcWithResize}`
     : src.startsWith("/")
     ? src
     : `${img_path}${src}`;
@@ -41,6 +50,8 @@ const ImageWithBasePath = (props: Image) => {
       width={props.width}
       id={props.id}
       style={props.style}
+      loading={props.loading}
+      decoding="async"
     />
   );
 };

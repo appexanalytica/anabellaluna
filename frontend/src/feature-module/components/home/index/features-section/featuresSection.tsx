@@ -97,6 +97,8 @@ const FeaturesSection = () => {
                             className="img-fluid"
                             src={coverSrc}
                             alt={prop.title || "property"}
+                            resizeWidth={480}
+                            loading="lazy"
                           />
                         </Link>
                         <div className="d-flex align-items-center justify-content-between position-absolute top-0 start-0 end-0 p-3 z-1">

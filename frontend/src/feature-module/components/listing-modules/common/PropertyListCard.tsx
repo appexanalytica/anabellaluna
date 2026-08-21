@@ -55,6 +55,8 @@ const PropertyListCard = ({ property, isFavorite, onToggleFavorite, detailPathFn
                   className="w-100 h-100"
                   src={coverSrc}
                   alt={p.title || "property"}
+                  resizeWidth={640}
+                  loading="lazy"
                 />
               </Link>
               <div className="d-flex align-items-center justify-content-between position-absolute top-0 start-0 end-0 p-3 z-1">

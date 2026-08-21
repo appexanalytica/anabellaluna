@@ -174,6 +174,8 @@ const Wishlist = () => {
                                   className="img-fluid w-100 h-100"
                                   src={coverUrl}
                                   alt={title}
+                                  resizeWidth={480}
+                                  loading="lazy"
                                 />
                               ) : (
                                 <div className="property-media-placeholder bg-light d-flex align-items-center justify-content-center w-100 h-100">
