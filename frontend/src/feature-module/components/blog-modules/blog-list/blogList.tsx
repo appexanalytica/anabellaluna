@@ -145,6 +145,8 @@ const BlogList = () => {
                             src={post.coverUrl}
                             alt="img"
                             className="img-fluid"
+                            resizeWidth={640}
+                            loading="lazy"
                           />
                         ) : null}
                       </Link>
@@ -162,6 +164,8 @@ const BlogList = () => {
                                   src={post.authorAgent.avatarUrl}
                                   alt="image"
                                   className="avatar avatar-sm rounded-circle me-2"
+                                  resizeWidth={80}
+                                  loading="lazy"
                                 />
                               ) : null}
                             </Link>
@@ -279,6 +283,8 @@ const BlogList = () => {
                               src={post.coverUrl}
                               alt="image"
                               className="img-fluid"
+                              resizeWidth={160}
+                              loading="lazy"
                             />
                           ) : null}
                         </div>

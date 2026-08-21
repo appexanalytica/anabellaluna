@@ -120,6 +120,8 @@ const AgentDetails = () => {
                           src={agent.avatarUrl}
                           alt={agent.name}
                           className="avatar avatar-xxl rounded-circle"
+                          resizeWidth={200}
+                          loading="lazy"
                         />
                       ) : (
                         <div className="avatar avatar-xxl rounded-circle bg-light d-inline-flex align-items-center justify-content-center">

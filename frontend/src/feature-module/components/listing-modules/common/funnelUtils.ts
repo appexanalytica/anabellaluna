@@ -7,11 +7,21 @@ import { API_BASE_URL } from '../../../../config/api';
 // Backend returns relative paths like "/public/media/{id}" — the browser would
 // resolve them against the *frontend* origin, not the API server. This helper
 // mirrors the logic in ImageWithBasePath but works for plain <img> and CSS urls.
-export function resolveMediaUrl(src: string | undefined | null): string {
+//
+// NOTE: `width` is a real, separate parameter (not folded into a single
+// options object) on purpose — do NOT call this as `.map(resolveMediaUrl)`
+// once a caller starts passing width, since Array#map also passes the
+// element's index as the 2nd argument and it would silently become `width`.
+// Wrap it — `.map((s) => resolveMediaUrl(s))` — at every call site instead.
+export function resolveMediaUrl(src: string | undefined | null, width?: number): string {
   if (!src) return '';
   const s = String(src);
-  if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('data:') || s.startsWith('blob:') || s.startsWith('//')) return s;
-  if (s.startsWith('/public/')) return `${API_BASE_URL}${s}`;
+  const isAbsolute = s.startsWith('http://') || s.startsWith('https://') || s.startsWith('data:') || s.startsWith('blob:') || s.startsWith('//');
+  const isBackendMedia = s.includes('/public/media/');
+  const withResize = isBackendMedia && width ? `${s}${s.includes('?') ? '&' : '?'}w=${width}` : s;
+
+  if (isAbsolute) return withResize;
+  if (s.startsWith('/public/')) return `${API_BASE_URL}${withResize}`;
   return s;
 }
 

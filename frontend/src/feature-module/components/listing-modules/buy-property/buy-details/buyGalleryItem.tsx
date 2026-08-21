@@ -67,7 +67,7 @@ const BuyGalleryItem = ({ images }: Props) => {
                   onClick={() => setOpenIndex(idx)}
                   className="gallery-item rounded"
                 >
-                  <ImageWithBasePath src={src} alt="image" className="rounded img-fluid" />
+                  <ImageWithBasePath src={src} alt="image" className="rounded img-fluid" resizeWidth={320} loading="lazy" />
                 </Link>
               </div>
             ))}

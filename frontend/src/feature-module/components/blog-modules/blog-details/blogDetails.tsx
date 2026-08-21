@@ -184,6 +184,8 @@ const BlogDetails = () => {
                                 src={post.coverUrl}
                                 alt="image"
                                 className="img-fluid"
+                                resizeWidth={1200}
+                                loading="lazy"
                               />
                             ) : null}
                           </div>
@@ -200,6 +202,8 @@ const BlogDetails = () => {
                                       src={post.authorAgent.avatarUrl}
                                       alt="image"
                                       className="avatar avatar-sm rounded-circle me-2"
+                                      resizeWidth={80}
+                                      loading="lazy"
                                     />
                                   ) : null}
                                 </Link>
@@ -254,6 +258,8 @@ const BlogDetails = () => {
                                     src={post.authorAgent.avatarUrl}
                                     alt="img"
                                     className="img-fluid avatar avatar-xxxl rounded-circle"
+                                    resizeWidth={240}
+                                    loading="lazy"
                                   />
                                 ) : null}
                               </div>
@@ -323,6 +329,8 @@ const BlogDetails = () => {
                                 src={p.coverUrl}
                                 alt="img"
                                 className="img-fluid"
+                                resizeWidth={480}
+                                loading="lazy"
                               />
                             ) : null}
                           </Link>
@@ -340,6 +348,8 @@ const BlogDetails = () => {
                                       src={p.authorAgent.avatarUrl}
                                       alt="image"
                                       className="avatar avatar-sm rounded-circle me-2"
+                                      resizeWidth={80}
+                                      loading="lazy"
                                     />
                                   ) : null}
                                 </Link>

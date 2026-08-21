@@ -75,6 +75,8 @@ const BlogSection = () => {
                           src={post.coverUrl}
                           alt="img"
                           className="img-fluid"
+                          resizeWidth={480}
+                          loading="lazy"
                         />
                       ) : null}
                     </Link>
@@ -92,6 +94,8 @@ const BlogSection = () => {
                                 src={post.authorAgent.avatarUrl}
                                 alt="image"
                                 className="avatar avatar-sm rounded-circle me-2"
+                                resizeWidth={80}
+                                loading="lazy"
                               />
                             ) : null}
                           </Link>

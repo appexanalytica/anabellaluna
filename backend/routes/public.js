@@ -294,16 +294,32 @@ router.get('/maps-config', (req, res) => {
   res.json({ mapboxToken: process.env.MAPBOX_TOKEN || '' });
 });
 
-const RESIZABLE_MIME = /^image\/(jpeg|jpg|png|webp|tiff|gif)$/i;
 // Originals above this size get downscaled even without an explicit ?w= — some
 // uploads are multi-MB screenshots/PNGs that were bloating property card loads
 // (visible as cards stuck half-rendered/gray on slow mobile connections).
 const AUTO_RESIZE_THRESHOLD_BYTES = 400 * 1024;
 const DEFAULT_MAX_WIDTH = 1600;
+const MAX_REQUESTABLE_WIDTH = 2000;
+// Formats sharp/libvips can safely re-encode as a static JPEG. Animated GIFs
+// are skipped on purpose (resizing would flatten the animation to one frame).
+const RESIZABLE_MIME = /^image\/(jpeg|jpg|png|webp|tiff|bmp|avif)$/i;
+
+function streamToBuffer(stream) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    stream.on('data', (chunk) => chunks.push(chunk));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+    stream.on('error', reject);
+  });
+}
 
 // Public media: streams the file from MinIO, downscaling images to a
-// reasonable size (via ?w=) so property card thumbnails don't ship
-// multi-megabyte originals to mobile clients.
+// reasonable size (via ?w=) so thumbnails don't ship multi-megabyte
+// originals to mobile clients. Resizing is attempted from the actual file
+// bytes (via sharp's own format sniffing), not from possibly-stale/incorrect
+// stored Content-Type metadata — and if anything about the transform fails
+// for any reason, the original file is served instead of erroring out, so a
+// media request never dead-ends as a broken image.
 router.get('/media/:id', async (req, res) => {
   try {
     const doc = await Document.findById(req.params.id).lean();
@@ -312,40 +328,64 @@ router.get('/media/:id', async (req, res) => {
     if (doc.object_key) {
       if (!minio.isConfigured()) return res.status(503).json({ error: 'MinIO is not configured' });
       const bucket = doc.bucket || minio.bucket;
+
+      let stat;
       try {
-        const stat = await minio.statObject(bucket, doc.object_key);
-        const ct = (stat.metaData && stat.metaData['content-type']) || doc.mimetype || 'application/octet-stream';
-        const stream = await minio.getObject(bucket, doc.object_key);
+        stat = await minio.statObject(bucket, doc.object_key);
+      } catch (statErr) {
+        return res.status(500).json({ error: statErr.message });
+      }
 
-        const requestedWidth = Math.min(Math.max(parseInt(req.query.w, 10) || 0, 0), 2000);
-        const shouldResize = RESIZABLE_MIME.test(ct)
-          && (requestedWidth > 0 || (stat.size || 0) > AUTO_RESIZE_THRESHOLD_BYTES);
+      const declaredCt = (stat.metaData && stat.metaData['content-type']) || doc.mimetype || 'application/octet-stream';
+      const requestedWidth = Math.min(Math.max(parseInt(req.query.w, 10) || 0, 0), MAX_REQUESTABLE_WIDTH);
+      const looksResizable = RESIZABLE_MIME.test(declaredCt) || /^image\//i.test(declaredCt);
+      const worthResizing = looksResizable
+        && (requestedWidth > 0 || (stat.size || 0) > AUTO_RESIZE_THRESHOLD_BYTES);
 
-        if (shouldResize) {
-          const targetWidth = requestedWidth > 0 ? requestedWidth : DEFAULT_MAX_WIDTH;
-          res.set('Content-Type', 'image/jpeg');
-          res.set('Cache-Control', 'public, max-age=3600');
-          const transformer = sharp()
-            .rotate()
-            .resize({ width: targetWidth, withoutEnlargement: true })
-            .jpeg({ quality: 78, progressive: true });
-          transformer.on('error', (transformErr) => {
-            if (!res.headersSent) res.status(500).json({ error: transformErr.message });
-            else res.end();
-          });
-          stream.on('error', (streamErr) => {
-            if (!res.headersSent) res.status(500).json({ error: streamErr.message });
-            else res.end();
-          });
-          return stream.pipe(transformer).pipe(res);
+      // Non-image files (PDFs, floor plans, etc.) and small-enough images are
+      // streamed straight through — no need to buffer them in memory.
+      if (!worthResizing) {
+        try {
+          const stream = await minio.getObject(bucket, doc.object_key);
+          res.set('Content-Type', declaredCt);
+          if (stat.size) res.set('Content-Length', String(stat.size));
+          res.set('Cache-Control', 'public, max-age=86400');
+          return stream.pipe(res);
+        } catch (streamErr) {
+          return res.status(500).json({ error: streamErr.message });
         }
+      }
 
-        res.set('Content-Type', ct);
-        if (stat.size) res.set('Content-Length', String(stat.size));
-        res.set('Cache-Control', 'public, max-age=3600');
-        return stream.pipe(res);
-      } catch (streamErr) {
-        return res.status(500).json({ error: streamErr.message });
+      // Worth a resize attempt: buffer it (property photos top out at a few
+      // MB) so a failed decode can still fall back to the original bytes
+      // instead of leaving the response half-written.
+      let originalBuffer;
+      try {
+        const stream = await minio.getObject(bucket, doc.object_key);
+        originalBuffer = await streamToBuffer(stream);
+      } catch (fetchErr) {
+        return res.status(500).json({ error: fetchErr.message });
+      }
+
+      try {
+        const targetWidth = requestedWidth > 0 ? requestedWidth : DEFAULT_MAX_WIDTH;
+        const resized = await sharp(originalBuffer)
+          .rotate()
+          .resize({ width: targetWidth, withoutEnlargement: true })
+          .jpeg({ quality: 78, progressive: true })
+          .toBuffer();
+        res.set('Content-Type', 'image/jpeg');
+        res.set('Content-Length', String(resized.length));
+        res.set('Cache-Control', 'public, max-age=86400');
+        return res.end(resized);
+      } catch {
+        // Not actually a decodable image (or an unsupported variant) despite
+        // its declared type — fall back to the original bytes rather than
+        // surfacing a broken image to the visitor.
+        res.set('Content-Type', declaredCt);
+        res.set('Content-Length', String(originalBuffer.length));
+        res.set('Cache-Control', 'public, max-age=86400');
+        return res.end(originalBuffer);
       }
     }
 

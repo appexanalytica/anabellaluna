@@ -10,6 +10,7 @@ import { buildHeroBackground, getAccentColor, heroTextColorClass, heroMutedColor
 import { VideoOverlay, VideoSection } from "../../common/VideoOverlay";
 import VirtualTourViewer from "../../../virtual-tour/VirtualTourViewer";
 import MapboxMap from "../../../../../core/common/mapbox-map";
+import { handleMediaImgError } from "../../../../../core/mediaFallback";
 import {
   scrollToElementForBrowser,
   useIosSafariClass,
@@ -128,7 +129,7 @@ const BuyDetails = () => {
   // Derived data (preserved)
   const galleryImages = (
     property?.galleryUrls?.length ? property.galleryUrls : property?.media?.coverUrl ? [property.media.coverUrl] : []
-  ).filter(Boolean).map(resolveMediaUrl);
+  ).filter(Boolean).map((s) => resolveMediaUrl(s, 1400));
 
   const priceLabel = () => {
     if (property?.price?.amount == null) return "";
@@ -163,7 +164,7 @@ const BuyDetails = () => {
   }, [propertySlug, visitName, visitPhone, visitEmail, visitDay, visitMsg, property?.id, slug]);
 
   const amenities = (property?.amenities || []).filter(Boolean);
-  const floorPlanUrls = (property?.floorPlanUrls || []).filter(Boolean).map(resolveMediaUrl);
+  const floorPlanUrls = (property?.floorPlanUrls || []).filter(Boolean).map((s) => resolveMediaUrl(s, 1600));
   const videoUrls = (property?.videoUrls || []).filter(Boolean);
   const lightboxSlides = [...galleryImages, ...floorPlanUrls].map((src) => ({ src }));
 
@@ -476,6 +477,9 @@ const BuyDetails = () => {
                             src={src}
                             alt={`${property.title} — ${i + 1}`}
                             style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", display: "block" }}
+                            loading={i === 0 ? "eager" : "lazy"}
+                            decoding="async"
+                            onError={handleMediaImgError}
                           />
                         </div>
                       ))}
@@ -622,6 +626,9 @@ const BuyDetails = () => {
                           alt={`Plano ${i + 1}`}
                           className="rounded-3 border"
                           style={{ width: "100%", cursor: "zoom-in", objectFit: "contain", maxHeight: 280 }}
+                          loading="lazy"
+                          decoding="async"
+                          onError={handleMediaImgError}
                           onClick={() => { setLightboxIndex(galleryImages.length + i); trackEvent("floor_plan_view", { propertyId: property.id }); }}
                         />
                       </div>
@@ -668,9 +675,12 @@ const BuyDetails = () => {
                       <div className="col-sm-auto">
                         {property.agent.avatarUrl ? (
                           <img
-                            src={resolveMediaUrl(property.agent.avatarUrl)}
+                            src={resolveMediaUrl(property.agent.avatarUrl, 160)}
                             alt={property.agent.name}
                             style={{ width: 96, height: 96, borderRadius: "50%", objectFit: "cover", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}
+                            loading="lazy"
+                            decoding="async"
+                            onError={handleMediaImgError}
                           />
                         ) : (
                           <div

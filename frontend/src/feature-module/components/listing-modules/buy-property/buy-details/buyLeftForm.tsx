@@ -207,6 +207,8 @@ const BuyLeftForm = ({ agent, propertySlug }: BuyLeftFormProps) => {
                             src={agent?.avatarUrl || "assets/img/users/user-06.jpg"}
                             alt="image"
                             className="rounded-circle"
+                            resizeWidth={96}
+                            loading="lazy"
                           />
                         </div>
                         <div>
@@ -287,6 +289,8 @@ const BuyLeftForm = ({ agent, propertySlug }: BuyLeftFormProps) => {
                             src={agent?.avatarUrl || "assets/img/users/user-06.jpg"}
                             alt="image"
                             className="rounded-circle"
+                            resizeWidth={96}
+                            loading="lazy"
                           />
                         </div>
                         <div>
@@ -431,6 +435,8 @@ const BuyLeftForm = ({ agent, propertySlug }: BuyLeftFormProps) => {
                     src={agent?.avatarUrl || "assets/img/users/user-06.jpg"}
                     alt="image"
                     className="rounded-circle"
+                    resizeWidth={96}
+                    loading="lazy"
                   />
                 </div>
                 <div>

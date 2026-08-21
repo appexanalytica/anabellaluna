@@ -76,6 +76,8 @@ const AgentGrid = () => {
                                 src={agent.avatarUrl}
                                 alt={agent.name}
                                 className="avatar avatar-xxl rounded-circle"
+                                resizeWidth={160}
+                                loading="lazy"
                               />
                             ) : (
                               <div

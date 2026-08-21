@@ -81,6 +81,8 @@ const BlogGrid = () => {
                             src={post.coverUrl}
                             alt="img"
                             className="img-fluid"
+                            resizeWidth={480}
+                            loading="lazy"
                           />
                         ) : null}
                       </Link>
@@ -98,6 +100,8 @@ const BlogGrid = () => {
                                   src={post.authorAgent.avatarUrl}
                                   alt="image"
                                   className="avatar avatar-sm rounded-circle me-2"
+                                  resizeWidth={80}
+                                  loading="lazy"
                                 />
                               ) : null}
                             </Link>

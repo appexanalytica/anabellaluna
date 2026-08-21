@@ -13,6 +13,7 @@ import { buildHeroBackground, getAccentColor, heroTextColorClass, heroMutedColor
 import { VideoOverlay, VideoSection } from "../../common/VideoOverlay";
 import VirtualTourViewer from "../../../virtual-tour/VirtualTourViewer";
 import MapboxMap from "../../../../../core/common/mapbox-map";
+import { handleMediaImgError } from "../../../../../core/mediaFallback";
 import {
   scrollToElementForBrowser,
   useIosSafariClass,
@@ -147,9 +148,14 @@ const RentDetails = () => {
     return () => { isMounted = false; };
   }, [slug, privateToken]);
 
-  const galleryImages = (
+  const rawGalleryUrls = (
     property?.galleryUrls?.length ? property.galleryUrls : property?.media?.coverUrl ? [property.media.coverUrl] : []
-  ).filter(Boolean).map(resolveMediaUrl);
+  ).filter(Boolean);
+  const galleryImages = rawGalleryUrls.map((s) => resolveMediaUrl(s, 1400));
+  // Separate, smaller rendition for the thumbnail rail (~62px tall) — using
+  // the full-size gallery URL there was shipping the same multi-MB original
+  // to six tiny thumbnails at once.
+  const galleryThumbImages = rawGalleryUrls.map((s) => resolveMediaUrl(s, 160));
 
   const priceLabel = () => {
     if (property?.price?.amount == null) return "";
@@ -184,7 +190,7 @@ const RentDetails = () => {
   }, [propertySlug, visitName, visitPhone, visitEmail, visitDay, visitMsg, property?.id, slug]);
 
   const amenities = (property?.amenities || []).filter(Boolean);
-  const floorPlanUrls = (property?.floorPlanUrls || []).filter(Boolean).map(resolveMediaUrl);
+  const floorPlanUrls = (property?.floorPlanUrls || []).filter(Boolean).map((s) => resolveMediaUrl(s, 1600));
   const videoUrls = (property?.videoUrls || []).filter(Boolean);
   const lightboxSlides = [...galleryImages, ...floorPlanUrls].map((src) => ({ src }));
 
@@ -418,6 +424,9 @@ const RentDetails = () => {
                             src={src}
                             alt={`${property.title} — ${i + 1}`}
                             style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", display: "block" }}
+                            loading={i === 0 ? "eager" : "lazy"}
+                            decoding="async"
+                            onError={handleMediaImgError}
                           />
                         </div>
                       ))}
@@ -492,6 +501,9 @@ const RentDetails = () => {
                       {galleryImages.map((src, i) => (
                         <div key={i}>
                           <img src={src} alt={`${property.title} — ${i + 1}`} style={{ width: "100%", height: 420, objectFit: "cover", display: "block" }}
+                            loading={i === 0 ? "eager" : "lazy"}
+                            decoding="async"
+                            onError={handleMediaImgError}
                             onLoad={() => trackEvent("gallery_image_view", { propertyId: property.id, index: i })} />
                         </div>
                       ))}
@@ -500,9 +512,12 @@ const RentDetails = () => {
                   {galleryImages.length > 1 && (
                     <div className="mt-2">
                       <Slider ref={thumbRef} {...thumbSettings}>
-                        {galleryImages.map((src, i) => (
+                        {galleryThumbImages.map((src, i) => (
                           <div key={i} style={{ padding: "0 3px" }}>
                             <img src={src} alt={`thumb-${i}`} style={{ width: "100%", height: 62, objectFit: "cover", borderRadius: 6, cursor: "pointer", opacity: 0.8 }}
+                              loading="lazy"
+                              decoding="async"
+                              onError={handleMediaImgError}
                               onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
                               onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.8")} />
                           </div>
@@ -561,6 +576,9 @@ const RentDetails = () => {
                     {floorPlanUrls.map((url, i) => (
                       <div key={i} className="col-sm-6">
                         <img src={url} alt={`Plano ${i + 1}`} className="rounded-3 border" style={{ width: "100%", cursor: "zoom-in", objectFit: "contain", maxHeight: 280 }}
+                          loading="lazy"
+                          decoding="async"
+                          onError={handleMediaImgError}
                           onClick={() => { setLightboxIndex(galleryImages.length + i); trackEvent("floor_plan_view", { propertyId: property.id }); }} />
                       </div>
                     ))}
@@ -600,7 +618,10 @@ const RentDetails = () => {
                     <div className="row align-items-center g-4">
                       <div className="col-sm-auto">
                         {property.agent.avatarUrl ? (
-                          <img src={resolveMediaUrl(property.agent.avatarUrl)} alt={property.agent.name} style={{ width: 96, height: 96, borderRadius: "50%", objectFit: "cover", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }} />
+                          <img src={resolveMediaUrl(property.agent.avatarUrl, 160)} alt={property.agent.name} style={{ width: 96, height: 96, borderRadius: "50%", objectFit: "cover", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}
+                            loading="lazy"
+                            decoding="async"
+                            onError={handleMediaImgError} />
                         ) : (
                           <div style={{ width: 96, height: 96, borderRadius: "50%", background: `linear-gradient(135deg,${accentColor},${accentColor}bb)`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "2rem", fontWeight: 700 }}>
                             {property.agent.name[0]}

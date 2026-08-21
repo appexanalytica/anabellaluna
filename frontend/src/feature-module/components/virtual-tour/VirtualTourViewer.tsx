@@ -62,7 +62,7 @@ const getSceneSourceCandidates = (scene: VirtualTourScene) => {
     scene.tileManifest?.source,
     scene.tileManifest?.fallbackSource,
     scene.previewUrl,
-  ].map(resolveMediaUrl).filter(Boolean);
+  ].map((s) => resolveMediaUrl(s)).filter(Boolean);
 
   return Array.from(new Set(candidates));
 };

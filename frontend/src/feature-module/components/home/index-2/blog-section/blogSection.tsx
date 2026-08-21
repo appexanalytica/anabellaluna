@@ -84,6 +84,8 @@ const BlogSection = () => {
                             src={post.coverUrl}
                             className="img-fluid"
                             alt="image"
+                            resizeWidth={480}
+                            loading="lazy"
                           />
                         ) : null}
                       </Link>

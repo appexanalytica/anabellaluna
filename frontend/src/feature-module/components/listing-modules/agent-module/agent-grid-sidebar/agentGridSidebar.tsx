@@ -70,7 +70,7 @@ const AgentGridSidebar = () => {
                         <div className="card-body text-center">
                           <div className="mb-3">
                             {agent.avatarUrl ? (
-                              <ImageWithBasePath src={agent.avatarUrl} alt={agent.name} className="avatar avatar-xxl rounded-circle" />
+                              <ImageWithBasePath src={agent.avatarUrl} alt={agent.name} className="avatar avatar-xxl rounded-circle" resizeWidth={160} loading="lazy" />
                             ) : (
                               <div className="avatar avatar-xxl rounded-circle bg-light d-inline-flex align-items-center justify-content-center">
                                 <i className="material-icons-outlined text-muted fs-1">person</i>

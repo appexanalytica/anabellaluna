@@ -81,6 +81,8 @@ const RentRightForm = ({ agent, propertySlug }: RentRightFormProps) => {
                     src={agent?.avatarUrl || "assets/img/users/user-06.jpg"}
                     alt="image"
                     className="rounded-circle"
+                    resizeWidth={96}
+                    loading="lazy"
                   />
                 </div>
                 <div>

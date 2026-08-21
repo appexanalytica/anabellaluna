@@ -1,8 +1,8 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { img_path } from '../../environment';
 import { API_BASE_URL } from '../../config/api';
-
+import { MEDIA_FALLBACK_SRC } from '../mediaFallback';
 
 interface Image {
   className?: string;
@@ -18,8 +18,16 @@ interface Image {
 }
 
 const ImageWithBasePath = (props: Image) => {
+  const [failed, setFailed] = useState(false);
+
   // Combine the base path and the provided src to create the full image source URL
   const src = String(props.src || "");
+
+  // Reset if the instance gets reused for a different image (same component,
+  // new src) rather than remounted — otherwise a prior failure would stick.
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
   const isBackendPublicPath = src.startsWith("/public/");
   const isAbsolute =
     src.startsWith("http://") ||
@@ -41,10 +49,11 @@ const ImageWithBasePath = (props: Image) => {
     : src.startsWith("/")
     ? src
     : `${img_path}${src}`;
+
   return (
     <img
       className={props.className}
-      src={fullSrc}
+      src={failed ? MEDIA_FALLBACK_SRC : fullSrc}
       height={props.height}
       alt={props.alt}
       width={props.width}
@@ -52,6 +61,7 @@ const ImageWithBasePath = (props: Image) => {
       style={props.style}
       loading={props.loading}
       decoding="async"
+      onError={() => setFailed(true)}
     />
   );
 };

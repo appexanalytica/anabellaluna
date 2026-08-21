@@ -68,7 +68,7 @@ const BlogSection = () => {
                       to={featured.slug ? all_routes.blogDetailsPath(featured.slug) : "#"}
                     >
                       {featured.coverUrl ? (
-                        <ImageWithBasePath src={featured.coverUrl} alt="image" />
+                        <ImageWithBasePath src={featured.coverUrl} alt="image" resizeWidth={800} loading="lazy" />
                       ) : null}
                     </Link>
                     <span className="badge bg-secondary badge-top">
@@ -104,7 +104,7 @@ const BlogSection = () => {
                             to={post.slug ? all_routes.blogDetailsPath(post.slug) : "#"}
                           >
                             {post.coverUrl ? (
-                              <ImageWithBasePath src={post.coverUrl} alt="image" />
+                              <ImageWithBasePath src={post.coverUrl} alt="image" resizeWidth={480} loading="lazy" />
                             ) : null}
                           </Link>
                           <span className="badge bg-secondary badge-top">

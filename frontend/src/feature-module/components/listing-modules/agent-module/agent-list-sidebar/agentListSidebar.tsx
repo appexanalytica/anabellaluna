@@ -73,7 +73,7 @@ const AgentListSidebar = () => {
                     <div className="row align-items-center">
                       <div className="col-lg-2 text-center">
                         {agent.avatarUrl ? (
-                          <ImageWithBasePath src={agent.avatarUrl} alt={agent.name} className="avatar avatar-xl rounded-circle" />
+                          <ImageWithBasePath src={agent.avatarUrl} alt={agent.name} className="avatar avatar-xl rounded-circle" resizeWidth={160} loading="lazy" />
                         ) : (
                           <div className="avatar avatar-xl rounded-circle bg-light d-inline-flex align-items-center justify-content-center">
                             <i className="material-icons-outlined text-muted fs-1">person</i>

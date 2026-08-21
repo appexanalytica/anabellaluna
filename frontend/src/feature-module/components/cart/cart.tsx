@@ -168,6 +168,8 @@ const Cart = () => {
                                             src={coverUrl}
                                             alt={title}
                                             className="img-fluid"
+                                            resizeWidth={320}
+                                            loading="lazy"
                                           />
                                         ) : (
                                           <div
