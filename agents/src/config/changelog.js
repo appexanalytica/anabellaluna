@@ -4,6 +4,20 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-08-21",
+    "title": "Nivel de interés por cada propiedad marcada en el alta",
+    "items": [
+      {
+        "type": "nuevo",
+        "text": "Cada propiedad que marcás en el alta de un cliente ahora tiene su propio selector de interés (bajo, medio o alto), al lado del nombre. No es obligatorio: si lo dejás en \"Sin nivel\" el cliente se guarda igual."
+      },
+      {
+        "type": "mejora",
+        "text": "El nivel que marques ahí queda reflejado en la ficha del cliente con una etiqueta de color, y también suma en el informe que se le puede mandar al dueño de la propiedad con el desglose de interés de sus consultas."
+      }
+    ]
+  },
+  {
+    "date": "2026-08-21",
     "title": "En el alta de cliente ya se pueden marcar varias propiedades",
     "items": [
       {

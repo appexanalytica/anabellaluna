@@ -60,7 +60,7 @@ const ClientesCRM = () => {
       const id = String(p?.id || '');
       if (!id || seen.has(id)) continue;
       seen.add(id);
-      out.push({ id, titulo: p.titulo || '', direccion: p.direccion || '' });
+      out.push({ id, titulo: p.titulo || '', direccion: p.direccion || '', nivelInteres: p.nivelInteres || '' });
     }
     return out;
   };
@@ -940,6 +940,7 @@ const ClientesCRM = () => {
           crmService.clientInteractions.create(normalized.id, {
             tipo: 'propiedad_interes',
             propiedadId: prop.id,
+            nivelInteres: prop.nivelInteres || '',
             descripcion: `Consultó por ${prop.titulo}${prop.direccion ? ` (${prop.direccion})` : ''} al momento del alta`,
           }).catch(() => null)
         )));
@@ -1673,20 +1674,32 @@ const ClientesCRM = () => {
                             {consultadas.length === 1 ? 'Propiedad por la que consultó' : `Propiedades por las que consultó (${consultadas.length})`}
                           </p>
                           <div className="space-y-2">
-                            {consultadas.map((prop, idx) => (
-                              <div key={prop.id || idx} className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
-                                <div className="flex items-center gap-2">
-                                  <FaBuilding className="text-orange-500" />
-                                  <span className="font-semibold dark:text-gray-200">{prop.titulo}</span>
-                                  {consultadas.length > 1 && idx === 0 && (
-                                    <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-100">Primera</span>
+                            {consultadas.map((prop, idx) => {
+                              const nivelClass = prop.nivelInteres === 'alto'
+                                ? 'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-100'
+                                : prop.nivelInteres === 'medio'
+                                ? 'bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-100'
+                                : prop.nivelInteres === 'bajo'
+                                ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+                                : '';
+                              return (
+                                <div key={prop.id || idx} className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
+                                  <div className="flex items-center gap-2">
+                                    <FaBuilding className="text-orange-500" />
+                                    <span className="font-semibold dark:text-gray-200">{prop.titulo}</span>
+                                    {consultadas.length > 1 && idx === 0 && (
+                                      <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-100">Primera</span>
+                                    )}
+                                    {nivelClass && (
+                                      <span className={`text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full ${nivelClass}`}>Interés {prop.nivelInteres}</span>
+                                    )}
+                                  </div>
+                                  {prop.direccion && (
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{prop.direccion}</p>
                                   )}
                                 </div>
-                                {prop.direccion && (
-                                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{prop.direccion}</p>
-                                )}
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       );
@@ -2924,20 +2937,39 @@ const ClientesCRM = () => {
                           {nuevoCliente.propiedadesConsultadasIniciales.map((prop, idx) => (
                             <div key={prop.id} className="flex items-center gap-2 p-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
                               <FaBuilding className="text-orange-500 flex-shrink-0" />
-                              <span className="flex-1 text-sm dark:text-gray-200">
-                                {prop.titulo}
-                                {prop.direccion && <span className="text-gray-500 dark:text-gray-400 ml-2 text-xs">{prop.direccion}</span>}
+                              <span className="flex-1 text-sm dark:text-gray-200 min-w-0">
+                                <span className="block truncate">{prop.titulo}</span>
+                                {prop.direccion && <span className="text-gray-500 dark:text-gray-400 text-xs">{prop.direccion}</span>}
                               </span>
                               {idx === 0 && (
-                                <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-100">Primera</span>
+                                <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-100 flex-shrink-0">Primera</span>
                               )}
+                              <select
+                                value={prop.nivelInteres || ''}
+                                onChange={(e) => {
+                                  const nivel = e.target.value;
+                                  setNuevoCliente((prev) => ({
+                                    ...prev,
+                                    propiedadesConsultadasIniciales: prev.propiedadesConsultadasIniciales.map((x) => (
+                                      x.id === prop.id ? { ...x, nivelInteres: nivel } : x
+                                    )),
+                                  }));
+                                }}
+                                className="text-xs px-2 py-1 rounded-lg border border-orange-300 dark:border-orange-700 bg-white dark:bg-gray-800 dark:text-gray-100 flex-shrink-0"
+                                title="Nivel de interés"
+                              >
+                                <option value="">Sin nivel</option>
+                                <option value="bajo">Interés bajo</option>
+                                <option value="medio">Interés medio</option>
+                                <option value="alto">Interés alto</option>
+                              </select>
                               <button
                                 type="button"
                                 onClick={() => setNuevoCliente((prev) => ({
                                   ...prev,
                                   propiedadesConsultadasIniciales: prev.propiedadesConsultadasIniciales.filter((x) => x.id !== prop.id),
                                 }))}
-                                className="text-gray-400 hover:text-red-500"
+                                className="text-gray-400 hover:text-red-500 flex-shrink-0"
                               >
                                 <FaTimes />
                               </button>
@@ -2980,6 +3012,7 @@ const ClientesCRM = () => {
                                           id: pid,
                                           titulo: p.title || p.titulo || p.nombre || 'Sin título',
                                           direccion: p.address || p.direccion || '',
+                                          nivelInteres: '',
                                         },
                                       ],
                                     }));
