@@ -36,6 +36,7 @@ const Navbar = () => {
     setScreenSize,
     screenSize,
     setMode,
+    setThemeSettings,
   } = useStateContext();
 
   const navigate = useNavigate();
@@ -129,7 +130,9 @@ const Navbar = () => {
 
   const cerrarPaneles = useCallback(() => setIsClicked(initialState), [initialState, setIsClicked]);
 
-  const toggleModo = () => setMode({ target: { value: currentMode === 'Dark' ? 'Light' : 'Dark' } });
+  const toggleModo = () => setMode(currentMode === 'Dark' ? 'Light' : 'Dark');
+
+  const abrirApariencia = () => { cerrarPaneles(); setThemeSettings(true); };
 
   const consultasSinLeer = summary.consultas.noLeidas;
   const tareasPendientes = summary.tareas.total;
@@ -212,7 +215,7 @@ const Navbar = () => {
         />
 
         {!isMobile && (
-          <div className="flex items-center gap-1 bg-white dark:bg-gray-800 rounded-2xl px-2 py-1 shadow-sm">
+          <div className="app-navbar-pill flex items-center gap-1 bg-white dark:bg-gray-800 rounded-2xl px-2 py-1 shadow-sm">
             <QuickCreate
               abierto={menuNuevo}
               onToggle={() => { cerrarPaneles(); setMenuPerfil(false); setMenuNuevo((v) => !v); }}
@@ -273,6 +276,7 @@ const Navbar = () => {
               currentColor={currentColor}
               currentMode={currentMode}
               onToggleMode={toggleModo}
+              onOpenAppearance={abrirApariencia}
             />
           </div>
         )}
@@ -286,6 +290,7 @@ const Navbar = () => {
             currentColor={currentColor}
             currentMode={currentMode}
             onToggleMode={toggleModo}
+            onOpenAppearance={abrirApariencia}
           />
         )}
       </div>
@@ -320,7 +325,7 @@ const Navbar = () => {
       {/* Navegación inferior en mobile */}
       {isMobile && (
         <div
-          className="fixed bottom-0 left-0 right-0 z-[9999] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200 dark:border-gray-700/80 shadow-[0_-2px_20px_rgba(0,0,0,0.08)] transition-transform duration-300"
+          className="app-bottom-nav fixed bottom-0 left-0 right-0 z-[9999] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200 dark:border-gray-700/80 shadow-[0_-2px_20px_rgba(0,0,0,0.08)] transition-transform duration-300"
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', transform: topBarVisible ? 'translateY(0)' : 'translateY(100%)' }}
         >
           <nav className="flex justify-around items-center h-16 max-w-lg mx-auto px-2">

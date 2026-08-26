@@ -4,6 +4,16 @@
 export const CHANGELOG_ENTRIES = [
   {
     "date": "2026-08-21",
+    "title": "Un tema nuevo para el panel",
+    "items": [
+      {
+        "type": "nuevo",
+        "text": "Se agregó un tema nuevo, con un contraste más cómodo para la vista. Lo elegís desde el menú de tu avatar, en \"Apariencia\"."
+      }
+    ]
+  },
+  {
+    "date": "2026-08-21",
     "title": "Nivel de interés por cada propiedad marcada en el alta",
     "items": [
       {

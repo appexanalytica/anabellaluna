@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MdKeyboardArrowDown, MdLogout, MdPerson, MdSecurity, MdDarkMode, MdLightMode } from 'react-icons/md';
+import { MdKeyboardArrowDown, MdLogout, MdPerson, MdSecurity, MdDarkMode, MdLightMode, MdPalette } from 'react-icons/md';
 
 import Avatar from './Avatar';
 import { authService } from '../../services/authService';
@@ -12,7 +12,7 @@ import { authService } from '../../services/authService';
  * sesión desde la navbar: la única salida estaba dentro de la propia pantalla
  * de perfil.
  */
-const ProfileMenu = ({ usuario, abierto, onToggle, onClose, currentColor, currentMode, onToggleMode }) => {
+const ProfileMenu = ({ usuario, abierto, onToggle, onClose, currentColor, currentMode, onToggleMode, onOpenAppearance }) => {
   const navigate = useNavigate();
   const ref = useRef(null);
 
@@ -87,6 +87,14 @@ const ProfileMenu = ({ usuario, abierto, onToggle, onClose, currentColor, curren
             {currentMode === 'Dark'
               ? <><MdLightMode className="text-lg text-gray-400" /> Modo claro</>
               : <><MdDarkMode className="text-lg text-gray-400" /> Modo oscuro</>}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className={itemClass}
+            onClick={() => { onClose(); onOpenAppearance?.(); }}
+          >
+            <MdPalette className="text-lg text-gray-400" /> Apariencia
           </button>
 
           <div className="border-t dark:border-gray-600 mt-1 pt-1">

@@ -66,7 +66,7 @@ const Sidebar = () => {
       {/* Sidebar */}
       <div 
         className={`
-          fixed left-0 top-0 h-screen flex flex-col z-50 bg-gray-900 shadow-xl
+          app-sidebar fixed left-0 top-0 h-screen flex flex-col z-50 bg-gray-900 shadow-xl
           transition-all duration-300 ease-in-out overflow-hidden
           ${isMobile 
             ? (activeMenu ? 'w-64 translate-x-0' : 'w-0 -translate-x-full') 
@@ -81,7 +81,7 @@ const Sidebar = () => {
           <Link 
             to="/" 
             onClick={handleCloseSideBar} 
-            className="flex items-center gap-3 text-white overflow-hidden"
+            className="app-sidebar-brand flex items-center gap-3 text-white overflow-hidden"
           >
             <MdSpaceDashboard className="text-2xl flex-shrink-0" style={{ color: currentColor }} />
             <span className={`font-bold text-lg whitespace-nowrap transition-all duration-300 ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0'}`}>

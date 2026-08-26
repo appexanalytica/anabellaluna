@@ -16,12 +16,16 @@ import AIFloatingOrb from './components/ai/AIFloatingOrb';
 import InstallPrompt from './components/pwa/InstallPrompt';
 import NotificationPrompt from './components/pwa/NotificationPrompt';
 import './App.css';
+import './styles/theme-luminous.css';
 import { authService } from './services/authService';
 import { api } from './config/api';
 import { useStateContext } from './contexts/ContextProvider';
 
+// Clase raíz de cada piel visual; `classic` no agrega ninguna.
+const SKIN_CLASS = { luminous: 'theme-luminous' };
+
 const App = () => {
-  const { setCurrentColor, setCurrentMode, currentMode, themeSettings } = useStateContext();
+  const { setCurrentColor, setCurrentMode, setCurrentSkin, currentMode, currentSkin, themeSettings } = useStateContext();
 
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('authToken'));
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
@@ -44,13 +48,17 @@ const App = () => {
     const user = authService.getCurrentUser();
     const backendMode = user?.themeMode;
     const backendColor = user?.colorMode;
+    const backendSkin = user?.themeSkin;
     const localMode = localStorage.getItem('themeMode');
     const localColor = localStorage.getItem('colorMode');
+    const localSkin = localStorage.getItem('themeSkin');
     const mode = backendMode || localMode;
     const color = backendColor || localColor;
+    const skin = backendSkin || localSkin;
     if (mode) { setCurrentMode(mode); localStorage.setItem('themeMode', mode); }
     if (color) { setCurrentColor(color); localStorage.setItem('colorMode', color); }
-  }, [setCurrentColor, setCurrentMode]);
+    if (skin) { setCurrentSkin(skin); localStorage.setItem('themeSkin', skin); }
+  }, [setCurrentColor, setCurrentMode, setCurrentSkin]);
 
   // Heartbeat de engagement: acumula el tiempo activo del agente mientras usa el
   // panel. El backend lo ignora para usuarios sin agente (p. ej. admins).
@@ -390,8 +398,15 @@ const App = () => {
     );
   }
 
+  // Modo y piel son ejes independientes: `dark` lo consume Tailwind y
+  // `theme-luminous` activa el tema Luminous (src/styles/theme-luminous.css).
+  const claseTema = [
+    currentMode === 'Dark' ? 'dark' : '',
+    SKIN_CLASS[currentSkin] || '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <div className={currentMode === 'Dark' ? 'dark' : ''}>
+    <div className={claseTema}>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <div className="flex relative dark:bg-main-dark-bg">
           <Sidebar />

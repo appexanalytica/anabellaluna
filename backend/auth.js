@@ -381,6 +381,8 @@ router.get('/me', async (req, res) => {
 
         user.colorMode = (agente.metadata && agente.metadata.colorMode) || '';
 
+        user.themeSkin = (agente.metadata && agente.metadata.themeSkin) || '';
+
       }
 
     } else {
@@ -410,6 +412,8 @@ router.get('/me', async (req, res) => {
         user.themeMode = (userDoc.metadata && userDoc.metadata.themeMode) || '';
 
         user.colorMode = (userDoc.metadata && userDoc.metadata.colorMode) || '';
+
+        user.themeSkin = (userDoc.metadata && userDoc.metadata.themeSkin) || '';
 
       }
 
@@ -506,10 +510,11 @@ router.put('/profile', authenticateToken, async (req, res) => {
 // Persist theme preference per user/agent
 router.patch('/theme', authenticateToken, async (req, res) => {
   try {
-    const { themeMode, colorMode } = req.body || {};
+    const { themeMode, colorMode, themeSkin } = req.body || {};
     const update = {};
     if (themeMode !== undefined) update['metadata.themeMode'] = themeMode;
     if (colorMode !== undefined) update['metadata.colorMode'] = colorMode;
+    if (themeSkin !== undefined) update['metadata.themeSkin'] = themeSkin;
     if (!Object.keys(update).length) return res.json({ ok: true });
 
     if (req.user.agenteId) {

@@ -1,0 +1,648 @@
+/* ==========================================================================
+   Tema "Luminous" — piel oscura de alto contraste con acento cian → magenta.
+
+   Se activa agregando la clase `theme-luminous` al contenedor raíz del panel.
+   Es un tema exclusivamente oscuro: el selector de apariencia fuerza el modo
+   Dark al elegirlo, así que `theme-luminous` y `dark` viajan siempre juntas.
+   Sin la clase, este archivo no pinta nada.
+
+   Cómo está organizado:
+     1. Tokens de color, radio y sombra.
+     2. Raíz y tipografía.
+     3. Superficies (tarjetas y su anidación en tres escalones de carbón).
+     4. Paleta: remapeo de las utilidades de color de Tailwind.
+     5. Cromo (sidebar, navbar, campos) y detalles finos.
+
+   La sección 4 enumera los tokens de color que el código usa de verdad, en vez
+   de usar selectores por subcadena. Es más largo pero respeta las variantes:
+   `hover:bg-blue-50` se emite como `.hover\:bg-blue-50:hover` y sigue siendo un
+   hover en vez de convertirse en un fondo permanente. Si se agregan utilidades
+   de color nuevas al código, hay que sumarlas ahí; se listan con:
+
+     grep -rhoE "(dark:|hover:|focus:)*(bg|text|border|from|via|to|ring)-(blue|red|…)-[0-9]+(/[0-9]+)?" src
+
+   El cromo va al final a propósito: comparte especificidad con la paleta y
+   necesita ganar por orden.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Tokens
+   -------------------------------------------------------------------------- */
+
+.theme-luminous {
+  --l-bg: #000000;
+  --l-surface: #0e0e12;
+  --l-surface-2: #16161c;
+  --l-surface-3: #1e1e26;
+  --l-border: rgba(255, 255, 255, 0.07);
+  --l-border-strong: rgba(255, 255, 255, 0.13);
+
+  --l-text: #ffffff;
+  --l-text-2: #c2c2cd;
+  --l-text-3: #8a8a95;
+  --l-text-4: #5b5b66;
+
+  --l-cyan: #22d3ee;
+  --l-cyan-soft: rgba(34, 211, 238, 0.12);
+  --l-magenta: #f472d0;
+  --l-magenta-soft: rgba(244, 114, 208, 0.12);
+
+  --l-grad: linear-gradient(90deg, #22d3ee 0%, #7aa6e6 48%, #f472d0 100%);
+  --l-grad-warm: linear-gradient(90deg, #f472d0 0%, #d8459f 100%);
+  --l-grad-diag: linear-gradient(135deg, #22d3ee 0%, #f472d0 100%);
+
+  --l-glow-cyan: 0 0 22px -6px rgba(34, 211, 238, 0.55);
+  --l-glow-magenta: 0 0 22px -6px rgba(244, 114, 208, 0.5);
+
+  --l-radius: 18px;
+  --l-shadow: 0 24px 60px -34px rgba(0, 0, 0, 1);
+}
+
+/* --------------------------------------------------------------------------
+   2. Raíz y tipografía
+   -------------------------------------------------------------------------- */
+
+.theme-luminous {
+  min-height: 100vh;
+  background-color: var(--l-bg);
+  color: var(--l-text-2);
+  /* Outfit la inyecta ContextProvider sólo cuando este tema está activo. */
+  font-family: 'Outfit', 'Open Sans', system-ui, sans-serif;
+}
+
+.theme-luminous :is(h1, h2, h3, h4) {
+  color: var(--l-text);
+  letter-spacing: -0.015em;
+}
+
+/* Las micro-etiquetas de la referencia: versalitas anchas y apagadas. */
+.theme-luminous .uppercase {
+  letter-spacing: 0.14em;
+}
+
+/* Los fondos opacos del layout dejan pasar el negro de la raíz. */
+.theme-luminous .bg-main-bg,
+.theme-luminous .bg-main-dark-bg,
+.theme-luminous .dark\:bg-main-dark-bg,
+.theme-luminous .bg-light-gray,
+.theme-luminous .min-h-screen:is(.bg-gray-50, .bg-gray-100, .bg-main-bg, .bg-main-dark-bg) {
+  background-color: transparent;
+}
+
+/* --------------------------------------------------------------------------
+   3. Superficies
+
+   Tres escalones de carbón según la profundidad: una tarjeta dentro de otra
+   se aclara sola, que es lo que separa las filas del "Real-Time Stream" de la
+   tarjeta que las contiene en la referencia.
+   -------------------------------------------------------------------------- */
+
+.theme-luminous :is(.bg-white, .bg-white\/95, .bg-white\/90, .bg-white\/80, .bg-white\/70, .bg-secondary-dark-bg, .dark\:bg-secondary-dark-bg, .dark\:bg-gray-900\/95, .dark\:bg-\[\#42464D\], .dark\:bg-\[\#484B52\]) {
+  background-color: var(--l-surface);
+  border-color: var(--l-border);
+}
+
+/* Con forma de tarjeta: radio generoso, borde de un pelo y sombra profunda. */
+.theme-luminous :is(.bg-white, .bg-white\/95, .bg-white\/90, .bg-secondary-dark-bg, .dark\:bg-secondary-dark-bg, .bg-gray-800, .bg-gray-900, .dark\:bg-gray-700, .dark\:bg-gray-800, .dark\:bg-gray-900, .dark\:bg-gray-900\/95, .dark\:bg-\[\#42464D\], .dark\:bg-\[\#484B52\]):is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl):not(.rounded-full) {
+  border-radius: var(--l-radius);
+  border-color: var(--l-border);
+  box-shadow: var(--l-shadow);
+}
+
+/* Anidación: segundo y tercer escalón. */
+.theme-luminous :is(.bg-white, .bg-white\/95, .bg-white\/90, .bg-secondary-dark-bg, .dark\:bg-secondary-dark-bg, .bg-gray-800, .bg-gray-900, .dark\:bg-gray-700, .dark\:bg-gray-800, .dark\:bg-gray-900) :is(.bg-white, .bg-white\/95, .bg-white\/90, .bg-secondary-dark-bg, .dark\:bg-secondary-dark-bg, .bg-gray-800, .bg-gray-900, .dark\:bg-gray-700, .dark\:bg-gray-800, .dark\:bg-gray-900) {
+  background-color: var(--l-surface-2);
+}
+
+.theme-luminous :is(.bg-white, .bg-secondary-dark-bg, .dark\:bg-gray-800, .dark\:bg-gray-900) :is(.bg-white, .bg-secondary-dark-bg, .dark\:bg-gray-800, .dark\:bg-gray-900) :is(.bg-white, .bg-secondary-dark-bg, .dark\:bg-gray-800, .dark\:bg-gray-900) {
+  background-color: var(--l-surface-3);
+}
+
+/* Separadores. */
+.theme-luminous :is(.border, .border-t, .border-b, .border-l, .border-r, .border-x, .border-y) {
+  border-color: var(--l-border);
+}
+
+/* --------------------------------------------------------------------------
+   4. Paleta: remapeo de las utilidades de color de Tailwind.
+
+   La referencia trabaja con dos acentos y nada mas: cian para lo positivo,
+   primario e informativo; magenta para lo negativo, de alerta y de salida.
+   Las familias frias (blue, indigo, violet, purple, sky, cyan, teal, emerald,
+   green, lime) caen en cian; las calidas (red, rose, pink, fuchsia, orange,
+   amber, yellow) en magenta. Los grises se invierten a una escala clara.
+   -------------------------------------------------------------------------- */
+
+/* Escala de grises: en negativo todo el texto neutro sube a claro. */
+.theme-luminous .dark\:text-gray-100, .theme-luminous .hover\:text-gray-800:hover,
+.theme-luminous .text-gray-100, .theme-luminous .text-gray-800, .theme-luminous .text-gray-900,
+.theme-luminous .text-slate-800, .theme-luminous .text-slate-900 {
+  color: #ffffff;
+}
+
+.theme-luminous .dark\:hover\:text-gray-200:hover,
+.theme-luminous .dark\:hover\:text-gray-300:hover, .theme-luminous .dark\:text-gray-200,
+.theme-luminous .dark\:text-gray-300, .theme-luminous .dark\:text-slate-300,
+.theme-luminous .hover\:text-gray-200:hover, .theme-luminous .hover\:text-gray-300:hover,
+.theme-luminous .text-gray-200, .theme-luminous .text-gray-300, .theme-luminous .text-slate-300 {
+  color: #d3d3dc;
+}
+
+.theme-luminous .dark\:text-gray-600, .theme-luminous .dark\:text-gray-700,
+.theme-luminous .hover\:text-gray-600:hover, .theme-luminous .hover\:text-gray-700:hover,
+.theme-luminous .text-gray-600, .theme-luminous .text-gray-700, .theme-luminous .text-slate-600,
+.theme-luminous .text-slate-700 {
+  color: #c2c2cd;
+}
+
+.theme-luminous .dark\:text-gray-400, .theme-luminous .dark\:text-gray-500,
+.theme-luminous .dark\:text-slate-400, .theme-luminous .placeholder-gray-400,
+.theme-luminous .placeholder-gray-500, .theme-luminous .text-gray-400,
+.theme-luminous .text-gray-500, .theme-luminous .text-slate-400,
+.theme-luminous .text-slate-500 {
+  color: #8a8a95;
+}
+
+/* Los fondos grises se reparten en los tres escalones de carbon. */
+.theme-luminous .bg-gray-100, .theme-luminous .bg-gray-50, .theme-luminous .bg-gray-700,
+.theme-luminous .bg-gray-700\/30, .theme-luminous .bg-gray-700\/50,
+.theme-luminous .bg-slate-100, .theme-luminous .bg-slate-50, .theme-luminous .dark\:bg-gray-600,
+.theme-luminous .dark\:bg-gray-700, .theme-luminous .dark\:bg-gray-700\/50,
+.theme-luminous .dark\:hover\:bg-gray-600:hover,
+.theme-luminous .dark\:hover\:bg-gray-600\/50:hover,
+.theme-luminous .dark\:hover\:bg-gray-700:hover,
+.theme-luminous .dark\:hover\:bg-gray-700\/60:hover, .theme-luminous .hover\:bg-gray-100:hover,
+.theme-luminous .hover\:bg-gray-50:hover, .theme-luminous .hover\:bg-gray-600:hover,
+.theme-luminous .hover\:bg-gray-700:hover, .theme-luminous .hover\:bg-gray-700\/40:hover,
+.theme-luminous .hover\:bg-gray-700\/60:hover {
+  background-color: var(--l-surface-2);
+}
+
+.theme-luminous .bg-gray-200, .theme-luminous .hover\:bg-gray-200:hover {
+  background-color: var(--l-surface-3);
+}
+
+.theme-luminous .bg-gray-300, .theme-luminous .bg-gray-400, .theme-luminous .bg-gray-500,
+.theme-luminous .bg-slate-500, .theme-luminous .hover\:bg-gray-300:hover,
+.theme-luminous .hover\:bg-gray-500:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.theme-luminous .bg-gray-800, .theme-luminous .bg-gray-800\/40,
+.theme-luminous .bg-gray-800\/50, .theme-luminous .bg-gray-800\/60,
+.theme-luminous .bg-gray-900, .theme-luminous .bg-gray-900\/40, .theme-luminous .bg-gray-950,
+.theme-luminous .dark\:bg-gray-800, .theme-luminous .dark\:bg-gray-800\/40,
+.theme-luminous .dark\:bg-gray-800\/50, .theme-luminous .dark\:bg-gray-800\/60,
+.theme-luminous .dark\:bg-gray-800\/90, .theme-luminous .dark\:bg-gray-800\/95,
+.theme-luminous .dark\:bg-gray-900, .theme-luminous .dark\:bg-gray-900\/20,
+.theme-luminous .dark\:bg-gray-900\/40, .theme-luminous .dark\:bg-gray-900\/50,
+.theme-luminous .dark\:bg-gray-900\/95, .theme-luminous .dark\:bg-gray-950,
+.theme-luminous .dark\:bg-slate-800\/60, .theme-luminous .dark\:bg-slate-900\/20,
+.theme-luminous .dark\:hover\:bg-gray-800:hover,
+.theme-luminous .dark\:hover\:bg-gray-800\/40:hover,
+.theme-luminous .dark\:hover\:bg-gray-800\/50:hover, .theme-luminous .hover\:bg-gray-800:hover,
+.theme-luminous .hover\:bg-gray-800\/50:hover {
+  background-color: var(--l-surface);
+}
+
+.theme-luminous .border-gray-100, .theme-luminous .border-gray-200,
+.theme-luminous .border-gray-200\/80, .theme-luminous .border-gray-200\/90,
+.theme-luminous .border-gray-300, .theme-luminous .border-gray-50,
+.theme-luminous .border-gray-500, .theme-luminous .border-slate-200,
+.theme-luminous .border-slate-500, .theme-luminous .hover\:border-gray-300:hover,
+.theme-luminous .hover\:border-gray-500:hover {
+  border-color: var(--l-border);
+}
+
+.theme-luminous .border-gray-600, .theme-luminous .border-gray-700,
+.theme-luminous .border-gray-700\/50, .theme-luminous .border-gray-800,
+.theme-luminous .dark\:border-gray-600, .theme-luminous .dark\:border-gray-700,
+.theme-luminous .dark\:border-gray-700\/50, .theme-luminous .dark\:border-gray-700\/70,
+.theme-luminous .dark\:border-gray-700\/80, .theme-luminous .dark\:hover\:border-gray-600:hover,
+.theme-luminous .hover\:border-gray-600:hover {
+  border-color: var(--l-border-strong);
+}
+
+.theme-luminous .from-gray-300, .theme-luminous .from-gray-400, .theme-luminous .to-gray-400,
+.theme-luminous .to-gray-500 {
+  --tw-gradient-from: #16161b var(--tw-gradient-from-position);
+  --tw-gradient-to: #0d0d11 var(--tw-gradient-to-position);
+}
+
+/* Texto de tinte claro: vive sobre un fondo de acento, va casi blanco. */
+.theme-luminous .dark\:text-amber-100, .theme-luminous .dark\:text-amber-200,
+.theme-luminous .dark\:text-blue-200, .theme-luminous .dark\:text-green-100,
+.theme-luminous .dark\:text-green-200, .theme-luminous .dark\:text-indigo-100,
+.theme-luminous .dark\:text-orange-100, .theme-luminous .dark\:text-red-200,
+.theme-luminous .dark\:text-yellow-100, .theme-luminous .dark\:text-yellow-200,
+.theme-luminous .text-amber-100, .theme-luminous .text-blue-100,
+.theme-luminous .text-green-100, .theme-luminous .text-orange-100,
+.theme-luminous .text-purple-100, .theme-luminous .text-red-100 {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* Todo el texto e iconografia de la familia fria pasa al cian de marca. */
+.theme-luminous .dark\:text-blue-300, .theme-luminous .dark\:text-blue-400,
+.theme-luminous .dark\:text-emerald-300, .theme-luminous .dark\:text-emerald-400,
+.theme-luminous .dark\:text-green-300, .theme-luminous .dark\:text-green-400,
+.theme-luminous .dark\:text-indigo-300, .theme-luminous .dark\:text-indigo-400,
+.theme-luminous .dark\:text-purple-300, .theme-luminous .dark\:text-purple-400,
+.theme-luminous .dark\:text-teal-400, .theme-luminous .dark\:text-violet-300,
+.theme-luminous .dark\:text-violet-400, .theme-luminous .hover\:text-blue-500:hover,
+.theme-luminous .hover\:text-blue-600:hover, .theme-luminous .hover\:text-blue-700:hover,
+.theme-luminous .hover\:text-blue-900:hover, .theme-luminous .hover\:text-indigo-300:hover,
+.theme-luminous .hover\:text-indigo-600:hover, .theme-luminous .hover\:text-indigo-700:hover,
+.theme-luminous .hover\:text-sky-700:hover, .theme-luminous .text-blue-300,
+.theme-luminous .text-blue-400, .theme-luminous .text-blue-500, .theme-luminous .text-blue-600,
+.theme-luminous .text-blue-700, .theme-luminous .text-blue-800, .theme-luminous .text-cyan-500,
+.theme-luminous .text-emerald-400, .theme-luminous .text-emerald-500,
+.theme-luminous .text-emerald-600, .theme-luminous .text-emerald-700,
+.theme-luminous .text-emerald-800, .theme-luminous .text-green-300,
+.theme-luminous .text-green-400, .theme-luminous .text-green-500,
+.theme-luminous .text-green-600, .theme-luminous .text-green-700,
+.theme-luminous .text-green-800, .theme-luminous .text-indigo-400,
+.theme-luminous .text-indigo-500, .theme-luminous .text-indigo-600,
+.theme-luminous .text-indigo-700, .theme-luminous .text-indigo-800,
+.theme-luminous .text-indigo-900, .theme-luminous .text-purple-500,
+.theme-luminous .text-purple-600, .theme-luminous .text-purple-700,
+.theme-luminous .text-sky-400, .theme-luminous .text-sky-600, .theme-luminous .text-teal-500,
+.theme-luminous .text-teal-600, .theme-luminous .text-violet-500,
+.theme-luminous .text-violet-600, .theme-luminous .text-violet-700,
+.theme-luminous .text-violet-800 {
+  color: var(--l-cyan);
+}
+
+/* La familia calida (errores, avisos, salidas) pasa al magenta de marca. */
+.theme-luminous .dark\:hover\:text-red-400:hover, .theme-luminous .dark\:text-amber-300,
+.theme-luminous .dark\:text-amber-400, .theme-luminous .dark\:text-orange-300,
+.theme-luminous .dark\:text-orange-400, .theme-luminous .dark\:text-pink-300,
+.theme-luminous .dark\:text-pink-400, .theme-luminous .dark\:text-red-300,
+.theme-luminous .dark\:text-red-400, .theme-luminous .dark\:text-rose-300,
+.theme-luminous .dark\:text-yellow-300, .theme-luminous .dark\:text-yellow-400,
+.theme-luminous .hover\:text-red-500:hover, .theme-luminous .hover\:text-red-600:hover,
+.theme-luminous .hover\:text-red-700:hover, .theme-luminous .text-amber-300,
+.theme-luminous .text-amber-400, .theme-luminous .text-amber-500,
+.theme-luminous .text-amber-600, .theme-luminous .text-amber-700,
+.theme-luminous .text-amber-800, .theme-luminous .text-orange-500,
+.theme-luminous .text-orange-600, .theme-luminous .text-orange-700,
+.theme-luminous .text-orange-800, .theme-luminous .text-orange-900,
+.theme-luminous .text-pink-500, .theme-luminous .text-pink-600, .theme-luminous .text-pink-700,
+.theme-luminous .text-pink-800, .theme-luminous .text-red-300, .theme-luminous .text-red-400,
+.theme-luminous .text-red-500, .theme-luminous .text-red-600, .theme-luminous .text-red-700,
+.theme-luminous .text-red-800, .theme-luminous .text-rose-600, .theme-luminous .text-yellow-300,
+.theme-luminous .text-yellow-400, .theme-luminous .text-yellow-500,
+.theme-luminous .text-yellow-600, .theme-luminous .text-yellow-700,
+.theme-luminous .text-yellow-800, .theme-luminous .text-yellow-900 {
+  color: var(--l-magenta);
+}
+
+/* Chips y banners frios: tinte cian muy bajo sobre el carbon. */
+.theme-luminous .bg-blue-100, .theme-luminous .bg-blue-50, .theme-luminous .bg-blue-900\/20,
+.theme-luminous .bg-blue-900\/50, .theme-luminous .bg-cyan-500\/10,
+.theme-luminous .bg-emerald-100, .theme-luminous .bg-emerald-50,
+.theme-luminous .bg-emerald-500\/10, .theme-luminous .bg-emerald-900\/30,
+.theme-luminous .bg-green-100, .theme-luminous .bg-green-200, .theme-luminous .bg-green-50,
+.theme-luminous .bg-green-500\/10, .theme-luminous .bg-green-800,
+.theme-luminous .bg-green-900\/20, .theme-luminous .bg-green-900\/30,
+.theme-luminous .bg-green-900\/50, .theme-luminous .bg-indigo-100,
+.theme-luminous .bg-indigo-50, .theme-luminous .bg-indigo-500\/10,
+.theme-luminous .bg-indigo-500\/20, .theme-luminous .bg-indigo-50\/30,
+.theme-luminous .bg-purple-100, .theme-luminous .bg-purple-50,
+.theme-luminous .bg-purple-500\/10, .theme-luminous .bg-purple-800,
+.theme-luminous .bg-purple-900\/20, .theme-luminous .bg-purple-900\/30,
+.theme-luminous .bg-purple-900\/50, .theme-luminous .bg-sky-50, .theme-luminous .bg-sky-500\/10,
+.theme-luminous .bg-teal-50, .theme-luminous .bg-violet-100, .theme-luminous .bg-violet-50,
+.theme-luminous .dark\:bg-blue-500\/20, .theme-luminous .dark\:bg-blue-900,
+.theme-luminous .dark\:bg-blue-900\/20, .theme-luminous .dark\:bg-blue-900\/30,
+.theme-luminous .dark\:bg-blue-900\/40, .theme-luminous .dark\:bg-emerald-900\/20,
+.theme-luminous .dark\:bg-emerald-900\/30, .theme-luminous .dark\:bg-emerald-900\/40,
+.theme-luminous .dark\:bg-green-500\/20, .theme-luminous .dark\:bg-green-800,
+.theme-luminous .dark\:bg-green-900, .theme-luminous .dark\:bg-green-900\/20,
+.theme-luminous .dark\:bg-green-900\/30, .theme-luminous .dark\:bg-indigo-900\/10,
+.theme-luminous .dark\:bg-indigo-900\/20, .theme-luminous .dark\:bg-indigo-900\/30,
+.theme-luminous .dark\:bg-purple-900, .theme-luminous .dark\:bg-purple-900\/20,
+.theme-luminous .dark\:bg-purple-900\/30, .theme-luminous .dark\:bg-purple-900\/40,
+.theme-luminous .dark\:bg-teal-900\/20, .theme-luminous .dark\:bg-violet-900\/20,
+.theme-luminous .dark\:bg-violet-900\/30, .theme-luminous .dark\:hover\:bg-blue-900\/20:hover,
+.theme-luminous .dark\:hover\:bg-blue-900\/30:hover,
+.theme-luminous .dark\:hover\:bg-green-900\/20:hover, .theme-luminous .hover\:bg-blue-50:hover,
+.theme-luminous .hover\:bg-green-50:hover, .theme-luminous .hover\:bg-purple-50:hover {
+  background-color: var(--l-cyan-soft);
+}
+
+/* Chips y banners calidos: tinte magenta muy bajo. */
+.theme-luminous .bg-amber-100, .theme-luminous .bg-amber-50, .theme-luminous .bg-amber-500\/10,
+.theme-luminous .bg-amber-50\/50, .theme-luminous .bg-amber-800,
+.theme-luminous .bg-amber-900\/20, .theme-luminous .bg-amber-900\/30,
+.theme-luminous .bg-amber-900\/50, .theme-luminous .bg-orange-100,
+.theme-luminous .bg-orange-200, .theme-luminous .bg-orange-50,
+.theme-luminous .bg-orange-900\/20, .theme-luminous .bg-pink-100, .theme-luminous .bg-pink-50,
+.theme-luminous .bg-pink-500\/10, .theme-luminous .bg-red-100, .theme-luminous .bg-red-200,
+.theme-luminous .bg-red-50, .theme-luminous .bg-red-500\/10, .theme-luminous .bg-red-900\/30,
+.theme-luminous .bg-rose-50, .theme-luminous .bg-yellow-100, .theme-luminous .bg-yellow-200,
+.theme-luminous .bg-yellow-50, .theme-luminous .bg-yellow-900\/20,
+.theme-luminous .dark\:bg-amber-500\/20, .theme-luminous .dark\:bg-amber-900\/10,
+.theme-luminous .dark\:bg-amber-900\/20, .theme-luminous .dark\:bg-amber-900\/30,
+.theme-luminous .dark\:bg-amber-900\/40, .theme-luminous .dark\:bg-orange-800,
+.theme-luminous .dark\:bg-orange-900\/20, .theme-luminous .dark\:bg-orange-900\/30,
+.theme-luminous .dark\:bg-pink-900, .theme-luminous .dark\:bg-pink-900\/20,
+.theme-luminous .dark\:bg-pink-900\/30, .theme-luminous .dark\:bg-red-500\/20,
+.theme-luminous .dark\:bg-red-900, .theme-luminous .dark\:bg-red-900\/20,
+.theme-luminous .dark\:bg-red-900\/30, .theme-luminous .dark\:bg-red-900\/40,
+.theme-luminous .dark\:bg-red-900\/50, .theme-luminous .dark\:bg-rose-500\/10,
+.theme-luminous .dark\:bg-yellow-800, .theme-luminous .dark\:bg-yellow-900,
+.theme-luminous .dark\:bg-yellow-900\/20, .theme-luminous .dark\:bg-yellow-900\/30,
+.theme-luminous .dark\:hover\:bg-amber-900\/20:hover,
+.theme-luminous .dark\:hover\:bg-orange-900\/20:hover,
+.theme-luminous .dark\:hover\:bg-red-900\/20:hover,
+.theme-luminous .dark\:hover\:bg-red-900\/30:hover, .theme-luminous .hover\:bg-amber-50:hover,
+.theme-luminous .hover\:bg-orange-50:hover, .theme-luminous .hover\:bg-red-100:hover,
+.theme-luminous .hover\:bg-red-50:hover, .theme-luminous .hover\:bg-red-900\/30:hover,
+.theme-luminous .hover\:bg-red-900\/50:hover, .theme-luminous .hover\:bg-yellow-50:hover {
+  background-color: var(--l-magenta-soft);
+}
+
+/* Fondos plenos frios: pasan al degradado cian -> magenta con glow. */
+.theme-luminous .bg-blue-500, .theme-luminous .bg-blue-600, .theme-luminous .bg-cyan-500,
+.theme-luminous .bg-emerald-500, .theme-luminous .bg-green-500, .theme-luminous .bg-green-600,
+.theme-luminous .bg-indigo-500, .theme-luminous .bg-indigo-600, .theme-luminous .bg-purple-500,
+.theme-luminous .bg-purple-600, .theme-luminous .bg-violet-500,
+.theme-luminous .hover\:bg-blue-600:hover, .theme-luminous .hover\:bg-blue-700:hover,
+.theme-luminous .hover\:bg-emerald-600:hover, .theme-luminous .hover\:bg-green-600:hover,
+.theme-luminous .hover\:bg-indigo-600:hover, .theme-luminous .hover\:bg-purple-600:hover {
+  background-color: var(--l-cyan);
+  background-image: var(--l-grad);
+  box-shadow: var(--l-glow-cyan);
+}
+
+/* Fondos plenos calidos: degradado magenta con glow propio. */
+.theme-luminous .bg-amber-500, .theme-luminous .bg-amber-700, .theme-luminous .bg-orange-400,
+.theme-luminous .bg-orange-500, .theme-luminous .bg-pink-500, .theme-luminous .bg-red-400,
+.theme-luminous .bg-red-500, .theme-luminous .bg-red-500\/90, .theme-luminous .bg-red-600,
+.theme-luminous .bg-rose-500, .theme-luminous .bg-yellow-400, .theme-luminous .bg-yellow-500,
+.theme-luminous .hover\:bg-amber-600:hover, .theme-luminous .hover\:bg-orange-600:hover,
+.theme-luminous .hover\:bg-red-500:hover, .theme-luminous .hover\:bg-red-600:hover,
+.theme-luminous .hover\:bg-red-700:hover, .theme-luminous .hover\:bg-yellow-600:hover {
+  background-color: var(--l-magenta);
+  background-image: var(--l-grad-warm);
+  box-shadow: var(--l-glow-magenta);
+}
+
+.theme-luminous .border-blue-200, .theme-luminous .border-blue-300,
+.theme-luminous .border-blue-400, .theme-luminous .border-blue-500,
+.theme-luminous .border-blue-700, .theme-luminous .border-cyan-400,
+.theme-luminous .border-emerald-200, .theme-luminous .border-emerald-500,
+.theme-luminous .border-emerald-500\/30, .theme-luminous .border-green-200,
+.theme-luminous .border-green-300, .theme-luminous .border-green-500,
+.theme-luminous .border-green-700, .theme-luminous .border-green-800,
+.theme-luminous .border-indigo-200, .theme-luminous .border-indigo-300,
+.theme-luminous .border-indigo-400, .theme-luminous .border-indigo-500,
+.theme-luminous .border-purple-200, .theme-luminous .border-purple-500,
+.theme-luminous .border-purple-800, .theme-luminous .border-sky-500\/30,
+.theme-luminous .border-teal-500, .theme-luminous .border-violet-500,
+.theme-luminous .dark\:border-blue-500\/30, .theme-luminous .dark\:border-blue-600,
+.theme-luminous .dark\:border-blue-800, .theme-luminous .dark\:border-emerald-700,
+.theme-luminous .dark\:border-green-800, .theme-luminous .dark\:border-indigo-700,
+.theme-luminous .dark\:border-indigo-800, .theme-luminous .dark\:hover\:border-blue-500:hover,
+.theme-luminous .focus\:border-cyan-400:focus, .theme-luminous .focus\:border-cyan-500:focus,
+.theme-luminous .focus\:border-indigo-500:focus, .theme-luminous .hover\:border-blue-300:hover,
+.theme-luminous .hover\:border-blue-400:hover,
+.theme-luminous .hover\:border-blue-500\/40:hover,
+.theme-luminous .hover\:border-cyan-300:hover,
+.theme-luminous .hover\:border-cyan-500\/40:hover,
+.theme-luminous .hover\:border-indigo-300:hover,
+.theme-luminous .hover\:border-indigo-500\/30:hover,
+.theme-luminous .hover\:border-indigo-500\/50:hover {
+  border-color: rgba(34, 211, 238, 0.32);
+}
+
+.theme-luminous .border-amber-200, .theme-luminous .border-amber-300,
+.theme-luminous .border-amber-400, .theme-luminous .border-amber-500,
+.theme-luminous .border-amber-500\/30, .theme-luminous .border-amber-500\/50,
+.theme-luminous .border-amber-700\/40, .theme-luminous .border-amber-800,
+.theme-luminous .border-orange-200, .theme-luminous .border-orange-300,
+.theme-luminous .border-orange-500, .theme-luminous .border-pink-500,
+.theme-luminous .border-red-200, .theme-luminous .border-red-300,
+.theme-luminous .border-red-500, .theme-luminous .border-red-600,
+.theme-luminous .border-red-700, .theme-luminous .border-yellow-100,
+.theme-luminous .border-yellow-200, .theme-luminous .border-yellow-500,
+.theme-luminous .dark\:border-amber-500\/30, .theme-luminous .dark\:border-amber-600,
+.theme-luminous .dark\:border-amber-700, .theme-luminous .dark\:border-orange-700,
+.theme-luminous .dark\:border-red-500\/30, .theme-luminous .dark\:border-red-500\/40,
+.theme-luminous .dark\:border-red-700, .theme-luminous .dark\:border-red-800,
+.theme-luminous .dark\:border-yellow-800, .theme-luminous .hover\:border-red-400:hover {
+  border-color: rgba(244, 114, 208, 0.32);
+}
+
+.theme-luminous .dark\:focus\:ring-indigo-500:focus,
+.theme-luminous .focus\:ring-blue-400:focus, .theme-luminous .focus\:ring-blue-500:focus,
+.theme-luminous .focus\:ring-emerald-500:focus, .theme-luminous .focus\:ring-green-300:focus,
+.theme-luminous .focus\:ring-green-500:focus, .theme-luminous .focus\:ring-indigo-500:focus,
+.theme-luminous .focus\:ring-indigo-500\/20:focus,
+.theme-luminous .focus\:ring-purple-500:focus, .theme-luminous .focus\:ring-sky-500:focus,
+.theme-luminous .focus\:ring-violet-400:focus, .theme-luminous .ring-blue-300,
+.theme-luminous .ring-blue-500, .theme-luminous .ring-green-500,
+.theme-luminous .ring-indigo-500, .theme-luminous .ring-purple-500 {
+  --tw-ring-color: rgba(34, 211, 238, 0.55);
+}
+
+.theme-luminous .dark\:ring-red-500\/20, .theme-luminous .focus\:ring-amber-500:focus,
+.theme-luminous .focus\:ring-red-300:focus, .theme-luminous .focus\:ring-red-400:focus,
+.theme-luminous .ring-amber-500, .theme-luminous .ring-red-200 {
+  --tw-ring-color: rgba(244, 114, 208, 0.55);
+}
+
+/* Los degradados frios arrancan en cian y terminan en magenta: es la firma del tema. */
+.theme-luminous .dark\:from-indigo-900\/20, .theme-luminous .from-blue-400,
+.theme-luminous .from-blue-50, .theme-luminous .from-blue-500,
+.theme-luminous .from-emerald-500, .theme-luminous .from-green-400,
+.theme-luminous .from-green-50, .theme-luminous .from-green-500,
+.theme-luminous .from-indigo-400, .theme-luminous .from-indigo-50,
+.theme-luminous .from-indigo-500, .theme-luminous .from-purple-400,
+.theme-luminous .from-purple-50, .theme-luminous .from-purple-500,
+.theme-luminous .from-teal-500, .theme-luminous .from-violet-500,
+.theme-luminous .hover\:from-green-600:hover, .theme-luminous .hover\:from-indigo-600:hover {
+  --tw-gradient-from: #22d3ee var(--tw-gradient-from-position);
+  --tw-gradient-to: rgba(34, 211, 238, 0) var(--tw-gradient-to-position);
+}
+
+.theme-luminous .from-amber-400, .theme-luminous .from-amber-50,
+.theme-luminous .from-amber-500, .theme-luminous .from-amber-600,
+.theme-luminous .from-orange-400, .theme-luminous .from-orange-500,
+.theme-luminous .from-pink-500, .theme-luminous .from-red-500, .theme-luminous .from-yellow-400,
+.theme-luminous .from-yellow-500 {
+  --tw-gradient-from: #f472d0 var(--tw-gradient-from-position);
+  --tw-gradient-to: rgba(244, 114, 208, 0) var(--tw-gradient-to-position);
+}
+
+.theme-luminous .dark\:to-purple-900\/20, .theme-luminous .hover\:to-green-700:hover,
+.theme-luminous .hover\:to-indigo-700:hover, .theme-luminous .to-blue-100,
+.theme-luminous .to-blue-600, .theme-luminous .to-emerald-600, .theme-luminous .to-green-100,
+.theme-luminous .to-green-600, .theme-luminous .to-indigo-600, .theme-luminous .to-purple-100,
+.theme-luminous .to-purple-50, .theme-luminous .to-purple-500, .theme-luminous .to-purple-600,
+.theme-luminous .to-teal-600, .theme-luminous .to-violet-600 {
+  --tw-gradient-to: #f472d0 var(--tw-gradient-to-position);
+}
+
+.theme-luminous .to-amber-100, .theme-luminous .to-amber-500, .theme-luminous .to-amber-600,
+.theme-luminous .to-amber-800, .theme-luminous .to-orange-500, .theme-luminous .to-orange-600,
+.theme-luminous .to-pink-600, .theme-luminous .to-red-600, .theme-luminous .to-yellow-600 {
+  --tw-gradient-to: #d8459f var(--tw-gradient-to-position);
+}
+
+.theme-luminous .accent-blue-500, .theme-luminous .accent-blue-600,
+.theme-luminous .accent-emerald-500, .theme-luminous .accent-indigo-500,
+.theme-luminous .accent-purple-500 {
+  accent-color: var(--l-cyan);
+}
+
+/* --------------------------------------------------------------------------
+   5. Cromo y detalles
+
+   Va después de la paleta a propósito: comparte especificidad con ella y
+   necesita ganar por orden de aparición.
+   -------------------------------------------------------------------------- */
+
+/* Sidebar: negro pleno contra el carbón de las tarjetas. */
+.theme-luminous .app-sidebar {
+  background-color: var(--l-bg);
+  border-right: 1px solid var(--l-border);
+  box-shadow: none;
+}
+
+.theme-luminous .app-sidebar :is(.border-gray-700, .border-gray-800) {
+  border-color: var(--l-border);
+}
+
+.theme-luminous .app-sidebar-brand {
+  color: var(--l-text);
+  letter-spacing: -0.01em;
+}
+
+/* Ítem activo: degradado de marca y filo cian a la izquierda. El `!important`
+   es para el box-shadow, que el componente escribe inline con el color de
+   acento y de otro modo no hay forma de reemplazar. */
+.theme-luminous .app-sidebar a[aria-current='page'] {
+  background-image: linear-gradient(90deg, rgba(34, 211, 238, 0.26) 0%, rgba(244, 114, 208, 0.14) 100%);
+  box-shadow: inset 3px 0 0 0 var(--l-cyan), 0 0 26px -12px rgba(34, 211, 238, 0.8) !important;
+  color: var(--l-text);
+}
+
+.theme-luminous .app-sidebar a:not([aria-current='page']):hover,
+.theme-luminous .app-sidebar button:hover {
+  background-color: var(--l-surface-2);
+  color: var(--l-text);
+}
+
+/* Navbar y barra inferior mobile. */
+.theme-luminous .app-navbar-pill {
+  background-color: var(--l-surface);
+  border: 1px solid var(--l-border);
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+.theme-luminous .app-navbar-pill :is(.bg-gray-200, .bg-gray-600, .dark\:bg-gray-600) {
+  background-color: var(--l-border-strong);
+}
+
+.theme-luminous .app-bottom-nav {
+  background-color: rgba(0, 0, 0, 0.88);
+  border-color: var(--l-border);
+  box-shadow: 0 -1px 0 0 var(--l-border);
+}
+
+/* Campos: carbón un escalón por encima de la tarjeta, texto claro. */
+.theme-luminous :is(input, textarea, select):not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']) {
+  background-color: var(--l-surface-2);
+  border-color: var(--l-border);
+  color: var(--l-text);
+}
+
+.theme-luminous :is(input, textarea)::placeholder {
+  color: var(--l-text-4);
+  opacity: 1;
+}
+
+.theme-luminous :is(input, textarea, select):focus {
+  border-color: rgba(34, 211, 238, 0.55);
+  outline-color: var(--l-cyan);
+}
+
+.theme-luminous :is(input, textarea, select):focus-visible {
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.18);
+}
+
+.theme-luminous :is([type='checkbox'], [type='radio'], [type='range']) {
+  accent-color: var(--l-cyan);
+}
+
+/* Botones de acción: la píldora de la referencia. */
+.theme-luminous button:is(.px-4, .px-5, .px-6, .px-8):is(.rounded-md, .rounded-lg, .rounded-xl) {
+  border-radius: 999px;
+}
+
+/* Divisores de Tailwind, que pintan el borde en los hijos y no en el padre. */
+.theme-luminous :is(.divide-y, .divide-x) > * {
+  border-color: var(--l-border);
+}
+
+/* Barras de scroll finas, como el resto del cromo. */
+.theme-luminous ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.theme-luminous ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
+
+.theme-luminous ::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.theme-luminous ::selection {
+  background-color: rgba(34, 211, 238, 0.3);
+  color: var(--l-text);
+}
+
+/* Gráficos: ApexCharts y Syncfusion dibujan en SVG y no leen las utilidades
+   de Tailwind, así que hay que apuntarles por sus propias clases. */
+.theme-luminous :is(.apexcharts-text, .apexcharts-legend-text, .apexcharts-title-text) {
+  fill: var(--l-text-3) !important;
+  color: var(--l-text-3) !important;
+}
+
+.theme-luminous :is(.apexcharts-gridline, .apexcharts-xaxis line, .apexcharts-yaxis line) {
+  stroke: rgba(255, 255, 255, 0.06) !important;
+}
+
+.theme-luminous .apexcharts-tooltip {
+  background-color: var(--l-surface-2) !important;
+  border-color: var(--l-border) !important;
+  color: var(--l-text) !important;
+}
+
+.theme-luminous :is(.e-chart, .e-accumulationchart) text {
+  fill: var(--l-text-3) !important;
+}
+
+.theme-luminous .e-grid,
+.theme-luminous .e-grid .e-rowcell,
+.theme-luminous .e-grid .e-headercell {
+  background-color: var(--l-surface) !important;
+  border-color: var(--l-border) !important;
+  color: var(--l-text-2) !important;
+}
+
+.theme-luminous .e-grid .e-row:hover .e-rowcell {
+  background-color: var(--l-surface-2) !important;
+}
+
+/* Transiciones cortas para que el cambio de tema no sea un salto seco. */
+.theme-luminous .app-sidebar,
+.theme-luminous .app-navbar-pill,
+.theme-luminous .app-bottom-nav {
+  transition: background-color 240ms ease, border-color 240ms ease, box-shadow 240ms ease;
+}

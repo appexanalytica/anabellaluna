@@ -21,11 +21,15 @@ import AIFloatingOrb from './components/ai/AIFloatingOrb';
 import InstallPrompt from './components/pwa/InstallPrompt';
 import NotificationPrompt from './components/pwa/NotificationPrompt';
 import './App.css';
+import './styles/theme-luminous.css';
 
 import { useStateContext } from './contexts/ContextProvider';
 import { isApiUnavailableError } from './config/api';
 import { authService } from './services/authService';
 import { crmService } from './services/crmService';
+
+// Clase raíz de cada piel visual; `classic` no agrega ninguna.
+const SKIN_CLASS = { luminous: 'theme-luminous' };
 
 const RequireAuth = ({ children }) => {
   const location = useLocation();
@@ -38,7 +42,7 @@ const RequireAuth = ({ children }) => {
 };
 
 const CrmLayout = () => {
-  const { currentMode, themeSettings } = useStateContext();
+  const { currentMode, currentSkin, themeSettings } = useStateContext();
 
   // Registro de login para la racha de recompensas. Vivía en la navbar, que ya
   // no muestra los logros; el registro sigue siendo necesario igual.
@@ -46,8 +50,15 @@ const CrmLayout = () => {
     crmService.rewards.recordLogin().catch(() => {});
   }, []);
 
+  // Modo y piel son ejes independientes: `dark` lo consume Tailwind y
+  // `theme-luminous` activa el tema Luminous (src/styles/theme-luminous.css).
+  const claseTema = [
+    currentMode === 'Dark' ? 'dark' : '',
+    SKIN_CLASS[currentSkin] || '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <div className={currentMode === 'Dark' ? 'dark' : ''}>
+    <div className={claseTema}>
       <div className="flex relative dark:bg-main-dark-bg">
         <Sidebar />
         <div
@@ -74,20 +85,24 @@ const CrmLayout = () => {
 };
 
 const App = () => {
-  const { setCurrentColor, setCurrentMode } = useStateContext();
+  const { setCurrentColor, setCurrentMode, setCurrentSkin } = useStateContext();
 
   useEffect(() => {
     // Prefer backend-persisted theme; fall back to localStorage
     const user = authService.getCurrentUser();
     const backendMode = user?.themeMode;
     const backendColor = user?.colorMode;
+    const backendSkin = user?.themeSkin;
     const localMode = localStorage.getItem('themeMode');
     const localColor = localStorage.getItem('colorMode');
+    const localSkin = localStorage.getItem('themeSkin');
     const mode = backendMode || localMode;
     const color = backendColor || localColor;
+    const skin = backendSkin || localSkin;
     if (mode) { setCurrentMode(mode); localStorage.setItem('themeMode', mode); }
     if (color) { setCurrentColor(color); localStorage.setItem('colorMode', color); }
-  }, [setCurrentColor, setCurrentMode]);
+    if (skin) { setCurrentSkin(skin); localStorage.setItem('themeSkin', skin); }
+  }, [setCurrentColor, setCurrentMode, setCurrentSkin]);
 
   // Handle online/offline status
   useEffect(() => {
