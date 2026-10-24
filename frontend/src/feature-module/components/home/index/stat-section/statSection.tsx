@@ -23,28 +23,26 @@ const StatSection = () => {
     return () => { m = false; };
   }, []);
 
+  // `raw` es el número real que anima el contador; `value` es el texto que ya está en el HTML
+  // (puede venir abreviado, "1.2K") y que se restaura al terminar de contar.
   const items = [
-    { icon: "assets/img/home/icons/stat-icon-1.svg", value: formatCount(stats.properties), label: "Publicaciones" },
-    { icon: "assets/img/home/icons/stat-icon-2.svg", value: formatCount(stats.agents), label: "Agentes" },
-    { icon: "assets/img/home/icons/stat-icon-3.svg", value: formatCount(stats.sales), label: "En Venta" },
-    { icon: "assets/img/home/icons/stat-icon-4.svg", value: formatCount(stats.rentals), label: "En Alquiler" },
+    { icon: "assets/img/home/icons/stat-icon-1.svg", raw: stats.properties, value: formatCount(stats.properties), label: "Publicaciones" },
+    { icon: "assets/img/home/icons/stat-icon-2.svg", raw: stats.agents, value: formatCount(stats.agents), label: "Agentes" },
+    { icon: "assets/img/home/icons/stat-icon-3.svg", raw: stats.sales, value: formatCount(stats.sales), label: "En Venta" },
+    { icon: "assets/img/home/icons/stat-icon-4.svg", raw: stats.rentals, value: formatCount(stats.rentals), label: "En Alquiler" },
   ];
 
   return (
     <>
       <section className="stat-section section-padding">
         <div className="container">
-          <div
-            className="section-heading aos"
-            data-aos="fade-down"
-            data-aos-duration={1000}
-          >
-            <h2 className="mb-2 text-center">Nuestros Números</h2>
+          <div className="section-heading" data-reveal-heading>
+            <h2 className="mb-2 text-center" data-reveal-title>Nuestros Números</h2>
             <div className="sec-line">
-              <span className="sec-line1" />
+              <span className="sec-line1" data-rule />
               <span className="sec-line2" />
             </div>
-            <p className="mb-0 text-center">
+            <p className="mb-0 text-center" data-reveal-label>
               Datos reales de nuestro crecimiento y alcance.
             </p>
           </div>
@@ -54,19 +52,15 @@ const StatSection = () => {
                 key={i}
                 className="col-md-6 col-lg-3"
               >
-                <div
-                  className="stat-item text-center aos"
-                  data-aos="fade-up"
-                  data-aos-duration={1000 + i * 200}
-                >
+                <div className="stat-item text-center" data-card>
                   <div className="d-flex align-items-center justify-content-center">
                     <ImageWithBasePath
                       src={item.icon}
                       alt={item.label}
                       className="img-fluid me-3"
                     />
-                    <div>
-                      <h3 className="mb-1">{item.value}</h3>
+                    <div data-card-text>
+                      <h3 className="mb-1" data-count={item.raw}>{item.value}</h3>
                       <p className="mb-0">{item.label}</p>
                     </div>
                   </div>

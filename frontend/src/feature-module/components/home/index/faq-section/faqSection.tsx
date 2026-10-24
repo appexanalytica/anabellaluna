@@ -20,14 +20,10 @@ const FaqSection = () => {
   return (
     <section className="faq-section section-padding">
       <div className="container">
-        <div
-          className="section-heading aos"
-          data-aos="fade-down"
-          data-aos-duration={1000}
-        >
-          <h2 className="mb-2 text-center">Preguntas Frecuentes</h2>
+        <div className="section-heading" data-reveal-heading>
+          <h2 className="mb-2 text-center" data-reveal-title>Preguntas Frecuentes</h2>
           <div className="sec-line">
-            <span className="sec-line1" />
+            <span className="sec-line1" data-rule />
             <span className="sec-line2" />
           </div>
           <p className="mb-0 text-center">

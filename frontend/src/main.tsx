@@ -16,7 +16,8 @@ import "../node_modules/@fortawesome/fontawesome-free/css/all.min.css";
 import "../src/style/icon/material-icon/material-icon.css";
 import AOS from 'aos';
 import '../node_modules/aos/dist/aos.css';
-import "../src/index.scss"; 
+import "../src/index.scss";
+import "../src/style/css/motion.css";
 import DynamicTitle from './feature-module/routes/dynamicTitle.js'
 import ScrollToTop from './feature-module/routes/ScrollToTop'
 

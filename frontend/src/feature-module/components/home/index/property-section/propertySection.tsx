@@ -61,14 +61,10 @@ const PropertySection = () => {
     <>
       <section className="property-type-section section-padding">
         <div className="container">
-          <div
-            className="section-heading aos"
-            data-aos="fade-down"
-            data-aos-duration={1000}
-          >
-            <h2 className="mb-2 text-center">Tipos de Propiedad</h2>
+          <div className="section-heading" data-reveal-heading>
+            <h2 className="mb-2 text-center" data-reveal-title>Tipos de Propiedad</h2>
             <div className="sec-line">
-              <span className="sec-line1" />
+              <span className="sec-line1" data-rule />
               <span className="sec-line2" />
             </div>
             <p className="mb-0 text-center">

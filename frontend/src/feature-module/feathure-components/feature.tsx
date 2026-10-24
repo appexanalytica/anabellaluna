@@ -1,10 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Header from "../../core/common/header";
 import Footer from "../../core/common/footer";
 import { Outlet, useLocation } from "react-router";
 import CommonModal from "../../core/common/Common-modal/CommonModal";
 import InstallPrompt from "../../components/pwa/InstallPrompt";
 import NotificationPrompt from "../../components/pwa/NotificationPrompt";
+import PageCurtain from "../../components/motion/PageCurtain";
+import SmoothScroll from "../../components/motion/SmoothScroll";
+import { useCardHover, useContentKey, useReveals } from "../../components/motion/hooks";
 
 const Feature = () => {
   const location = useLocation();
@@ -15,6 +18,13 @@ const Feature = () => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
+  // Entradas de scroll y hover de las tarjetas para todo el sitio público. El contador de
+  // contenido vuelve a enganchar las piezas que llegan de la API después del primer render.
+  const wrapper = useRef<HTMLDivElement>(null);
+  const contentKey = useContentKey(wrapper);
+  useReveals(wrapper, `${location.pathname}:${contentKey}`);
+  useCardHover(wrapper, `${location.pathname}:${contentKey}`);
+
   const isDetailsHeader =
     location.pathname.startsWith("/buy/") ||
     location.pathname.startsWith("/rent/") ||
@@ -22,7 +32,9 @@ const Feature = () => {
 
   return (
     <>
-      <div className="main-wrapper">
+      <PageCurtain />
+      <SmoothScroll />
+      <div className="main-wrapper" ref={wrapper}>
         <div
           className={`${
             location.pathname === "/index-2"

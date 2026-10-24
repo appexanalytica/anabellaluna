@@ -7,14 +7,10 @@ const WorkSection = () => {
       <section className="how-work-section section-padding">
         <div className="container">
           {/* start title */}
-          <div
-            className="section-heading aos"
-            data-aos="fade-down"
-            data-aos-duration={1000}
-          >
-            <h2 className="mb-2 text-center">Cómo Funciona</h2>
+          <div className="section-heading" data-reveal-heading>
+            <h2 className="mb-2 text-center" data-reveal-title>Cómo Funciona</h2>
             <div className="sec-line">
-              <span className="sec-line1" />
+              <span className="sec-line1" data-rule />
               <span className="sec-line2" />
             </div>
             <p className="mb-0 text-center">Encuentra tu propiedad ideal en tres simples pasos</p>

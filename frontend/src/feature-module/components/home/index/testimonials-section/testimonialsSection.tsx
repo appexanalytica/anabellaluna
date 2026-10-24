@@ -40,14 +40,10 @@ const TestimonialsSection = () => {
   return (
     <section className="testimonial-section section-padding">
       <div className="container">
-        <div
-          className="section-heading aos"
-          data-aos="fade-down"
-          data-aos-duration={1000}
-        >
-          <h2 className="mb-2 text-center">Lo que Dicen Nuestros Clientes</h2>
+        <div className="section-heading" data-reveal-heading>
+          <h2 className="mb-2 text-center" data-reveal-title>Lo que Dicen Nuestros Clientes</h2>
           <div className="sec-line">
-            <span className="sec-line1" />
+            <span className="sec-line1" data-rule />
             <span className="sec-line2" />
           </div>
           <p className="mb-0 text-center">

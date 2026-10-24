@@ -73,13 +73,17 @@ header {
             &.logo-dark { display: none; }
             &.logo-white { display: block; }
         }
+        // Sobre el hero: íconos blancos sin vidrio. El contraste lo da el ícono,
+        // no una capa desenfocada encima de la foto.
         .header-items .btn.topbar-link,
         .header-items .topbar-link {
-            background: rgba(255,255,255,0.12) !important;
-            backdrop-filter: blur(8px);
+            background: none !important;
             border: none !important;
             color: #fff !important;
+            transition: opacity 0.25s ease;
             i { color: #fff !important; }
+
+            &:hover { opacity: 0.7; }
         }
         &.fixed {
             background: var(--white) !important;
@@ -1171,50 +1175,36 @@ html.menu-opened body {
     display: none;
 }
 
-// Glass sutil para los botones del navbar (Inicio, Propiedades, Agentes)
-// Mismo lenguaje visual que los botones de búsqueda/notificaciones/carrito.
+// Navegación del header: texto limpio, sin fondo ni desenfoque.
+// Antes cada enlace era una píldora con backdrop-filter; el vidrio ensuciaba la barra
+// y competía con la foto del hero. El estado se marca con color y una línea fina.
 @include respond-above(lg) {
-    .header .header-nav .main-nav > li > a {
-        padding: 7px 16px;
-        border-radius: 12px;
-        background: rgba(17, 24, 39, 0.04);
-        border: 1px solid rgba(17, 24, 39, 0.06);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        transition: background 0.25s ease, border-color 0.25s ease,
-            color 0.25s ease, box-shadow 0.25s ease;
-    }
-    .header .header-nav .main-nav > li > a:hover,
-    .header .header-nav .main-nav > li.active > a {
-        background: rgba(17, 24, 39, 0.07);
-        border-color: rgba(17, 24, 39, 0.1);
-        box-shadow: 0 4px 14px rgba(17, 24, 39, 0.06);
-    }
+    // :not(.has-submenu) porque en esos ítems el ::after es la flecha del submenú
+    // y esta regla se la comería.
+    .header .header-nav .main-nav > li:not(.has-submenu) > a {
+        position: relative;
+        padding: 7px 14px;
+        background: none;
+        border: 0;
+        transition: color 0.25s ease;
 
-    // Sobre el hero translúcido, el glass va en tono claro
-    .header.header-hero:not(.fixed) .header-nav .main-nav > li > a {
-        background: rgba(255, 255, 255, 0.12);
-        border-color: rgba(255, 255, 255, 0.2);
-    }
-    .header.header-hero:not(.fixed) .header-nav .main-nav > li > a:hover,
-    .header.header-hero:not(.fixed) .header-nav .main-nav > li.active > a {
-        background: rgba(255, 255, 255, 0.22);
-        border-color: rgba(255, 255, 255, 0.3);
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
-    }
-}
-
-[data-theme="dark"] {
-    @include respond-above(lg) {
-        .header .header-nav .main-nav > li > a {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: rgba(255, 255, 255, 0.1);
+        // La línea del activo/hover: crece desde el centro, solo transform.
+        &::after {
+            content: "";
+            position: absolute;
+            left: 14px;
+            right: 14px;
+            bottom: 0;
+            height: 2px;
+            border-radius: 2px;
+            background: currentColor;
+            transform: scaleX(0);
+            transform-origin: center;
+            transition: transform 0.3s ease;
         }
-        .header .header-nav .main-nav > li > a:hover,
-        .header .header-nav .main-nav > li.active > a {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.16);
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-        }
+    }
+    .header .header-nav .main-nav > li:not(.has-submenu) > a:hover::after,
+    .header .header-nav .main-nav > li:not(.has-submenu).active > a::after {
+        transform: scaleX(1);
     }
 }

@@ -7,17 +7,11 @@
   position: relative;
   overflow: hidden;
 
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: url("/assets/img/home/bg/banner-bg.jpg") center / cover no-repeat;
-    background-attachment: fixed;
-    z-index: 0;
-    pointer-events: none;
-  }
+  // La foto vive en .hero-media (ver style/css/motion.css): es un elemento real para que
+  // GSAP pueda hacerle el zoom de entrada y el parallax, que sobre un ::before con
+  // background-attachment: fixed no se podían animar.
 
-  > * {
+  > *:not(.hero-media) {
     position: relative;
     z-index: 1;
   }
@@ -530,14 +524,8 @@
     max-width: 416px;
     margin: auto;
 
-    &:hover {
-      .img-card {
-        img {
-          transform: scale(1.1);
-          transition: 0.5s;
-        }
-      }
-    }
+    // El zoom de la foto en hover lo hace GSAP (useCardHover): si además estuviera acá, el
+    // transform de CSS y el de GSAP se pelean y la foto queda a los saltos.
     .buy-property {
       padding: 20px;
       border-radius: 5px;
@@ -578,8 +566,6 @@
 
       img {
         border-radius: $border-radius-xxl;
-        transition: 0.5s;
-        transform: scale(1);
       }
     }
   }

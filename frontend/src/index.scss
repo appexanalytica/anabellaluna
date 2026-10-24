@@ -336,13 +336,11 @@ header .main-menu-wrapper .main-nav > li a i {
       height: 100%;
       object-fit: cover;
       display: block;
-      transition: transform 0.35s ease;
     }
   }
 
-  &:hover &__media img {
-    transform: scale(1.035);
-  }
+  /* El zoom de la foto en hover lo hace GSAP (useCardHover). Tenerlo también acá dejaba el
+     transform de CSS peleando con el de GSAP. */
 
   &__media--list {
     height: 100% !important;

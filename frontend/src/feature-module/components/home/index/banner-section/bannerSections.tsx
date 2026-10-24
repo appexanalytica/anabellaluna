@@ -2,9 +2,12 @@ import { useNavigate } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { all_routes } from "../../../../routes/all_routes";
 import publicService from "../../../../../services/publicService";
+import { Magnetic, useHeroMotion } from "../../../../../components/motion/hooks";
 
 const BannerSections = () => {
   const navigate = useNavigate();
+  const hero = useRef<HTMLElement>(null);
+  useHeroMotion(hero);
   const [propertyCount, setPropertyCount] = useState(0);
   const [activeTab, setActiveTab] = useState<"buy" | "rent">("buy");
 
@@ -59,14 +62,16 @@ const BannerSections = () => {
   return (
     <>
       {/* start banner section */}
-      <section className="Home-banner-section">
+      <section className="Home-banner-section" ref={hero}>
+        {/* La foto del hero: entra con un zoom lento y hace parallax al bajar (useHeroMotion). */}
+        <div className="hero-media" data-hero-media aria-hidden="true" />
         <div className="container">
           {/* start row */}
           <div className="row">
             <div className="col-lg-6">
-              <div className="banner-content aos" data-aos="fade-up">
-                <h1 className="mb-2">Tu casa en la playa</h1>
-                <p className="mb-0">
+              <div className="banner-content">
+                <h1 className="mb-2" data-hero-title>Tu casa en la playa</h1>
+                <p className="mb-0" data-hero-extra>
                   Propiedades para comprar o alquilar en tu zona.
                   {propertyCount > 0
                     ? ` Tenemos más de ${propertyCount} publicaciones para vos.`
@@ -79,8 +84,8 @@ const BannerSections = () => {
           {/* Search Start */}
           <div className="home-search-1 home-search-2">
             <ul
-              className="nav nav-tabs justify-content-lg-start justify-content-center aos"
-              data-aos="fade-up"
+              className="nav nav-tabs justify-content-lg-start justify-content-center"
+              data-hero-extra
               role="tablist"
             >
               <li className="nav-item" role="presentation">
@@ -106,11 +111,7 @@ const BannerSections = () => {
                 </a>
               </li>
             </ul>
-            <div
-              className="tab-content aos"
-              data-aos="fade-down"
-              data-aos-duration={1000}
-            >
+            <div className="tab-content" data-hero-extra>
               {/* Buy Tab */}
               <div
                 className={`tab-pane fade ${activeTab === "buy" ? "show active" : ""}`}
@@ -157,9 +158,11 @@ const BannerSections = () => {
                         />
                       </div>
                       <div className="custom-search-item d-flex align-items-end">
-                        <button type="submit" className="btn btn-primary home-btn">
-                          <i className="material-icons-outlined">search</i>
-                        </button>
+                        <Magnetic>
+                          <button type="submit" className="btn btn-primary home-btn">
+                            <i className="material-icons-outlined">search</i>
+                          </button>
+                        </Magnetic>
                       </div>
                     </div>
                   </form>
@@ -211,9 +214,11 @@ const BannerSections = () => {
                         />
                       </div>
                       <div className="custom-search-item d-flex align-items-end">
-                        <button type="submit" className="btn btn-primary home-btn">
-                          <i className="material-icons-outlined">search</i>
-                        </button>
+                        <Magnetic>
+                          <button type="submit" className="btn btn-primary home-btn">
+                            <i className="material-icons-outlined">search</i>
+                          </button>
+                        </Magnetic>
                       </div>
                     </div>
                   </form>

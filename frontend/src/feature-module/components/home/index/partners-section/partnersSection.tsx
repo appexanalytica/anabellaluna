@@ -45,16 +45,12 @@ const PartnersSection = () => {
       <section className="partners-section section-padding ">
         <div className="container">
           {/* start title */}
-          <div
-            className="section-heading aos"
-            data-aos="fade-down"
-            data-aos-duration={1000}
-          >
-            <h2 className="mb-2 text-center">
+          <div className="section-heading" data-reveal-heading>
+            <h2 className="mb-2 text-center" data-reveal-title>
               Cientos de Socios en Todo el Mundo
             </h2>
             <div className="sec-line">
-              <span className="sec-line1" />
+              <span className="sec-line1" data-rule />
               <span className="sec-line2" />
             </div>
             <p className="mb-0 text-center">

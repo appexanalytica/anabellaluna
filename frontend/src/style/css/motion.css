@@ -1,0 +1,113 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   Animaciones GSAP del sitio público (paquete editorial).
+   Solo lo que GSAP necesita tener definido por CSS: el estado inicial de la
+   cortina, el soporte de Lenis y las piezas que la rueda del scroll compone.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Scroll suave (Lenis): reemplaza al scroll-behavior nativo mientras está activo. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+.lenis [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+/* Cortina de marca (PageCurtain). En el intro llega tapando, con el logo oculto hasta que
+   GSAP lo revela; si el JS no llega, se retira sola a los 4 s. */
+.page-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  visibility: hidden;
+  background-color: #0d1520;
+}
+.page-curtain[data-intro] {
+  visibility: visible;
+  animation: curtain-fallback 0.8s ease-in-out 4s forwards;
+}
+
+.curtain-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.curtain-logo-img {
+  width: clamp(170px, 34vw, 260px);
+  height: auto;
+}
+.curtain-descriptor {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+
+/* Logo chico de las transiciones entre páginas. */
+.curtain-mark {
+  position: absolute;
+  visibility: hidden;
+}
+.curtain-mark img {
+  width: clamp(130px, 22vw, 170px);
+  height: auto;
+}
+
+/* El logo del intro arranca tapado: GSAP lo destapa con clip-path. */
+.page-curtain[data-intro] .curtain-logo > :nth-child(1) {
+  clip-path: inset(0 0 100% 0);
+}
+.page-curtain[data-intro] .curtain-logo > :nth-child(2) {
+  opacity: 0;
+}
+
+@keyframes curtain-fallback {
+  to {
+    transform: translateY(-100%);
+    visibility: hidden;
+  }
+}
+
+/* Foto del hero: la capa que hace el zoom de entrada y el parallax al bajar.
+   Reemplaza al ::before con background-attachment: fixed, que no se puede animar
+   y que en iOS no se comporta como parallax. */
+.hero-media {
+  position: absolute;
+  inset: -8% 0;
+  z-index: 0;
+  background: url("/assets/img/home/bg/banner-bg.jpg") center / cover no-repeat;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Regla que crece bajo los rótulos de sección (la anima useReveals). */
+.section-rule {
+  display: block;
+  width: 72px;
+  height: 2px;
+  margin: 14px auto 16px;
+  background-color: var(--primary, #03bd9d);
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .page-curtain[data-intro] {
+    display: none;
+  }
+  .hero-media {
+    inset: 0;
+  }
+}

@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import ImageWithBasePath from "../../../../core/imageWithBasePath";
 import { all_routes } from "../../../routes/all_routes";
 import type { PropertyCard } from "../../../../services/publicService";
+import { CardLine } from "../../../../components/motion/hooks";
 
 interface Props {
   property: PropertyCard;
@@ -45,9 +46,11 @@ const PropertyGridCard = ({ property, isFavorite, onToggleFavorite, detailPathFn
     .join(", ") || p.location?.addressLine || "";
 
   return (
-    <div className="property-card property-card-modern flex-fill">
+    // data-card / data-card-media / data-card-text: contrato de las animaciones de scroll y
+    // hover (ver components/motion/hooks). Al estar acá, lo heredan todos los listados.
+    <div className="property-card property-card-modern flex-fill" data-card>
       <div className="property-listing-item p-0 mb-0 border-0">
-        <div className="buy-grid-img property-card-modern__media mb-0">
+        <div className="buy-grid-img property-card-modern__media mb-0" data-card-media>
           <Link to={detailPath}>
             <ImageWithBasePath
               className="w-100 h-100"
@@ -99,11 +102,14 @@ const PropertyGridCard = ({ property, isFavorite, onToggleFavorite, detailPathFn
             )}
           </div>
         </div>
-        <div className="buy-grid-content property-card-modern__content">
+        <div className="buy-grid-content property-card-modern__content" data-card-text>
           <div className="mb-3">
             <div className="d-flex align-items-start justify-content-between gap-2">
               <h6 className="title property-card-modern__title mb-1">
-                <Link to={detailPath}>{p.title || "Sin título"}</Link>
+                <Link to={detailPath} className="d-inline-block">
+                  {p.title || "Sin título"}
+                  <CardLine />
+                </Link>
               </h6>
               {p.operation && (
                 <span className="property-card-modern__operation">

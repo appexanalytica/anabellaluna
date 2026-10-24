@@ -8,6 +8,13 @@ import { all_routes } from "../../../feature-module/routes/all_routes";
 import userService from "../../../services/userService";
 import publicService from "../../../services/publicService";
 import type { PropertyCard } from "../../../services/publicService";
+import { gsap, reducedMotion, useGSAP } from "../../../lib/motion";
+
+/** Alto de la barra: normal arriba de todo y compacta una vez que la página bajó. */
+const NAV_HEIGHT = {
+  desktop: { full: 72, compact: 58 },
+  mobile: { full: 55, compact: 48 },
+};
 
 const Header = () => {
   const [subOpen, setSubopen] = useState<any>("");
@@ -141,6 +148,59 @@ const Header = () => {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  // La barra se compacta acompañando la rueda en los primeros 160 px de scroll. El alto lo
+  // maneja GSAP sobre .header-nav (que lo tiene fijo por CSS, sin transición propia).
+  const headerRef = useRef<HTMLElement>(null);
+  useGSAP(
+    () => {
+      if (reducedMotion()) return;
+      const nav = headerRef.current?.querySelector(".header-nav");
+      if (!nav) return;
+      const mm = gsap.matchMedia();
+      // Se rearma al cruzar el breakpoint lg, porque el alto de partida cambia.
+      mm.add({ desktop: "(min-width: 992px)", mobile: "(max-width: 991px)" }, (ctx) => {
+        const size = ctx.conditions?.["desktop"] ? NAV_HEIGHT.desktop : NAV_HEIGHT.mobile;
+        gsap.fromTo(
+          nav,
+          { height: size.full },
+          { height: size.compact, ease: "none", scrollTrigger: { start: 0, end: 160, scrub: 0.3 } },
+        );
+      });
+      return () => mm.revert();
+    },
+    { scope: headerRef },
+  );
+
+  // El menú del teléfono lo abre y cierra el CSS con la clase .menu-opened en <html>. GSAP solo
+  // agrega la entrada escalonada de los ítems cuando se abre, sin meterse con el panel.
+  useGSAP(
+    () => {
+      if (reducedMotion()) return;
+      const mm = gsap.matchMedia();
+      mm.add("(max-width: 991px)", () => {
+        const html = document.documentElement;
+        const items = gsap.utils.toArray<HTMLElement>(".main-menu-wrapper .main-nav > li", headerRef.current);
+        if (!items.length) return;
+        const entrar = () => {
+          if (!html.classList.contains("menu-opened")) return;
+          gsap.fromTo(
+            items,
+            { autoAlpha: 0, x: -16 },
+            { autoAlpha: 1, x: 0, duration: 0.45, stagger: 0.05, ease: "power2.out", overwrite: true },
+          );
+        };
+        const observer = new MutationObserver(entrar);
+        observer.observe(html, { attributes: true, attributeFilter: ["class"] });
+        return () => {
+          observer.disconnect();
+          gsap.set(items, { clearProps: "opacity,visibility,x" });
+        };
+      });
+      return () => mm.revert();
+    },
+    { scope: headerRef },
+  );
+
   const handleNavSuggestionClick = useCallback((prop: PropertyCard) => {
     setNavSearchOpen(false);
     setNavSearchInput('');
@@ -154,7 +214,10 @@ const Header = () => {
   return (
     <>
       {/* Header Start */}
-      <header className={`header${isFixed ? " fixed" : ""}${isHeroPage ? " header-hero" : ""}`}>
+      <header
+        ref={headerRef}
+        className={`header${isFixed ? " fixed" : ""}${isHeroPage ? " header-hero" : ""}`}
+      >
         <div className="container-fluid">
           <nav className="navbar navbar-expand-lg header-nav">
             <div className="navbar-header">
@@ -217,7 +280,12 @@ const Header = () => {
                     {(mainMenus.tittle === "Inicio" || mainMenus.directRoute) ? (
                       <li
                         className={
-                          location.pathname === all_routes.index ? "active" : ""
+                          // Cada ítem se compara con SU ruta: antes todos los de ruta
+                          // directa miraban la del inicio, así que en la home quedaban
+                          // los tres marcados como activos a la vez.
+                          location.pathname === (mainMenus.directRoute || all_routes.index)
+                            ? "active"
+                            : ""
                         }
                       >
                         <Link to={mainMenus.directRoute || all_routes.index}>{mainMenus.tittle}</Link>
