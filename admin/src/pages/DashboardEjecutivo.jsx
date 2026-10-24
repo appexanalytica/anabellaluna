@@ -302,7 +302,7 @@ const DashboardEjecutivo = () => {
         {kpis.map((kpi, i) => {
           const Icon = kpi.icon;
           return (
-            <div key={i} className={`rounded-2xl p-6 border shadow-sm ${isDark ? 'bg-secondary-dark-bg border-gray-700/50' : 'bg-white border-gray-100'}`} style={{ borderLeft: `4px solid ${kpi.color}` }}>
+            <div key={i} data-panel-card className={`rounded-2xl p-6 border shadow-sm ${isDark ? 'bg-secondary-dark-bg border-gray-700/50' : 'bg-white border-gray-100'}`} style={{ borderLeft: `4px solid ${kpi.color}` }}>
               <div className="flex items-center justify-between mb-3">
                 <div className={`w-10 h-10 rounded-xl ${kpi.bgColor} flex items-center justify-center`}>
                   <Icon className="text-lg" style={{ color: kpi.color }} />
@@ -312,7 +312,7 @@ const DashboardEjecutivo = () => {
                   {kpi.change}
                 </div>
               </div>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{kpi.value}</p>
+              <p data-count-auto className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{kpi.value}</p>
               <p className={`text-sm font-semibold mt-1 ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{kpi.title}</p>
               <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{kpi.subtitle}</p>
             </div>
@@ -341,14 +341,14 @@ const DashboardEjecutivo = () => {
         ].map((m, i) => {
           const Icon = m.icon;
           return (
-            <div key={i} className={`rounded-2xl p-4 border transition-all ${isDark ? 'bg-secondary-dark-bg border-gray-700/50 hover:border-indigo-500/30' : 'bg-white border-gray-100 shadow-md hover:shadow-lg'}`}>
+            <div key={i} data-panel-card className={`rounded-2xl p-4 border transition-all ${isDark ? 'bg-secondary-dark-bg border-gray-700/50 hover:border-indigo-500/30' : 'bg-white border-gray-100 shadow-md hover:shadow-lg'}`}>
               <div className="flex items-center gap-2 mb-2">
                 <div className={`w-7 h-7 rounded-lg ${m.bgColor} flex items-center justify-center`}>
                   <Icon className="text-xs" style={{ color: m.color }} />
                 </div>
                 <p className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{m.label}</p>
               </div>
-              <p className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{m.value}</p>
+              <p data-count-auto className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{m.value}</p>
               <span className={`text-xs font-medium ${m.up ? 'text-emerald-500' : 'text-red-500'}`}>{m.change}</span>
             </div>
           );

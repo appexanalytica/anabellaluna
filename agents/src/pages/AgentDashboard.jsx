@@ -243,14 +243,14 @@ const AgentDashboard = () => {
           };
           const bgColor = bgMap[kpi.color] || 'bg-indigo-50 dark:bg-indigo-900/20';
           return (
-            <div key={kpi.title} className={`rounded-2xl p-6 border shadow-sm transition-all ${isDark ? 'bg-secondary-dark-bg border-gray-700/50 hover:border-indigo-500/30' : 'bg-white border-gray-100 hover:shadow-lg'}`} style={{ borderLeft: `4px solid ${accentColor}` }}>
+            <div key={kpi.title} data-panel-card className={`rounded-2xl p-6 border shadow-sm transition-all ${isDark ? 'bg-secondary-dark-bg border-gray-700/50 hover:border-indigo-500/30' : 'bg-white border-gray-100 hover:shadow-lg'}`} style={{ borderLeft: `4px solid ${accentColor}` }}>
               <div className="flex items-center justify-between mb-3">
                 <div className={`w-10 h-10 rounded-xl ${bgColor} flex items-center justify-center`}>
                   <span className="text-lg" style={{ color: accentColor }}>{kpi.icon}</span>
                 </div>
                 <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/30">{kpi.trend}</span>
               </div>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{kpi.value}</p>
+              <p data-count-auto className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{kpi.value}</p>
               <p className={`text-sm font-semibold mt-1 ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{kpi.title}</p>
               <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{kpi.desc}</p>
             </div>

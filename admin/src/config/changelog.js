@@ -3,6 +3,71 @@
 // Filtrado para "admin": solo las novedades que le incumben a esta app.
 export const CHANGELOG_ENTRIES = [
   {
+    "date": "2026-10-23",
+    "title": "El sitio público estrena movimiento",
+    "audiencia": "admin",
+    "items": [
+      {
+        "type": "mejora",
+        "text": "Al entrar al sitio aparece una presentación corta con el logo sobre fondo oscuro y después se descubre la página. Al pasar de una sección a otra, una cortina tapa el cambio en lugar del salto seco de antes."
+      },
+      {
+        "type": "mejora",
+        "text": "La foto de portada entra con un acercamiento suave y se mueve más lento que el resto cuando bajás. El título aparece renglón por renglón."
+      },
+      {
+        "type": "mejora",
+        "text": "La barra de arriba se achica sola a medida que bajás, así se gana pantalla sin perder el menú."
+      },
+      {
+        "type": "mejora",
+        "text": "Los números de \"Nuestros Números\" cuentan desde cero cuando llegás a esa parte, los títulos de sección entran con su línea de color creciendo, y las fichas de propiedades se descubren de a una mientras aparecen."
+      },
+      {
+        "type": "mejora",
+        "text": "Al pasar el mouse por una ficha, la foto hace un acercamiento suave y se subraya el título. En el teléfono eso no se aplica, y el menú del celular abre con sus opciones entrando una atrás de la otra."
+      },
+      {
+        "type": "mejora",
+        "text": "El scroll quedó más suave, con inercia. Quien tenga activado \"reducir movimiento\" en su sistema ve el sitio completamente quieto, como antes."
+      },
+      {
+        "type": "mejora",
+        "text": "Los botones del menú de arriba dejaron de tener el fondo tipo vidrio esmerilado. Ahora son texto limpio y la sección en la que estás se marca con una línea fina abajo."
+      }
+    ]
+  },
+  {
+    "date": "2026-10-23",
+    "title": "El panel también se mueve",
+    "items": [
+      {
+        "type": "mejora",
+        "text": "Al entrar al panel aparece una presentación corta con el logo sobre fondo oscuro, igual que en el sitio. Es una sola vez por sesión: al cambiar de pantalla no vuelve a salir."
+      },
+      {
+        "type": "mejora",
+        "text": "Al cambiar de pantalla, el contenido entra con un movimiento corto en lugar de aparecer de golpe."
+      },
+      {
+        "type": "mejora",
+        "text": "Las tarjetas del inicio aparecen una atrás de la otra y los números grandes cuentan desde cero, respetando el formato de cada uno (porcentajes, montos, cantidades)."
+      },
+      {
+        "type": "mejora",
+        "text": "La pantalla de inicio de sesión entra con el logo descubriéndose y el formulario detrás."
+      },
+      {
+        "type": "mejora",
+        "text": "El panel no usa el scroll con inercia del sitio público: acá se trabaja todo el día y conviene que el scroll responda al instante."
+      },
+      {
+        "type": "mejora",
+        "text": "Se sacó de la pantalla el copiloto de IA (el círculo flotante). La función sigue en el sistema: se puede volver a mostrar cuando haga falta."
+      }
+    ]
+  },
+  {
     "date": "2026-08-21",
     "title": "Un tema nuevo para el panel",
     "items": [

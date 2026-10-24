@@ -23,6 +23,8 @@ import NotificationPrompt from './components/pwa/NotificationPrompt';
 import './App.css';
 import './styles/theme-luminous.css';
 
+import PanelMotion from './components/motion/PanelMotion';
+import BrandIntro from './components/motion/BrandIntro';
 import { useStateContext } from './contexts/ContextProvider';
 import { isApiUnavailableError } from './config/api';
 import { authService } from './services/authService';
@@ -30,6 +32,11 @@ import { crmService } from './services/crmService';
 
 // Clase raíz de cada piel visual; `classic` no agrega ninguna.
 const SKIN_CLASS = { luminous: 'theme-luminous' };
+
+// El copiloto de IA queda fuera de la interfaz por ahora. El componente y su
+// lógica siguen en components/ai/AIFloatingOrb: para volver a mostrarlo alcanza
+// con poner esto en true.
+const MOSTRAR_COPILOTO_IA = false;
 
 const RequireAuth = ({ children }) => {
   const location = useLocation();
@@ -59,6 +66,8 @@ const CrmLayout = () => {
 
   return (
     <div className={claseTema}>
+      {/* Cortina de marca al entrar al panel, el mismo gesto que el sitio. */}
+      <BrandIntro descriptor="CRM" />
       <div className="flex relative dark:bg-main-dark-bg">
         <Sidebar />
         <div
@@ -71,14 +80,16 @@ const CrmLayout = () => {
           <NotificationPrompt />
           <div className="pt-16 md:pt-0 pb-20 md:pb-0">
             {themeSettings && (<ThemeSettings />)}
-            <Outlet />
+            <PanelMotion>
+              <Outlet />
+            </PanelMotion>
           </div>
           <Footer />
         </div>
       </div>
       <Celebration />
       <OnboardingTutorial />
-      <AIFloatingOrb />
+      {MOSTRAR_COPILOTO_IA && <AIFloatingOrb />}
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme={currentMode === 'Dark' ? 'dark' : 'light'} />
     </div>
   );

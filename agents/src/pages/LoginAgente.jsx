@@ -8,13 +8,18 @@ import windowsHdBg from '../data/windows-abstract-hd.svg';
 
 import { authService } from '../services/authService';
 
+import { devLogin } from '../config/devLogin';
+
+import { useLoginIntro } from '../components/motion/hooks';
+
 const LoginAgente = () => {
   const navigate = useNavigate();
 
   const location = useLocation();
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  // En local arranca con las credenciales de desarrollo; en producción, vacío.
+  const [username, setUsername] = useState(devLogin.username);
+  const [password, setPassword] = useState(devLogin.password);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [loginStatus, setLoginStatus] = useState('idle');
@@ -28,6 +33,10 @@ const LoginAgente = () => {
   const [tfaError, setTfaError] = useState('');
   const [tfaLoading, setTfaLoading] = useState(false);
   const tfaInputRef = useRef(null);
+
+  // La pantalla entra con la marca descubriéndose y el resto detrás.
+  const loginRef = useRef(null);
+  useLoginIntro(loginRef);
 
   const mountedRef = useRef(true);
 
@@ -130,6 +139,7 @@ const LoginAgente = () => {
   return (
 
     <div
+      ref={loginRef}
       className="min-h-screen flex items-center justify-center bg-gray-950 cs-hd-bg"
       style={{
         backgroundImage: `url(${windowsHdBg})`,
@@ -153,12 +163,12 @@ const LoginAgente = () => {
       )}
       <div className="w-full max-w-5xl mx-4 grid md:grid-cols-2 overflow-hidden rounded-3xl border border-white/20 shadow-2xl backdrop-blur">
         <div className="hidden md:flex flex-col justify-between p-10 cs-login-left">
-          <div className="cs-fade-up" style={{ animationDelay: '60ms' }}>
+          <div data-login-logo>
             <div className="cs-badge">
               Client Service
             </div>
           </div>
-          <div className="cs-fade-up" style={{ animationDelay: '140ms' }}>
+          <div data-login-step>
             <div className="cs-left-copy">
               <h2 className="text-3xl font-extrabold tracking-tight cs-left-title">
                 {twoFactorToken ? 'Verificación de seguridad' : 'Bienvenido al CRM'}
@@ -170,7 +180,7 @@ const LoginAgente = () => {
               </p>
             </div>
           </div>
-          <div className="cs-fade-up" style={{ animationDelay: '220ms' }}>
+          <div data-login-step>
             <div className="cs-chip">
               <span className="cs-dot" />
               Acceso para agentes y atención al cliente
@@ -185,7 +195,7 @@ const LoginAgente = () => {
               className={`cs-login-card ${tfaError ? 'cs-shake' : ''}`}
               autoComplete="off"
             >
-              <div className="flex items-center gap-3 cs-fade-up" style={{ animationDelay: '60ms' }}>
+              <div className="flex items-center gap-3" data-login-step>
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-sky-50">
                   <FiShield size={24} className="text-sky-600" />
                 </div>
@@ -201,7 +211,7 @@ const LoginAgente = () => {
                 </div>
               </div>
 
-              <div className="mt-6 cs-fade-up" style={{ animationDelay: '120ms' }}>
+              <div className="mt-6" data-login-step>
                 <input
                   ref={tfaInputRef}
                   type="text"
@@ -239,7 +249,7 @@ const LoginAgente = () => {
                 </span>
               </button>
 
-              <div className="mt-4 flex items-center justify-between cs-fade-up" style={{ animationDelay: '180ms' }}>
+              <div className="mt-4 flex items-center justify-between" data-login-step>
                 <button
                   type="button"
                   onClick={handleBack2FA}
@@ -268,14 +278,14 @@ const LoginAgente = () => {
             className={`cs-login-card ${loginStatus === 'error' ? 'cs-shake' : ''} ${loginStatus === 'success' ? 'cs-success' : ''}`}
             autoComplete="off"
           >
-            <div className="md:hidden cs-fade-up" style={{ animationDelay: '60ms' }}>
+            <div className="md:hidden" data-login-step>
               <div className="cs-badge">Client Service</div>
             </div>
-            <div className="mt-2 cs-fade-up" style={{ animationDelay: '110ms' }}>
+            <div className="mt-2" data-login-step>
               <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">Acceso de Agentes</h1>
               <p className="text-sm text-gray-600 mt-1">Ingresá tus credenciales para entrar al CRM</p>
             </div>
-            <div className="mt-7 space-y-4 cs-fade-up" style={{ animationDelay: '170ms' }}>
+            <div className="mt-7 space-y-4" data-login-step>
               <div>
                 <label htmlFor="field-69" className="block text-sm font-semibold text-gray-800 mb-2">Usuario</label>
                 <input
@@ -341,6 +351,12 @@ const LoginAgente = () => {
                 {loginStatus === 'success' ? '¡Bienvenido!' : (loading ? 'Conectando...' : 'Ingresar al CRM')}
               </span>
             </button>
+            {devLogin.activo && (
+              <p className="mt-4 text-center text-[11px] text-amber-600">
+                Credenciales de desarrollo precargadas · solo en local
+              </p>
+            )}
+
             <div className="mt-6 text-xs text-gray-500">
               Si no tenés usuario, pedilo a un administrador.
             </div>

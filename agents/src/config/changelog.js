@@ -3,6 +3,36 @@
 // Filtrado para "agents": solo las novedades que le incumben a esta app.
 export const CHANGELOG_ENTRIES = [
   {
+    "date": "2026-10-23",
+    "title": "El panel también se mueve",
+    "items": [
+      {
+        "type": "mejora",
+        "text": "Al entrar al panel aparece una presentación corta con el logo sobre fondo oscuro, igual que en el sitio. Es una sola vez por sesión: al cambiar de pantalla no vuelve a salir."
+      },
+      {
+        "type": "mejora",
+        "text": "Al cambiar de pantalla, el contenido entra con un movimiento corto en lugar de aparecer de golpe."
+      },
+      {
+        "type": "mejora",
+        "text": "Las tarjetas del inicio aparecen una atrás de la otra y los números grandes cuentan desde cero, respetando el formato de cada uno (porcentajes, montos, cantidades)."
+      },
+      {
+        "type": "mejora",
+        "text": "La pantalla de inicio de sesión entra con el logo descubriéndose y el formulario detrás."
+      },
+      {
+        "type": "mejora",
+        "text": "El panel no usa el scroll con inercia del sitio público: acá se trabaja todo el día y conviene que el scroll responda al instante."
+      },
+      {
+        "type": "mejora",
+        "text": "Se sacó de la pantalla el copiloto de IA (el círculo flotante). La función sigue en el sistema: se puede volver a mostrar cuando haga falta."
+      }
+    ]
+  },
+  {
     "date": "2026-08-21",
     "title": "Un tema nuevo para el panel",
     "items": [

@@ -2,6 +2,71 @@
   "$comment": "Changelog visible en el panel de Novedades del sidebar. Redactar en español simple, pensado para el usuario final (no técnico). Tipos válidos: nuevo | mejora | arreglo. Cada ítem puede declarar \"audiencia\": \"admin\" | \"agente\" | \"todos\" — sin declarar es \"todos\". También se puede fijar la audiencia de una entrada entera. Una entrada que se queda sin ítems para una app no se publica ahí. Editar este archivo y rebuildear: scripts/write-app-version.js lo convierte en admin/agents src/config/changelog.js, ya filtrado por app.",
   "entries": [
     {
+      "date": "2026-10-23",
+      "title": "El sitio público estrena movimiento",
+      "audiencia": "admin",
+      "items": [
+        {
+          "type": "mejora",
+          "text": "Al entrar al sitio aparece una presentación corta con el logo sobre fondo oscuro y después se descubre la página. Al pasar de una sección a otra, una cortina tapa el cambio en lugar del salto seco de antes."
+        },
+        {
+          "type": "mejora",
+          "text": "La foto de portada entra con un acercamiento suave y se mueve más lento que el resto cuando bajás. El título aparece renglón por renglón."
+        },
+        {
+          "type": "mejora",
+          "text": "La barra de arriba se achica sola a medida que bajás, así se gana pantalla sin perder el menú."
+        },
+        {
+          "type": "mejora",
+          "text": "Los números de \"Nuestros Números\" cuentan desde cero cuando llegás a esa parte, los títulos de sección entran con su línea de color creciendo, y las fichas de propiedades se descubren de a una mientras aparecen."
+        },
+        {
+          "type": "mejora",
+          "text": "Al pasar el mouse por una ficha, la foto hace un acercamiento suave y se subraya el título. En el teléfono eso no se aplica, y el menú del celular abre con sus opciones entrando una atrás de la otra."
+        },
+        {
+          "type": "mejora",
+          "text": "El scroll quedó más suave, con inercia. Quien tenga activado \"reducir movimiento\" en su sistema ve el sitio completamente quieto, como antes."
+        },
+        {
+          "type": "mejora",
+          "text": "Los botones del menú de arriba dejaron de tener el fondo tipo vidrio esmerilado. Ahora son texto limpio y la sección en la que estás se marca con una línea fina abajo."
+        }
+      ]
+    },
+    {
+      "date": "2026-10-23",
+      "title": "El panel también se mueve",
+      "items": [
+        {
+          "type": "mejora",
+          "text": "Al entrar al panel aparece una presentación corta con el logo sobre fondo oscuro, igual que en el sitio. Es una sola vez por sesión: al cambiar de pantalla no vuelve a salir."
+        },
+        {
+          "type": "mejora",
+          "text": "Al cambiar de pantalla, el contenido entra con un movimiento corto en lugar de aparecer de golpe."
+        },
+        {
+          "type": "mejora",
+          "text": "Las tarjetas del inicio aparecen una atrás de la otra y los números grandes cuentan desde cero, respetando el formato de cada uno (porcentajes, montos, cantidades)."
+        },
+        {
+          "type": "mejora",
+          "text": "La pantalla de inicio de sesión entra con el logo descubriéndose y el formulario detrás."
+        },
+        {
+          "type": "mejora",
+          "text": "El panel no usa el scroll con inercia del sitio público: acá se trabaja todo el día y conviene que el scroll responda al instante."
+        },
+        {
+          "type": "mejora",
+          "text": "Se sacó de la pantalla el copiloto de IA (el círculo flotante). La función sigue en el sistema: se puede volver a mostrar cuando haga falta."
+        }
+      ]
+    },
+    {
       "date": "2026-08-21",
       "title": "Un tema nuevo para el panel",
       "items": [
@@ -398,233 +463,392 @@
       "date": "2026-07-12",
       "title": "Clientes en stand by dentro del funnel",
       "items": [
-        { "type": "nuevo", "text": "El funnel de clientes ahora incluye la columna Congelado para separar los casos que quedan en stand by sin marcarlos como perdidos ni ganados." }
+        {
+          "type": "nuevo",
+          "text": "El funnel de clientes ahora incluye la columna Congelado para separar los casos que quedan en stand by sin marcarlos como perdidos ni ganados."
+        }
       ]
     },
     {
       "date": "2026-07-02",
       "title": "Arreglo: pantalla en blanco al traducir la página",
       "items": [
-        { "type": "arreglo", "text": "Solucionamos un error que hacía que la app se cerrara o quedara en blanco cuando el navegador (Chrome/Edge) traducía la página automáticamente. Ahora el sitio se identifica correctamente en español y se evita esa traducción, que era la causa del problema." }
+        {
+          "type": "arreglo",
+          "text": "Solucionamos un error que hacía que la app se cerrara o quedara en blanco cuando el navegador (Chrome/Edge) traducía la página automáticamente. Ahora el sitio se identifica correctamente en español y se evita esa traducción, que era la causa del problema."
+        }
       ]
     },
     {
       "date": "2026-06-21",
       "title": "Agentes: centro de mando con Score de Desempeño",
       "items": [
-        { "type": "nuevo", "text": "El panel de Agentes ahora es el centro de mando del equipo: incorpora un Score de Desempeño (0-100) por agente que combina captaciones, ventas, actividad, calidad de carga de propiedades, uso de la app, conversión y fidelización." },
-        { "type": "nuevo", "text": "Nuevo Ranking de Desempeño que ordena a los agentes por su Score, con el desglose por categoría y atajo al detalle de cada uno." },
-        { "type": "nuevo", "text": "Se mide el uso de la app: tiempo activo, cantidad de logins, días activos y racha de cada agente, visibles en el panel y en su ficha." },
-        { "type": "nuevo", "text": "Nueva métrica de Calidad de Carga: mide qué tan completas están las publicaciones (fotos, descripción, video, tour 360°, ubicación en el mapa y dirección)." },
-        { "type": "mejora", "text": "Recompensas se fusionó dentro de Agentes (pestaña \"Ranking & Recompensas\"). El ranking, tiers, premios y la configuración ahora viven en un solo lugar; se quitó la entrada \"Recompensas\" del menú." },
-        { "type": "mejora", "text": "La ficha de cada agente ahora muestra su Score con desglose, su uso de la app y un resumen de recompensas (categoría anual, captaciones, facturación, fidelización y pre-listing)." },
-        { "type": "nuevo", "text": "Desde Configuración se puede ajustar la ponderación de cada categoría del Score y sus metas, para adaptarlo a las prioridades del equipo." }
+        {
+          "type": "nuevo",
+          "text": "El panel de Agentes ahora es el centro de mando del equipo: incorpora un Score de Desempeño (0-100) por agente que combina captaciones, ventas, actividad, calidad de carga de propiedades, uso de la app, conversión y fidelización."
+        },
+        {
+          "type": "nuevo",
+          "text": "Nuevo Ranking de Desempeño que ordena a los agentes por su Score, con el desglose por categoría y atajo al detalle de cada uno."
+        },
+        {
+          "type": "nuevo",
+          "text": "Se mide el uso de la app: tiempo activo, cantidad de logins, días activos y racha de cada agente, visibles en el panel y en su ficha."
+        },
+        {
+          "type": "nuevo",
+          "text": "Nueva métrica de Calidad de Carga: mide qué tan completas están las publicaciones (fotos, descripción, video, tour 360°, ubicación en el mapa y dirección)."
+        },
+        {
+          "type": "mejora",
+          "text": "Recompensas se fusionó dentro de Agentes (pestaña \"Ranking & Recompensas\"). El ranking, tiers, premios y la configuración ahora viven en un solo lugar; se quitó la entrada \"Recompensas\" del menú."
+        },
+        {
+          "type": "mejora",
+          "text": "La ficha de cada agente ahora muestra su Score con desglose, su uso de la app y un resumen de recompensas (categoría anual, captaciones, facturación, fidelización y pre-listing)."
+        },
+        {
+          "type": "nuevo",
+          "text": "Desde Configuración se puede ajustar la ponderación de cada categoría del Score y sus metas, para adaptarlo a las prioridades del equipo."
+        }
       ]
     },
     {
       "date": "2026-06-21",
       "title": "Menú del sitio con estilo glass",
       "items": [
-        { "type": "mejora", "text": "Los botones del menú principal (Inicio, Propiedades, Agentes) ahora tienen un sutil efecto de vidrio esmerilado, en línea con los botones de búsqueda, notificaciones y carrito. Se ve más moderno y prolijo, y se adapta al modo claro/oscuro." }
+        {
+          "type": "mejora",
+          "text": "Los botones del menú principal (Inicio, Propiedades, Agentes) ahora tienen un sutil efecto de vidrio esmerilado, en línea con los botones de búsqueda, notificaciones y carrito. Se ve más moderno y prolijo, y se adapta al modo claro/oscuro."
+        }
       ]
     },
     {
       "date": "2026-06-21",
       "title": "Propiedades Destacadas al inicio",
       "items": [
-        { "type": "mejora", "text": "En la página de inicio, las Propiedades Destacadas ahora aparecen primero, antes de las secciones \"Cómo Funciona\" y \"Tipos de Propiedad\"." }
+        {
+          "type": "mejora",
+          "text": "En la página de inicio, las Propiedades Destacadas ahora aparecen primero, antes de las secciones \"Cómo Funciona\" y \"Tipos de Propiedad\"."
+        }
       ]
     },
     {
       "date": "2026-06-21",
       "title": "Homepage del sitio web actualizado",
       "items": [
-        { "type": "mejora", "text": "Las tres tarjetas de acceso rápido ahora son Comprar, Vender y Alquilar (antes había dos veces Comprar). La tarjeta Vender lleva a la página de contacto." },
-        { "type": "mejora", "text": "Las Propiedades Destacadas se muestran en una grilla de hasta 9 propiedades, en lugar del carrusel anterior." },
-        { "type": "mejora", "text": "En la sección Conviértete en Agente, el botón ahora abre WhatsApp para contactar directamente, en lugar de ir al registro." },
-        { "type": "mejora", "text": "Se quitaron del inicio las secciones \"Cientos de Socios en Todo el Mundo\" y \"Últimos Artículos\" para una página más enfocada." }
+        {
+          "type": "mejora",
+          "text": "Las tres tarjetas de acceso rápido ahora son Comprar, Vender y Alquilar (antes había dos veces Comprar). La tarjeta Vender lleva a la página de contacto."
+        },
+        {
+          "type": "mejora",
+          "text": "Las Propiedades Destacadas se muestran en una grilla de hasta 9 propiedades, en lugar del carrusel anterior."
+        },
+        {
+          "type": "mejora",
+          "text": "En la sección Conviértete en Agente, el botón ahora abre WhatsApp para contactar directamente, en lugar de ir al registro."
+        },
+        {
+          "type": "mejora",
+          "text": "Se quitaron del inicio las secciones \"Cientos de Socios en Todo el Mundo\" y \"Últimos Artículos\" para una página más enfocada."
+        }
       ]
     },
     {
       "date": "2026-06-21",
       "title": "Detalle de propiedad arranca desde arriba",
       "items": [
-        { "type": "arreglo", "text": "En el sitio web, al entrar al detalle de una propiedad desde el listado, la página ahora se abre desde el principio. Antes aparecía a la mitad del scroll, manteniendo la posición de la página anterior." }
+        {
+          "type": "arreglo",
+          "text": "En el sitio web, al entrar al detalle de una propiedad desde el listado, la página ahora se abre desde el principio. Antes aparecía a la mitad del scroll, manteniendo la posición de la página anterior."
+        }
       ]
     },
     {
       "date": "2026-06-21",
       "title": "Ocultar agentes del sitio web",
       "items": [
-        { "type": "nuevo", "text": "En el detalle de cada agente (panel de administración) ahora hay un botón Activo/Inactivo para mostrar u ocultar al agente del sitio web. Los agentes marcados como Inactivos dejan de aparecer en el listado y la página de agentes del sitio público." }
+        {
+          "type": "nuevo",
+          "text": "En el detalle de cada agente (panel de administración) ahora hay un botón Activo/Inactivo para mostrar u ocultar al agente del sitio web. Los agentes marcados como Inactivos dejan de aparecer en el listado y la página de agentes del sitio público."
+        }
       ]
     },
     {
       "date": "2026-06-21",
       "title": "Menú del sitio web mejor distribuido",
       "items": [
-        { "type": "mejora", "text": "Los botones del menú principal del sitio web ahora se reparten de forma pareja a lo ancho de la barra, en lugar de quedar agrupados y descentrados. Se ve más prolijo y equilibrado." }
+        {
+          "type": "mejora",
+          "text": "Los botones del menú principal del sitio web ahora se reparten de forma pareja a lo ancho de la barra, en lugar de quedar agrupados y descentrados. Se ve más prolijo y equilibrado."
+        }
       ]
     },
     {
       "date": "2026-06-21",
       "title": "Menú del sitio web más simple",
       "items": [
-        { "type": "mejora", "text": "Se simplificó el menú principal del sitio web: se quitaron los botones Inmobiliarias, Páginas y Blog para dejar la navegación más clara y enfocada en lo importante." }
+        {
+          "type": "mejora",
+          "text": "Se simplificó el menú principal del sitio web: se quitaron los botones Inmobiliarias, Páginas y Blog para dejar la navegación más clara y enfocada en lo importante."
+        }
       ]
     },
     {
       "date": "2026-06-21",
       "title": "Mapa de la propiedad en pantalla completa",
       "items": [
-        { "type": "nuevo", "text": "En el detalle de la propiedad (sitio web, panel de admin y panel de agentes) ahora podés tocar el botón \"Ampliar\" sobre el mapa para abrirlo en grande, navegar la zona y hacer zoom con comodidad. Se cierra con la X o la tecla Escape." }
+        {
+          "type": "nuevo",
+          "text": "En el detalle de la propiedad (sitio web, panel de admin y panel de agentes) ahora podés tocar el botón \"Ampliar\" sobre el mapa para abrirlo en grande, navegar la zona y hacer zoom con comodidad. Se cierra con la X o la tecla Escape."
+        }
       ]
     },
     {
       "date": "2026-06-21",
       "title": "Fotos más grandes en pantalla completa",
       "items": [
-        { "type": "mejora", "text": "Al abrir una foto de la propiedad en pantalla completa, ahora la imagen ocupa una porción mucho mayor de la pantalla, para verla con más detalle." }
+        {
+          "type": "mejora",
+          "text": "Al abrir una foto de la propiedad en pantalla completa, ahora la imagen ocupa una porción mucho mayor de la pantalla, para verla con más detalle."
+        }
       ]
     },
     {
       "date": "2026-06-21",
       "title": "Footer del sitio web renovado",
       "items": [
-        { "type": "mejora", "text": "Se rediseñó el pie de página del sitio web: ahora muestra el logo de Anabella Luna, datos de contacto reales (dirección, teléfono y email) y solo las redes sociales que estén configuradas." },
-        { "type": "mejora", "text": "Se quitó la sección que invitaba a descargar una app móvil y los enlaces de ejemplo que venían del diseño original (ciudades y datos ficticios)." }
+        {
+          "type": "mejora",
+          "text": "Se rediseñó el pie de página del sitio web: ahora muestra el logo de Anabella Luna, datos de contacto reales (dirección, teléfono y email) y solo las redes sociales que estén configuradas."
+        },
+        {
+          "type": "mejora",
+          "text": "Se quitó la sección que invitaba a descargar una app móvil y los enlaces de ejemplo que venían del diseño original (ciudades y datos ficticios)."
+        }
       ]
     },
     {
       "date": "2026-06-21",
       "title": "Galería de propiedades sin avance automático",
       "items": [
-        { "type": "arreglo", "text": "En el detalle de la propiedad del sitio web, el carrusel de fotos ya no cambia solo. Ahora podés mirar cada imagen con tranquilidad y avanzar manualmente cuando quieras." }
+        {
+          "type": "arreglo",
+          "text": "En el detalle de la propiedad del sitio web, el carrusel de fotos ya no cambia solo. Ahora podés mirar cada imagen con tranquilidad y avanzar manualmente cuando quieras."
+        }
       ]
     },
     {
       "date": "2026-06-21",
       "title": "Panel de agentes más enfocado",
       "items": [
-        { "type": "mejora", "text": "Se quitaron los recuadros de Equipo de Agentes, Comisiones y Asignaciones, Roles y Permisos y Distribución por Zonas del panel de agentes. El dashboard queda más limpio y centrado en las métricas y el rendimiento del equipo." }
+        {
+          "type": "mejora",
+          "text": "Se quitaron los recuadros de Equipo de Agentes, Comisiones y Asignaciones, Roles y Permisos y Distribución por Zonas del panel de agentes. El dashboard queda más limpio y centrado en las métricas y el rendimiento del equipo."
+        }
       ]
     },
     {
       "date": "2026-06-21",
       "title": "Panel de clientes más simple",
       "items": [
-        { "type": "mejora", "text": "Se quitaron los recuadros de Lead Scoring y Comunicación Integrada del panel de clientes. Ahora la Base de Datos de Clientes ocupa todo el ancho para verse más clara." }
+        {
+          "type": "mejora",
+          "text": "Se quitaron los recuadros de Lead Scoring y Comunicación Integrada del panel de clientes. Ahora la Base de Datos de Clientes ocupa todo el ancho para verse más clara."
+        }
       ]
     },
     {
       "date": "2026-06-19",
       "title": "Visitas a propiedades de colegas",
       "items": [
-        { "type": "nuevo", "text": "Al agendar una visita ahora podés indicar que la propiedad es de un colega u otra inmobiliaria: se cargan el nombre y la dirección de la propiedad y la inmobiliaria a cargo, sin necesidad de que esté publicada en el sistema." }
+        {
+          "type": "nuevo",
+          "text": "Al agendar una visita ahora podés indicar que la propiedad es de un colega u otra inmobiliaria: se cargan el nombre y la dirección de la propiedad y la inmobiliaria a cargo, sin necesidad de que esté publicada en el sistema."
+        }
       ]
     },
     {
       "date": "2026-06-19",
       "title": "Operaciones y comisiones conectadas",
       "items": [
-        { "type": "arreglo", "text": "Las ventas y alquileres cargados desde el panel de agentes ahora quedan guardados correctamente como operaciones reales." },
-        { "type": "mejora", "text": "Las comisiones se actualizan con el monto de la operación, el porcentaje del agente y la fecha de cierre o cobro." }
+        {
+          "type": "arreglo",
+          "text": "Las ventas y alquileres cargados desde el panel de agentes ahora quedan guardados correctamente como operaciones reales."
+        },
+        {
+          "type": "mejora",
+          "text": "Las comisiones se actualizan con el monto de la operación, el porcentaje del agente y la fecha de cierre o cobro."
+        }
       ]
     },
     {
       "date": "2026-06-18",
       "title": "Recompensas conectadas a datos reales",
       "items": [
-        { "type": "arreglo", "text": "Los gráficos, rankings y premios de Recompensas ahora se calculan con operaciones, comisiones y propiedades reales de la base de datos." },
-        { "type": "mejora", "text": "Al cerrar o editar una operación, el sistema completa los datos necesarios para que las recompensas se actualicen correctamente." }
+        {
+          "type": "arreglo",
+          "text": "Los gráficos, rankings y premios de Recompensas ahora se calculan con operaciones, comisiones y propiedades reales de la base de datos."
+        },
+        {
+          "type": "mejora",
+          "text": "Al cerrar o editar una operación, el sistema completa los datos necesarios para que las recompensas se actualicen correctamente."
+        }
       ]
     },
     {
       "date": "2026-06-18",
       "title": "Estado no disponible en propiedades",
       "items": [
-        { "type": "nuevo", "text": "Al crear o editar una propiedad ahora podés marcar el estado como \"No disponible\"." },
-        { "type": "mejora", "text": "Las propiedades marcadas como \"No disponible\" quedan automáticamente fuera del sitio web público." }
+        {
+          "type": "nuevo",
+          "text": "Al crear o editar una propiedad ahora podés marcar el estado como \"No disponible\"."
+        },
+        {
+          "type": "mejora",
+          "text": "Las propiedades marcadas como \"No disponible\" quedan automáticamente fuera del sitio web público."
+        }
       ]
     },
     {
       "date": "2026-06-18",
       "title": "Sitio web y WhatsApp más prolijos",
       "items": [
-        { "type": "arreglo", "text": "En el sitio web, las fotos de portada de las propiedades ya no muestran una franja gris oscura en la base de la imagen." },
-        { "type": "mejora", "text": "WhatsApp queda incluido en las novedades para comunicar mejor las mejoras y correcciones recientes del canal de contacto." }
+        {
+          "type": "arreglo",
+          "text": "En el sitio web, las fotos de portada de las propiedades ya no muestran una franja gris oscura en la base de la imagen."
+        },
+        {
+          "type": "mejora",
+          "text": "WhatsApp queda incluido en las novedades para comunicar mejor las mejoras y correcciones recientes del canal de contacto."
+        }
       ]
     },
     {
       "date": "2026-06-12",
       "title": "Mapas nuevos en propiedades",
       "items": [
-        { "type": "mejora", "text": "La vista de Mapa de propiedades estrena mapas nuevos, más rápidos y detallados, con un marcador por cada propiedad publicada." },
-        { "type": "mejora", "text": "Al cargar o editar una propiedad podés arrastrar el pin sobre el mapa para ajustar la ubicación exacta antes de guardar." }
+        {
+          "type": "mejora",
+          "text": "La vista de Mapa de propiedades estrena mapas nuevos, más rápidos y detallados, con un marcador por cada propiedad publicada."
+        },
+        {
+          "type": "mejora",
+          "text": "Al cargar o editar una propiedad podés arrastrar el pin sobre el mapa para ajustar la ubicación exacta antes de guardar."
+        }
       ]
     },
     {
       "date": "2026-06-12",
       "title": "Carga de propiedades sin campos obligatorios",
       "items": [
-        { "type": "mejora", "text": "El formulario de nueva propiedad ya no exige campos obligatorios: podés guardar con los datos que tengas a mano y completar el resto cuando quieras, sin trabas en el flujo de trabajo." },
-        { "type": "mejora", "text": "Si guardás sin título, el sistema arma uno automáticamente con el tipo de propiedad, la operación y el barrio (por ejemplo: \"Departamento en Venta · Palermo\")." }
+        {
+          "type": "mejora",
+          "text": "El formulario de nueva propiedad ya no exige campos obligatorios: podés guardar con los datos que tengas a mano y completar el resto cuando quieras, sin trabas en el flujo de trabajo."
+        },
+        {
+          "type": "mejora",
+          "text": "Si guardás sin título, el sistema arma uno automáticamente con el tipo de propiedad, la operación y el barrio (por ejemplo: \"Departamento en Venta · Palermo\")."
+        }
       ]
     },
     {
       "date": "2026-06-12",
       "title": "Compartir propiedades por WhatsApp",
       "items": [
-        { "type": "arreglo", "text": "Los links de propiedades que se copian desde el panel ahora muestran la vista previa completa al compartirlos por WhatsApp, también desde iPhone: foto de portada grande arriba y, debajo, el precio, la dirección, los ambientes, los amenities y la descripción." }
+        {
+          "type": "arreglo",
+          "text": "Los links de propiedades que se copian desde el panel ahora muestran la vista previa completa al compartirlos por WhatsApp, también desde iPhone: foto de portada grande arriba y, debajo, el precio, la dirección, los ambientes, los amenities y la descripción."
+        }
       ]
     },
     {
       "date": "2026-06-11",
       "title": "Carga de propiedades más simple y ubicación exacta",
       "items": [
-        { "type": "mejora", "text": "El alta y la edición de propiedades ahora son una sola pantalla: los datos de la propiedad y la asignación del cliente quedaron juntos, sin tener que pasar por un \"paso 2\" aparte." },
-        { "type": "nuevo", "text": "La dirección se carga en dos campos separados, calle y altura (número). Al completar la altura, el mapa ubica el pin en la posición exacta de la propiedad." }
+        {
+          "type": "mejora",
+          "text": "El alta y la edición de propiedades ahora son una sola pantalla: los datos de la propiedad y la asignación del cliente quedaron juntos, sin tener que pasar por un \"paso 2\" aparte."
+        },
+        {
+          "type": "nuevo",
+          "text": "La dirección se carga en dos campos separados, calle y altura (número). Al completar la altura, el mapa ubica el pin en la posición exacta de la propiedad."
+        }
       ]
     },
     {
       "date": "2026-06-11",
       "title": "Consultas del sitio web y portales inmobiliarios",
       "items": [
-        { "type": "nuevo", "text": "Nueva sección Consultas: ahora podés ver y hacer seguimiento de todas las consultas que llegan desde el sitio web, con estados para saber cuáles ya fueron respondidas." },
-        { "type": "nuevo", "text": "Integraciones con portales: las propiedades pueden publicarse automáticamente en 12 portales inmobiliarios (Zonaprop, Argenprop, Proppit y más) mediante feeds que se actualizan solos." },
-        { "type": "arreglo", "text": "Solucionamos un error que dejaba el panel de administración fuera de servicio." }
+        {
+          "type": "nuevo",
+          "text": "Nueva sección Consultas: ahora podés ver y hacer seguimiento de todas las consultas que llegan desde el sitio web, con estados para saber cuáles ya fueron respondidas."
+        },
+        {
+          "type": "nuevo",
+          "text": "Integraciones con portales: las propiedades pueden publicarse automáticamente en 12 portales inmobiliarios (Zonaprop, Argenprop, Proppit y más) mediante feeds que se actualizan solos."
+        },
+        {
+          "type": "arreglo",
+          "text": "Solucionamos un error que dejaba el panel de administración fuera de servicio."
+        }
       ]
     },
     {
       "date": "2026-06-09",
       "title": "Operaciones y comisiones",
       "items": [
-        { "type": "arreglo", "text": "Las comisiones ahora se calculan correctamente según quién las mire: el administrador ve el total y cada agente ve solo lo suyo." },
-        { "type": "mejora", "text": "Al editar una operación se abre el mismo formulario completo que al crearla, con todos los datos cargados." }
+        {
+          "type": "arreglo",
+          "text": "Las comisiones ahora se calculan correctamente según quién las mire: el administrador ve el total y cada agente ve solo lo suyo."
+        },
+        {
+          "type": "mejora",
+          "text": "Al editar una operación se abre el mismo formulario completo que al crearla, con todos los datos cargados."
+        }
       ]
     },
     {
       "date": "2026-06-08",
       "title": "Historial de operaciones y fotos renovadas",
       "items": [
-        { "type": "nuevo", "text": "Las operaciones ahora se pueden editar y eliminar, y hay una tabla con el historial completo." },
-        { "type": "mejora", "text": "Las fotos de las propiedades se muestran en un nuevo visor tipo presentación, más grande y moderno." }
+        {
+          "type": "nuevo",
+          "text": "Las operaciones ahora se pueden editar y eliminar, y hay una tabla con el historial completo."
+        },
+        {
+          "type": "mejora",
+          "text": "Las fotos de las propiedades se muestran en un nuevo visor tipo presentación, más grande y moderno."
+        }
       ]
     },
     {
       "date": "2026-06-07",
       "title": "Tours virtuales 360",
       "items": [
-        { "type": "mejora", "text": "Los tours 360 ahora tienen botón de pantalla completa (estilo YouTube) y se ven mejor integrados en la página." }
+        {
+          "type": "mejora",
+          "text": "Los tours 360 ahora tienen botón de pantalla completa (estilo YouTube) y se ven mejor integrados en la página."
+        }
       ]
     },
     {
       "date": "2026-06-06",
       "title": "Filtros por agente y mejoras en WhatsApp",
       "items": [
-        { "type": "nuevo", "text": "Filtro por agente en Propiedades y en Clientes: elegí un agente y mirá solo lo que le pertenece." },
-        { "type": "nuevo", "text": "En la Bandeja de WhatsApp ahora se pueden eliminar conversaciones." },
-        { "type": "mejora", "text": "La configuración de WhatsApp se movió a la página de Integraciones para tener todo en un solo lugar." }
+        {
+          "type": "nuevo",
+          "text": "Filtro por agente en Propiedades y en Clientes: elegí un agente y mirá solo lo que le pertenece."
+        },
+        {
+          "type": "nuevo",
+          "text": "En la Bandeja de WhatsApp ahora se pueden eliminar conversaciones."
+        },
+        {
+          "type": "mejora",
+          "text": "La configuración de WhatsApp se movió a la página de Integraciones para tener todo en un solo lugar."
+        }
       ]
     }
   ]

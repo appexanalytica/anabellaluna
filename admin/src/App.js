@@ -14,21 +14,32 @@ import MotorRecomendaciones from './pages/MotorRecomendaciones';
 import AIObservability from './pages/AIObservability';
 import AIFloatingOrb from './components/ai/AIFloatingOrb';
 import InstallPrompt from './components/pwa/InstallPrompt';
+import PanelMotion from './components/motion/PanelMotion';
+import BrandIntro from './components/motion/BrandIntro';
 import NotificationPrompt from './components/pwa/NotificationPrompt';
 import './App.css';
 import './styles/theme-luminous.css';
 import { authService } from './services/authService';
 import { api } from './config/api';
 import { useStateContext } from './contexts/ContextProvider';
+import { devLogin } from './config/devLogin';
+import { useLoginIntro } from './components/motion/hooks';
 
 // Clase raíz de cada piel visual; `classic` no agrega ninguna.
 const SKIN_CLASS = { luminous: 'theme-luminous' };
+
+// El copiloto de IA queda fuera de la interfaz por ahora. El componente y su
+// lógica siguen en components/ai/AIFloatingOrb: para volver a mostrarlo alcanza
+// con poner esto en true.
+const MOSTRAR_COPILOTO_IA = false;
 
 const App = () => {
   const { setCurrentColor, setCurrentMode, setCurrentSkin, currentMode, currentSkin, themeSettings } = useStateContext();
 
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('authToken'));
-  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  // En local el formulario arranca con las credenciales de desarrollo; en el build
+  // de producción devLogin viene vacío (ver config/devLogin.js).
+  const [loginForm, setLoginForm] = useState({ username: devLogin.username, password: devLogin.password });
   const [loginError, setLoginError] = useState('');
   const [loggingIn, setLoggingIn] = useState(false);
   const [loginStatus, setLoginStatus] = useState('idle');
@@ -36,6 +47,10 @@ const App = () => {
   const [showLoginOverlay, setShowLoginOverlay] = useState(false);
 
   // 2FA login step
+  // La pantalla de login entra con el logo descubriéndose y el resto detrás.
+  const loginRef = useRef(null);
+  useLoginIntro(loginRef);
+
   const [twoFactorToken, setTwoFactorToken] = useState(null);
   const [tfaCode, setTfaCode] = useState('');
   const [tfaRecoveryMode, setTfaRecoveryMode] = useState(false);
@@ -160,7 +175,7 @@ const App = () => {
 
   if (!authToken) {
     return (
-      <div className={currentMode === 'Dark' ? 'dark' : ''}>
+      <div className={currentMode === 'Dark' ? 'dark' : ''} ref={loginRef}>
         <div className="min-h-screen flex items-center justify-center bg-main-bg dark:bg-main-dark-bg p-4 al-login-bg">
           {showLoginOverlay && (
             <div className="al-login-overlay" role="status" aria-live="polite" aria-label="Ingresando al ERP">
@@ -177,14 +192,14 @@ const App = () => {
           )}
           <div className={`w-full max-w-5xl grid md:grid-cols-2 overflow-hidden rounded-3xl border ${currentMode === 'Dark' ? 'border-gray-700/50' : 'border-gray-200'} shadow-2xl`}>
             <div className="hidden md:flex flex-col justify-between p-10 al-login-left">
-              <div className="al-fade-up" style={{ animationDelay: '80ms' }}>
+              <div data-login-logo>
                 <img
                   src={currentMode === 'Dark' ? '/anabella-logo-white.svg' : '/anabella-logo.svg'}
                   alt="Anabella Luna"
                   className="h-10 w-auto al-login-logo"
                 />
               </div>
-              <div className="al-fade-up" style={{ animationDelay: '160ms' }}>
+              <div data-login-step>
                 <div className={`al-left-copy ${currentMode === 'Dark' ? 'text-white' : 'text-gray-900'}`}>
                   <h2 className="text-3xl font-extrabold tracking-tight al-left-title">
                     {twoFactorToken ? 'Verificación de seguridad' : 'Bienvenido al ERP'}
@@ -196,7 +211,7 @@ const App = () => {
                   </p>
                 </div>
               </div>
-              <div className="al-fade-up" style={{ animationDelay: '240ms' }}>
+              <div data-login-step>
                 <div className={`inline-flex items-center gap-2 text-xs px-3 py-2 rounded-xl ${currentMode === 'Dark' ? 'bg-black/25 text-gray-100 border border-white/10' : 'bg-white/65 text-gray-900 border border-black/5'}`}>
                   <span className="al-dot" />
                   Acceso seguro para administradores
@@ -212,7 +227,7 @@ const App = () => {
                   className={`al-login-card ${tfaError ? 'al-shake' : ''}`}
                   autoComplete="off"
                 >
-                  <div className="flex items-center gap-3 al-fade-up" style={{ animationDelay: '60ms' }}>
+                  <div className="flex items-center gap-3" data-login-step>
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${currentMode === 'Dark' ? 'bg-indigo-500/20' : 'bg-indigo-50'}`}>
                       <FiShield size={24} className="text-indigo-500" />
                     </div>
@@ -228,7 +243,7 @@ const App = () => {
                     </div>
                   </div>
 
-                  <div className="mt-6 al-fade-up" style={{ animationDelay: '120ms' }}>
+                  <div className="mt-6" data-login-step>
                     <input
                       ref={tfaInputRef}
                       type="text"
@@ -268,7 +283,7 @@ const App = () => {
                     </span>
                   </button>
 
-                  <div className="mt-4 flex items-center justify-between al-fade-up" style={{ animationDelay: '180ms' }}>
+                  <div className="mt-4 flex items-center justify-between" data-login-step>
                     <button
                       type="button"
                       onClick={handleBack2FA}
@@ -297,7 +312,7 @@ const App = () => {
                 className={`al-login-card ${loginStatus === 'error' ? 'al-shake' : ''} ${loginStatus === 'success' ? 'al-success' : ''}`}
                 autoComplete="off"
               >
-                <div className="md:hidden al-fade-up" style={{ animationDelay: '80ms' }}>
+                <div className="md:hidden" data-login-logo>
                   <img
                     src={currentMode === 'Dark' ? '/anabella-logo-white.svg' : '/anabella-logo.svg'}
                     alt="Anabella Luna"
@@ -305,14 +320,14 @@ const App = () => {
                   />
                 </div>
 
-                <div className="al-fade-up" style={{ animationDelay: '120ms' }}>
+                <div data-login-step>
                   <h1 className={`text-2xl font-bold ${currentMode === 'Dark' ? 'text-white' : 'text-gray-900'}`}>Iniciar sesión</h1>
                   <p className={`mt-1 text-sm ${currentMode === 'Dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                     Ingresá con tus credenciales de administrador.
                   </p>
                 </div>
 
-                <div className="mt-7 space-y-4 al-fade-up" style={{ animationDelay: '180ms' }}>
+                <div className="mt-7 space-y-4" data-login-step>
                   <label htmlFor="login-username" className={`block text-sm font-medium mb-2 ${currentMode === 'Dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                     <span className="block mb-2">Usuario</span>
                     <input
@@ -386,6 +401,12 @@ const App = () => {
                   </span>
                 </button>
 
+                {devLogin.activo && (
+                  <p className="mt-4 text-center text-[11px] text-amber-600 dark:text-amber-400">
+                    Credenciales de desarrollo precargadas · solo en local
+                  </p>
+                )}
+
                 <div className={`mt-6 text-xs ${currentMode === 'Dark' ? 'text-gray-500' : 'text-gray-400'}`}>
                   © {new Date().getFullYear()} Anabella Luna · ERP
                 </div>
@@ -407,6 +428,8 @@ const App = () => {
 
   return (
     <div className={claseTema}>
+      {/* Cortina de marca al entrar al panel, el mismo gesto que el sitio. */}
+      <BrandIntro descriptor="ERP" />
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <div className="flex relative dark:bg-main-dark-bg">
           <Sidebar />
@@ -421,6 +444,7 @@ const App = () => {
             <div className="pt-16 md:pt-0 pb-20 md:pb-0">
               {themeSettings && (<ThemeSettings />)}
 
+              <PanelMotion>
               <Routes>
                 {/* dashboard  */}
                 <Route path="/" element={(<DashboardEjecutivo />)} />
@@ -476,12 +500,13 @@ const App = () => {
                 <Route path="*" element={<Navigate to="/" replace />} />
 
               </Routes>
+              </PanelMotion>
             </div>
             <Footer />
           </div>
         </div>
         <OnboardingTutorial />
-        <AIFloatingOrb />
+        {MOSTRAR_COPILOTO_IA && <AIFloatingOrb />}
         <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme={currentMode === 'Dark' ? 'dark' : 'light'} />
       </BrowserRouter>
     </div>

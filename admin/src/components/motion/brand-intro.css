@@ -1,0 +1,50 @@
+/* Cortina de marca al entrar al panel (BrandIntro.jsx).
+   El estado inicial y el retiro de emergencia van por CSS para que, si el JS
+   falla o tarda, la cortina se vaya sola y nunca deje el panel tapado. */
+
+.panel-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: grid;
+  place-items: center;
+  background-color: #0d1520;
+  animation: panel-intro-salida 0.7s ease-in-out 3.5s forwards;
+}
+
+.panel-intro-marca {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Arranca tapado: GSAP lo descubre con clip-path. */
+.panel-intro-logo {
+  width: clamp(150px, 30vw, 230px);
+  height: auto;
+  clip-path: inset(0 0 100% 0);
+}
+
+.panel-intro-descriptor {
+  opacity: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+}
+
+@keyframes panel-intro-salida {
+  to {
+    transform: translateY(-100%);
+    visibility: hidden;
+  }
+}
+
+/* Con "reducir movimiento" no hay cortina: el panel aparece directamente. */
+@media (prefers-reduced-motion: reduce) {
+  .panel-intro {
+    display: none;
+  }
+}
